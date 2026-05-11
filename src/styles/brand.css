@@ -1,0 +1,241 @@
+/* docs.polaris.express brand stylesheet
+ *
+ * Color/spacing/radius tokens mirror the web product verbatim
+ * (web/assets/styles.css). Update this file when the web product's
+ * theme moves; do not invent new tokens here.
+ *
+ * Theme: "Electric Volt" — vibrant, clean-energy palette tuned for an
+ * EV-charging product. OKLch keeps light/dark luminance perceptually
+ * uniform across all accents.
+ */
+
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Light mode — vibrant, clean energy feel */
+    --background: oklch(0.98 0.005 220);
+    --foreground: oklch(0.18 0.03 240);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.18 0.03 240);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.18 0.03 240);
+    --primary: oklch(0.55 0.20 220);
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.94 0.03 220);
+    --secondary-foreground: oklch(0.25 0.06 220);
+    --muted: oklch(0.95 0.015 220);
+    --muted-foreground: oklch(0.45 0.03 240);
+    --accent: oklch(0.60 0.22 145);
+    --accent-foreground: oklch(0.98 0 0);
+    --destructive: oklch(0.50 0.24 25);
+    --destructive-foreground: oklch(0.98 0 0);
+    --success: oklch(0.60 0.22 145);
+    --success-foreground: oklch(0.98 0 0);
+    --warning: oklch(0.75 0.18 85);
+    --warning-foreground: oklch(0.20 0.05 85);
+    --border: oklch(0.88 0.025 220);
+    --input: oklch(0.92 0.015 220);
+    --ring: oklch(0.55 0.20 220);
+
+    /* Chart colors — vibrant electric spectrum */
+    --chart-1: oklch(0.55 0.20 220);
+    --chart-2: oklch(0.60 0.22 145);
+    --chart-3: oklch(0.55 0.22 280);
+    --chart-4: oklch(0.75 0.18 85);
+    --chart-5: oklch(0.65 0.22 30);
+
+    --radius: 0.625rem;
+
+    /* Sidebar — clean with subtle electric accent */
+    --sidebar: oklch(0.96 0.015 220);
+    --sidebar-foreground: oklch(0.18 0.03 240);
+    --sidebar-primary: oklch(0.55 0.20 220);
+    --sidebar-primary-foreground: oklch(0.98 0 0);
+    --sidebar-accent: oklch(0.92 0.04 220);
+    --sidebar-accent-foreground: oklch(0.25 0.06 220);
+    --sidebar-border: oklch(0.88 0.025 220);
+    --sidebar-ring: oklch(0.55 0.20 220);
+
+    /* Electric glow colors — for BorderBeam and decorative halos */
+    --glow-cyan: oklch(0.65 0.20 220);
+    --glow-green: oklch(0.70 0.22 145);
+    --glow-violet: oklch(0.60 0.24 280);
+    --glow-amber: oklch(0.75 0.18 85);
+    --glow-orange: oklch(0.70 0.20 55);
+  }
+
+  :root[data-theme="dark"] {
+    /* Dark mode — premium electric feel */
+    --background: oklch(0.12 0.02 240);
+    --foreground: oklch(0.95 0.01 220);
+    --card: oklch(0.15 0.02 240);
+    --card-foreground: oklch(0.95 0.01 220);
+    --popover: oklch(0.15 0.02 240);
+    --popover-foreground: oklch(0.95 0.01 220);
+    --primary: oklch(0.75 0.15 200);
+    --primary-foreground: oklch(0.12 0.02 220);
+    --secondary: oklch(0.22 0.03 240);
+    --secondary-foreground: oklch(0.95 0.01 220);
+    --muted: oklch(0.22 0.02 240);
+    --muted-foreground: oklch(0.65 0.02 220);
+    --accent: oklch(0.75 0.22 145);
+    --accent-foreground: oklch(0.12 0.05 145);
+    --destructive: oklch(0.45 0.18 25);
+    --destructive-foreground: oklch(0.90 0.15 25);
+    --success: oklch(0.75 0.22 145);
+    --success-foreground: oklch(0.12 0.05 145);
+    --warning: oklch(0.85 0.18 85);
+    --warning-foreground: oklch(0.20 0.05 85);
+    --border: oklch(0.28 0.03 240);
+    --input: oklch(0.22 0.02 240);
+    --ring: oklch(0.75 0.15 200);
+
+    --chart-1: oklch(0.75 0.15 200);
+    --chart-2: oklch(0.75 0.22 145);
+    --chart-3: oklch(0.70 0.22 280);
+    --chart-4: oklch(0.85 0.18 85);
+    --chart-5: oklch(0.75 0.20 30);
+
+    --sidebar: oklch(0.10 0.02 240);
+    --sidebar-foreground: oklch(0.95 0.01 220);
+    --sidebar-primary: oklch(0.75 0.15 200);
+    --sidebar-primary-foreground: oklch(0.12 0.02 220);
+    --sidebar-accent: oklch(0.20 0.03 240);
+    --sidebar-accent-foreground: oklch(0.95 0.01 220);
+    --sidebar-border: oklch(0.25 0.02 240);
+    --sidebar-ring: oklch(0.75 0.15 200);
+
+    --glow-cyan: oklch(0.80 0.18 200);
+    --glow-green: oklch(0.85 0.22 145);
+    --glow-violet: oklch(0.72 0.25 280);
+    --glow-amber: oklch(0.85 0.18 85);
+    --glow-orange: oklch(0.80 0.20 55);
+  }
+}
+
+/* ===== Tailwind v4 theme — exposes brand tokens as utilities ===== */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-glow-cyan: var(--glow-cyan);
+  --color-glow-green: var(--glow-green);
+  --color-glow-violet: var(--glow-violet);
+  --color-glow-amber: var(--glow-amber);
+  --color-glow-orange: var(--glow-orange);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ===== Starlight CSS variable mapping =====
+ *
+ * Starlight reads its own --sl-* CSS variables. Bind them to our brand
+ * tokens so the entire Starlight theme inherits the product palette.
+ * Per-section accent overrides live in accents.css and override
+ * --sl-color-accent / --sl-color-text-accent specifically.
+ */
+:root {
+  /* Font stacks — identical to web product (web/assets/styles.css:121) */
+  --sl-font:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  --sl-font-system-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+
+  /* Surfaces */
+  --sl-color-bg: var(--background);
+  --sl-color-bg-nav: var(--sidebar);
+  --sl-color-bg-sidebar: var(--sidebar);
+  --sl-color-bg-inline-code: var(--muted);
+
+  /* Text */
+  --sl-color-text: var(--foreground);
+  --sl-color-text-accent: var(--primary);
+  --sl-color-text-invert: var(--primary-foreground);
+  --sl-color-white: oklch(1 0 0);
+  --sl-color-gray-1: var(--muted);
+  --sl-color-gray-2: var(--muted-foreground);
+  --sl-color-gray-3: var(--muted-foreground);
+  --sl-color-gray-4: oklch(0.55 0.025 240);
+  --sl-color-gray-5: oklch(0.40 0.03 240);
+  --sl-color-gray-6: oklch(0.25 0.03 240);
+  --sl-color-gray-7: oklch(0.18 0.03 240);
+  --sl-color-black: var(--background);
+
+  /* Accent (overridden per-section in accents.css) */
+  --sl-color-accent-low: oklch(from var(--primary) l c h / 0.10);
+  --sl-color-accent: var(--primary);
+  --sl-color-accent-high: oklch(from var(--primary) calc(l + 0.10) c h);
+
+  /* Borders */
+  --sl-color-hairline: var(--border);
+  --sl-color-hairline-light: var(--border);
+  --sl-color-hairline-shade: var(--border);
+
+  /* Code blocks — Expressive Code reads these */
+  --sl-color-bg-codeblock: var(--card);
+
+  /* Radius — align Starlight's defaults with the product */
+  --sl-text-code: var(--radius-md);
+}
+
+:root[data-theme="dark"] {
+  --sl-color-bg: var(--background);
+  --sl-color-text: var(--foreground);
+  --sl-color-text-accent: var(--primary);
+  --sl-color-bg-codeblock: var(--card);
+  --sl-color-hairline: var(--border);
+}
+
+/* ===== Body baseline (matches web product) ===== */
+html {
+  font-family: var(--sl-font);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--sl-font-system-mono);
+}
+
+/* ===== Polish: align surface chrome with product radii ===== */
+.sl-markdown-content :is(table, blockquote, pre, .expressive-code) {
+  border-radius: var(--radius-lg);
+}
+
+/* Selection — accent-tinted using the section accent */
+::selection {
+  background-color: oklch(from var(--sl-color-accent) l c h / 0.25);
+}

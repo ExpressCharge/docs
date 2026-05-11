@@ -1,0 +1,1622 @@
+# Master article backlog for docs.polaris.express.
+#
+# Single source of truth. Authoring scripts read this; CI workflows read
+# this; humans read this. Update statuses + last_authored fields on
+# every author run.
+#
+# Fields:
+#   slug         — dotted path that derives the URL (user.web.sessions.start-a-charge)
+#   title        — display title
+#   tier         — P0 (launch) | P1 (30-day follow-up) | P2 (nice-to-have)
+#   section      — user | admin | selfhost | concepts | api | glossary | changelog
+#   surface      — web | ios | selfhost | n/a
+#   persona      — Driver | Operator | Selfhoster | Developer
+#   prompt       — prompt template name in prompts/ (without .md)
+#   code_refs    — file paths (relative to monorepo root) the writer must consult
+#   screenshots  — placeholder filenames; "" if none planned
+#   status       — backlog | drafting | review | published
+#   last_authored — ISO date string when last regenerated; null if never
+
+# ============================================================
+# Welcome (P0, all)
+# ============================================================
+
+- slug: welcome.choose-your-path
+  title: Choose your path
+  tier: P0
+  section: user
+  surface: n/a
+  persona: All
+  prompt: concept
+  code_refs: []
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: welcome.quickstart-customer
+  title: Customer 60-second tour
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: welcome.quickstart-admin
+  title: Admin 60-second tour
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: welcome.quickstart-selfhost
+  title: Self-host 60-second tour
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - README.md
+    - docker-compose.yml
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+# ============================================================
+# User Guide — Web (25 articles, 17 P0)
+# ============================================================
+
+- slug: user.web.getting-started.overview
+  title: Tour of the customer portal
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/index.tsx
+  screenshots: ["customer-dashboard.png"]
+  status: backlog
+  last_authored: null
+
+- slug: user.web.getting-started.notifications-and-email
+  title: How notifications and email work
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/src/email/
+    - web/routes/api/stream/customer.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.account.sign-in-magic-link
+  title: Sign in with a magic email link
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/login.tsx
+    - web/routes/api/auth/magic-link/preflight.ts
+    - web/routes/api/auth/magic-link/verify.ts
+  screenshots: ["login-magic-link.png"]
+  status: backlog
+  last_authored: null
+
+- slug: user.web.account.sign-in-qr
+  title: Sign in by scanning a charger QR
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/auth/scan.tsx
+    - web/routes/api/auth/scan-login.ts
+    - web/routes/api/auth/qr-sign-in.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.account.change-password
+  title: Change your password
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/account/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.account.delete-account
+  title: Delete your account
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/account/index.tsx
+    - web/routes/api/customer/delete-account.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.account.manage-sessions
+  title: Manage your active sessions
+  tier: P1
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/account/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.cards.add-a-card
+  title: Add an EV card to your account
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/cards/index.tsx
+    - web/routes/api/customer/cards/index.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.cards.rename-or-color-a-card
+  title: Rename or color-code your EV card
+  tier: P1
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/cards/[id].tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.cards.report-lost-card
+  title: Report a lost or stolen EV card
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/cards/[id].tsx
+    - web/routes/api/customer/cards/[id]/report-lost.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.cards.transfer-card-between-users
+  title: Transfer an EV card to another user
+  tier: P2
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/cards/[id].tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.sessions.start-a-charge
+  title: Start a charging session
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/index.tsx
+    - web/routes/api/customer/remote-start.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.sessions.stop-a-charge
+  title: Stop an active charging session
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/sessions/[id].tsx
+    - web/routes/api/customer/session-stop.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.sessions.view-session-history
+  title: View your charging session history
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/sessions/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.sessions.understand-session-status
+  title: Understand session statuses
+  tier: P1
+  section: user
+  surface: web
+  persona: Driver
+  prompt: concept
+  code_refs:
+    - web/routes/sessions/[id].tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.sessions.dispute-a-session
+  title: Dispute a charging session
+  tier: P1
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/sessions/[id].tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.reservations.create-a-reservation
+  title: Reserve a charger for later
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/reservations/new.tsx
+    - web/routes/api/customer/reservations/index.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.reservations.cancel-a-reservation
+  title: Cancel a reservation
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/reservations/[id].tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.reservations.reservation-rules-and-limits
+  title: Reservation rules and limits
+  tier: P1
+  section: user
+  surface: web
+  persona: Driver
+  prompt: concept
+  code_refs:
+    - web/routes/api/customer/reservations/index.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.billing.view-invoice
+  title: View an invoice
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/billing/index.tsx
+    - web/routes/billing/invoices/[id].tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.billing.download-invoice-pdf
+  title: Download an invoice PDF
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/api/customer/invoices/[id]/pdf.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.billing.change-subscription-plan
+  title: Change your subscription plan
+  tier: P1
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/subscription/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.billing.payment-methods
+  title: Manage payment methods
+  tier: P1
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - web/routes/billing/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.web.troubleshooting.common-issues
+  title: Common issues — cookies, magic-link expiry, card not recognized
+  tier: P0
+  section: user
+  surface: web
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs: []
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+# ============================================================
+# User Guide — iOS (21 articles, 13 P0)
+# ============================================================
+
+- slug: user.ios.install.download-and-install
+  title: Install the iOS app
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/README.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.install.system-requirements
+  title: iOS system requirements
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: concept
+  code_refs:
+    - ios/project.yml
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.install.grant-permissions
+  title: Grant NFC, notification, and location permissions
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/NotificationPriming/NotificationPrimingView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.sign-in.magic-email
+  title: Sign in with a magic email link
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Auth/MagicEmailDeepLinkHandler.swift
+    - ios/App/Features/Auth/CustomerSignInProgressView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.sign-in.qr-sign-in
+  title: Sign in by scanning a QR code
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Auth/QrSignInViewModel.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.sign-in.sign-out
+  title: Sign out
+  tier: P1
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Settings/SettingsView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.charging.start-charge-with-nfc
+  title: Tap your card to start a charge
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Scan/ReadyView.swift
+    - ios/App/Features/Scan/ScanActiveView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.charging.stop-session
+  title: Stop a session from the app
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Chargers/ChargerDetailView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.charging.view-active-session
+  title: View your active session
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Chargers/ChargerDetailView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.charging.handle-charging-errors
+  title: Understand charging errors
+  tier: P1
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Scan/ErrorView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.find.charger-map
+  title: Find a charger nearby
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Chargers/ChargersTabView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.find.charger-detail
+  title: View charger details
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Chargers/ChargerDetailView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.find.availability-indicators
+  title: Read charger availability indicators
+  tier: P1
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: concept
+  code_refs:
+    - ios/App/Features/Chargers/ChargersTabView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.notifications.enable-push
+  title: Enable push notifications
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/NotificationPriming/NotificationPrimingView.swift
+    - ios/App/Services/PushService.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.notifications.notification-types
+  title: What kinds of notifications you'll receive
+  tier: P1
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: concept
+  code_refs:
+    - ios/App/AppDelegate.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.deep-links.expchg-scheme
+  title: Open chargers from URLs (expchg:// scheme)
+  tier: P1
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: concept
+  code_refs:
+    - ios/App/RootView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.deep-links.universal-links
+  title: Open the app from web links
+  tier: P1
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: concept
+  code_refs:
+    - ios/App/RootView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.troubleshooting.nfc-not-reading
+  title: My card isn't being recognized by NFC
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Scan/ErrorView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.troubleshooting.sign-in-loops
+  title: I'm stuck in a sign-in loop
+  tier: P0
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/RootView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: user.ios.troubleshooting.diagnostics-sheet
+  title: Share diagnostics with support
+  tier: P1
+  section: user
+  surface: ios
+  persona: Driver
+  prompt: customer-tutorial
+  code_refs:
+    - ios/App/Features/Scan/DiagnosticsSheet.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+# ============================================================
+# Admin Guide — Web (45 articles, 28 P0)
+# Note: the full list lives in the plan file; this seeds the P0 set
+# plus enough P1 entries to validate the pipeline. The CI authoring
+# fleet can extend this file as new admin features ship.
+# ============================================================
+
+- slug: admin.getting-started.operator-onboarding
+  title: Operator onboarding
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.getting-started.console-tour
+  title: Admin console tour
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/index.tsx
+    - web/src/lib/admin-navigation.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.getting-started.permissions-model
+  title: Permissions and host-dispatch model
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: concept
+  code_refs:
+    - web/utils.ts
+    - web/src/lib/auth.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.devices.register-charger
+  title: Register a new charger
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/devices/index.tsx
+    - web/routes/api/admin/charger/index.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.devices.register-nfc-scanner
+  title: Register an NFC scanner device
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/devices/[deviceId].tsx
+    - web/routes/api/devices/register.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.devices.view-device-health
+  title: View charger and device health
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/devices/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.cards.link-card-to-customer
+  title: Link an EV card to a customer
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/tags/[tagPk]/link.tsx
+    - web/routes/api/admin/tag/link.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.cards.unlink-or-reassign-card
+  title: Unlink or reassign an EV card
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/tags/[tagPk]/edit.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.cards.diagnose-card-not-charging
+  title: Diagnose a card that won't charge
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/api/ocpp/pre-authorize.ts
+    - web/routes/admin/tags/[tagPk].tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.transactions.browse-transactions
+  title: Browse charging transactions
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/transactions/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.transactions.inspect-meter-values
+  title: Inspect a transaction's meter values
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/transactions/[id].tsx
+    - web/routes/api/admin/transaction/event.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.transactions.force-close-stuck-session
+  title: Force-close a stuck session
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/api/admin/charger/operation.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.billing.lago-overview
+  title: How Lago billing fits together
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: concept
+  code_refs:
+    - web/src/lib/lago-client.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.billing.finalize-invoice
+  title: Finalize a draft invoice
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/api/admin/invoice/[id]/finalize.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.billing.void-invoice
+  title: Void an invoice
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/api/admin/invoice/[id]/void.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.billing.manage-customer-subscription
+  title: Manage a customer's subscription
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/subscriptions/[externalId]/profile.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.users.impersonate-customer
+  title: Impersonate a customer for support
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/api/customer/impersonation/start.ts
+    - web/routes/api/customer/impersonation/end.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.sync.trigger-manual-sync
+  title: Trigger a manual sync run
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/api/admin/sync/trigger.ts
+    - web/sync-worker.ts
+    - web/docs/SYNC-TRIGGER.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.sync.read-sync-run-detail
+  title: Read a sync-run detail page
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/sync/[id].tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.webhooks.view-event-log
+  title: View the Lago webhook event log
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/webhook-events/index.tsx
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.webhooks.replay-webhook
+  title: Replay a failed webhook
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/api/admin/webhook-events/[id]/replay.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.feature-flags.toggle-global-flag
+  title: Toggle a global feature flag
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/admin/feature-flags/index.tsx
+    - web/src/lib/devices/feature-flags.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.feature-flags.per-user-overrides
+  title: Set a per-user feature-flag override
+  tier: P0
+  section: admin
+  surface: web
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - web/routes/api/admin/users/[userId]/feature-flags.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+# ============================================================
+# Admin Guide — iOS (15 articles)
+# ============================================================
+
+- slug: admin.ios.install-scanner-build
+  title: Install the iOS scanner build
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/README.md
+    - ios/App/Features/Registration/RegistrationView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.ios.sign-in-pkce-oauth
+  title: Sign in with PKCE OAuth
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/App/Features/Auth/LoginViewModel.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.ios.nfc-scan-a-card
+  title: Perform an NFC card scan
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/App/Features/Scan/ReadyView.swift
+    - ios/App/Services/ScanCoordinator.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.ios.diagnose-nfc-failure
+  title: Diagnose an NFC scan failure
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/App/Features/Scan/ErrorView.swift
+    - ios/App/Features/Scan/DiagnosticsSheet.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.ios.operator-settings-tour
+  title: Operator settings tour
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/App/Features/Settings/SettingsView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.ios.share-diagnostics-bundle
+  title: Share a diagnostics bundle with support
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/App/Features/Scan/DiagnosticsSheet.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.ios.kiosk.activate-kiosk-mode
+  title: Activate kiosk mode on a device
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/App/Features/Kiosk/KioskShell.swift
+    - web/routes/api/admin/devices/[deviceId]/settings.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.ios.kiosk.configure-kiosk
+  title: Configure a kiosk device
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/App/Features/Kiosk/KioskShell.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: admin.ios.kiosk.recover-stuck-kiosk-5-tap
+  title: Recover a stuck kiosk with the 5-tap gesture
+  tier: P0
+  section: admin
+  surface: ios
+  persona: Operator
+  prompt: admin-runbook
+  code_refs:
+    - ios/App/Features/Kiosk/KioskShell.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+# ============================================================
+# Selfhost (21 articles, 17 P0)
+# ============================================================
+
+- slug: selfhost.before-you-begin
+  title: Before you begin — prerequisites and cost
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - README.md
+    - web/.env.example
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.architecture-overview
+  title: Architecture overview
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: concept
+  code_refs:
+    - docker-compose.yml
+    - steve/docker-compose.yml
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-1-credentials
+  title: Phase 1 — Generate credentials
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - web/.env.example
+    - email-worker/README.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-2-dns
+  title: Phase 2 — Configure DNS + Cloudflare email
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - email-worker/README.md
+    - web/docs/POLARIS-DEPLOY.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-3-email-worker
+  title: Phase 3 — Deploy the Cloudflare email Worker
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - email-worker/README.md
+    - email-worker/wrangler.jsonc
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-4-steve
+  title: Phase 4 — Deploy SteVe (OCPP backend)
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - steve/CLAUDE.md
+    - steve/docker-compose.yml
+    - steve/README.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-5-fresh-app
+  title: Phase 5 — Bring up the Fresh web app
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - docker-compose.yml
+    - web/Dockerfile
+    - web/.env.example
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-6-migrations
+  title: Phase 6 — Run database migrations
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - web/drizzle/
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-7-backfill
+  title: Phase 7 — Backfill customer accounts
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs: []
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-8-admin-seed
+  title: Phase 8 — Seed the first admin
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs: []
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-9-first-boot
+  title: Phase 9 — First boot and health checks
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - docker-compose.yml
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-10-smoke-tests
+  title: Phase 10 — Smoke tests
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - web/routes/api/health.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.phase-11-register-chargers
+  title: Phase 11 — Register your first chargers
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - steve/README.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.ops.backups
+  title: Backups — Postgres and MariaDB
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - docker-compose.yml
+    - steve/docker-compose.yml
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.ops.upgrades
+  title: Upgrades — bumping submodule pointers
+  tier: P1
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - Makefile
+    - .github/workflows/bump-submodules.yml
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.ops.monitoring
+  title: Monitoring — logs and sync health
+  tier: P1
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - web/docs/logging/contract.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.ops.secrets-rotation
+  title: Rotate secrets — HMAC keys and AUTH_SECRET
+  tier: P1
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - email-worker/README.md
+    - web/.env.example
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.troubleshooting.charger-wont-connect
+  title: A charger won't connect to SteVe
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - steve/CLAUDE.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.troubleshooting.webhook-failures
+  title: HMAC webhook failures
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - web/routes/api/ocpp/pre-authorize.ts
+    - web/routes/api/ocpp/meter-values.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: selfhost.reference.env-vars
+  title: Environment variables reference
+  tier: P0
+  section: selfhost
+  surface: selfhost
+  persona: Selfhoster
+  prompt: selfhost-phase
+  code_refs:
+    - web/.env.example
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+# ============================================================
+# Concepts (8 articles)
+# ============================================================
+
+- slug: concepts.ocpp-and-steve
+  title: OCPP and SteVe
+  tier: P0
+  section: concepts
+  surface: n/a
+  persona: Developer
+  prompt: concept
+  code_refs:
+    - steve/README.md
+    - steve/CLAUDE.md
+    - web/src/lib/steve-client.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: concepts.sync-runs
+  title: Sync runs and Adaptive Cadence
+  tier: P0
+  section: concepts
+  surface: n/a
+  persona: Developer
+  prompt: concept
+  code_refs:
+    - web/sync-worker.ts
+    - web/docs/SYNC-TRIGGER.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: concepts.webhook-contract
+  title: The HMAC webhook contract
+  tier: P0
+  section: concepts
+  surface: n/a
+  persona: Developer
+  prompt: concept
+  code_refs:
+    - web/routes/api/ocpp/pre-authorize.ts
+    - web/routes/api/ocpp/meter-values.ts
+    - email-worker/README.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: concepts.lago-billing-model
+  title: The Lago billing model
+  tier: P0
+  section: concepts
+  surface: n/a
+  persona: Developer
+  prompt: concept
+  code_refs:
+    - web/src/lib/lago-client.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: concepts.capability-system
+  title: The iOS capability system
+  tier: P1
+  section: concepts
+  surface: n/a
+  persona: Developer
+  prompt: concept
+  code_refs:
+    - ios/Sources/Capabilities/Capabilities.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: concepts.feature-flags
+  title: Feature flags
+  tier: P1
+  section: concepts
+  surface: n/a
+  persona: Developer
+  prompt: concept
+  code_refs:
+    - web/src/lib/devices/feature-flags.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: concepts.accent-color-system
+  title: The accent color system
+  tier: P1
+  section: concepts
+  surface: n/a
+  persona: Developer
+  prompt: concept
+  code_refs:
+    - web/src/lib/colors.ts
+    - web/CLAUDE.md
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: concepts.deep-link-routing
+  title: Deep-link routing
+  tier: P1
+  section: concepts
+  surface: n/a
+  persona: Developer
+  prompt: concept
+  code_refs:
+    - ios/App/RootView.swift
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+# ============================================================
+# API reference — overview + namespace pages
+# (Per-endpoint pages are generated by the api-reference prompt.
+# Backlog only seeds the namespace pages; the authoring script
+# scans web/routes/api/** to enumerate endpoints.)
+# ============================================================
+
+- slug: api.overview
+  title: API overview
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs:
+    - web/routes/api/health.ts
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: api.auth
+  title: Auth endpoints
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs:
+    - web/routes/api/auth/
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: api.customer
+  title: Customer endpoints
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs:
+    - web/routes/api/customer/
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: api.admin
+  title: Admin endpoints
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs:
+    - web/routes/api/admin/
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: api.devices
+  title: Devices endpoints
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs:
+    - web/routes/api/devices/
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: api.ocpp
+  title: OCPP webhook endpoints
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs:
+    - web/routes/api/ocpp/
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: api.stream
+  title: SSE stream endpoints
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs:
+    - web/routes/api/stream/
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: api.webhook
+  title: Inbound webhooks (Lago, etc.)
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs:
+    - web/routes/api/webhook/
+  screenshots: []
+  status: backlog
+  last_authored: null
+
+- slug: api.errors-and-rate-limits
+  title: Errors and rate limits
+  tier: P0
+  section: api
+  surface: n/a
+  persona: Developer
+  prompt: api-reference
+  code_refs: []
+  screenshots: []
+  status: backlog
+  last_authored: null

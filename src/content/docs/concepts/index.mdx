@@ -1,0 +1,24 @@
+---
+title: Concepts
+description: Background on how the platform works — OCPP, SteVe, sync runs, webhooks, capabilities.
+sidebar:
+  label: Overview
+  order: 0
+---
+
+import { LinkCard, CardGrid } from "@astrojs/starlight/components";
+
+These pages explain how the platform fits together. Read them when
+docs reference a concept that isn't obvious from context, or when
+you're integrating something new.
+
+<CardGrid>
+  <LinkCard title="OCPP and SteVe" href="/concepts/ocpp-and-steve/" />
+  <LinkCard title="Sync runs and Adaptive Cadence" href="/concepts/sync-runs/" />
+  <LinkCard title="The HMAC webhook contract" href="/concepts/webhook-contract/" />
+  <LinkCard title="The Lago billing model" href="/concepts/lago-billing-model/" />
+  <LinkCard title="The iOS capability system" href="/concepts/capability-system/" />
+  <LinkCard title="Feature flags" href="/concepts/feature-flags/" />
+  <LinkCard title="The accent color system" href="/concepts/accent-color-system/" />
+  <LinkCard title="Deep-link routing" href="/concepts/deep-link-routing/" />
+</CardGrid>

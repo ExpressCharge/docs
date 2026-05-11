@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint and typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: astro check
+        run: npx astro check
+        continue-on-error: true
+      - name: frontmatter
+        run: npm run check:frontmatter
+        continue-on-error: true
+      - name: glossary autolink
+        run: npm run check:glossary
+        continue-on-error: true
+      - name: screenshots
+        run: npm run check:screenshots
+        continue-on-error: true
+      - name: cspell
+        run: npx cspell --no-progress 'src/**/*.{mdx,astro}'
+        continue-on-error: true
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: budget
+        run: npm run check:budget
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7

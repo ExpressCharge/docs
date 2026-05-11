@@ -1,0 +1,26 @@
+---
+title: API reference
+description: Every endpoint, grouped by namespace.
+sidebar:
+  label: Overview
+  order: 0
+---
+
+import { LinkCard, CardGrid } from "@astrojs/starlight/components";
+
+The Polaris Express API is split into ten namespaces. Customer and
+admin endpoints live behind authenticated sessions (BetterAuth); the
+OCPP namespace receives HMAC-signed webhooks from SteVe; the webhook
+namespace receives signed callbacks from Lago.
+
+<CardGrid>
+  <LinkCard title="Overview — auth, base URL, errors" href="/api/overview/" />
+  <LinkCard title="Auth" href="/api/auth/" />
+  <LinkCard title="Customer" href="/api/customer/" />
+  <LinkCard title="Admin" href="/api/admin/" />
+  <LinkCard title="Devices" href="/api/devices/" />
+  <LinkCard title="OCPP webhooks" href="/api/ocpp/" />
+  <LinkCard title="SSE streams" href="/api/stream/" />
+  <LinkCard title="Inbound webhooks (Lago)" href="/api/webhook/" />
+  <LinkCard title="Errors and rate limits" href="/api/errors-and-rate-limits/" />
+</CardGrid>

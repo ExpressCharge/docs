@@ -1,0 +1,56 @@
+---
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<li class="tutorial-step">
+  <h3 class="step-title">{title}</h3>
+  <div class="step-body">
+    <slot />
+  </div>
+</li>
+
+<style>
+  .tutorial-step {
+    counter-increment: tut-step;
+    position: relative;
+    padding: 0.75rem 0 0.75rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tutorial-step:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .tutorial-step::before {
+    content: counter(tut-step);
+    position: absolute;
+    left: 0;
+    top: 0.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.10);
+    color: var(--sl-color-accent, var(--primary));
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .step-title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--foreground);
+  }
+
+  .step-body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>

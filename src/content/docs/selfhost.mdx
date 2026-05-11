@@ -1,0 +1,57 @@
+---
+title: Selfhost Installation
+description: Run Polaris Express on your own infrastructure — 11-phase install, ops, troubleshooting.
+sidebar:
+  label: Overview
+  order: 0
+---
+
+import { LinkCard, CardGrid } from "@astrojs/starlight/components";
+import Persona from "@components/Persona.astro";
+
+<Persona for="Selfhoster">
+  Polaris Express is built to be self-hosted. This guide walks you
+  from a blank machine to a running stack: SteVe (OCPP backend),
+  Postgres, the Fresh web app, the sync worker, and the Cloudflare
+  email Worker.
+</Persona>
+
+The install splits into eleven ordered phases. Each phase has a
+dedicated runbook with prerequisites, exact commands, and verification
+checks. Don't skip ahead — later phases assume earlier ones completed
+cleanly.
+
+## Before you begin
+
+<CardGrid>
+  <LinkCard title="Before you begin" href="/selfhost/before-you-begin/" />
+  <LinkCard title="Architecture overview" href="/selfhost/architecture-overview/" />
+</CardGrid>
+
+## The 11 phases
+
+<CardGrid>
+  <LinkCard title="Phase 1 — Credentials" href="/selfhost/phase-1-credentials/" />
+  <LinkCard title="Phase 2 — DNS" href="/selfhost/phase-2-dns/" />
+  <LinkCard title="Phase 3 — Email worker" href="/selfhost/phase-3-email-worker/" />
+  <LinkCard title="Phase 4 — SteVe (OCPP)" href="/selfhost/phase-4-steve/" />
+  <LinkCard title="Phase 5 — Fresh web app" href="/selfhost/phase-5-fresh-app/" />
+  <LinkCard title="Phase 6 — Migrations" href="/selfhost/phase-6-migrations/" />
+  <LinkCard title="Phase 7 — Backfill" href="/selfhost/phase-7-backfill/" />
+  <LinkCard title="Phase 8 — Admin seed" href="/selfhost/phase-8-admin-seed/" />
+  <LinkCard title="Phase 9 — First boot" href="/selfhost/phase-9-first-boot/" />
+  <LinkCard title="Phase 10 — Smoke tests" href="/selfhost/phase-10-smoke-tests/" />
+  <LinkCard title="Phase 11 — Register chargers" href="/selfhost/phase-11-register-chargers/" />
+</CardGrid>
+
+## After install
+
+<CardGrid>
+  <LinkCard title="Ops — backups" href="/selfhost/ops/backups/" />
+  <LinkCard title="Ops — upgrades" href="/selfhost/ops/upgrades/" />
+  <LinkCard title="Ops — monitoring" href="/selfhost/ops/monitoring/" />
+  <LinkCard title="Ops — secrets rotation" href="/selfhost/ops/secrets-rotation/" />
+  <LinkCard title="Troubleshooting — charger won't connect" href="/selfhost/troubleshooting/charger-wont-connect/" />
+  <LinkCard title="Troubleshooting — webhook failures" href="/selfhost/troubleshooting/webhook-failures/" />
+  <LinkCard title="Reference — environment variables" href="/selfhost/reference/env-vars/" />
+</CardGrid>

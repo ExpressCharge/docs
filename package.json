@@ -1,0 +1,59 @@
+{
+  "name": "@expresscharge/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check && npm run check:frontmatter && npm run check:glossary && npm run check:screenshots && cspell --no-progress 'src/**/*.{mdx,astro}'",
+    "check:frontmatter": "tsx scripts/check-frontmatter.ts",
+    "check:glossary": "tsx scripts/autolink-glossary.ts --check",
+    "check:screenshots": "tsx scripts/check-screenshots.ts",
+    "check:links": "tsx scripts/check-links.ts",
+    "check:budget": "tsx scripts/check-budget.ts",
+    "drift": "tsx scripts/drift-check.ts",
+    "vocab": "tsx scripts/extract-vocab.ts",
+    "autolink": "tsx scripts/autolink-glossary.ts",
+    "author": "tsx scripts/author-article.ts",
+    "author:tier": "tsx scripts/author-article.ts --tier",
+    "review": "tsx scripts/review-article.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/mdx": "^4.0.0",
+    "@astrojs/sitemap": "^3.2.0",
+    "@beoe/rehype-mermaid": "^1.0.0",
+    "@expressive-code/plugin-collapsible-sections": "^0.39.0",
+    "@expressive-code/plugin-line-numbers": "^0.39.0",
+    "@iconify-json/lucide": "^1.2.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "astro": "^5.0.0",
+    "astro-icon": "^1.1.5",
+    "astro-og-canvas": "^0.7.0",
+    "astro-robots-txt": "^1.0.0",
+    "canvaskit-wasm": "^0.39.1",
+    "sharp": "^0.33.5",
+    "starlight-heading-badges": "^0.5.0",
+    "starlight-image-zoom": "^0.12.0",
+    "starlight-links-validator": "^0.16.0",
+    "starlight-llms-txt": "^0.6.0",
+    "starlight-package-managers": "^0.11.0",
+    "starlight-sidebar-topics": "^0.7.0",
+    "@astrojs/starlight": "^0.39.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.7.0"
+  },
+  "devDependencies": {
+    "cspell": "^9.0.0",
+    "tsx": "^4.19.0",
+    "yaml": "^2.6.0",
+    "zod": "^3.24.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

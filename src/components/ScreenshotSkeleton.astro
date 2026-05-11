@@ -1,0 +1,142 @@
+---
+/**
+ * ScreenshotSkeleton — accent-tinted placeholder used when no real
+ * capture has been authored yet. The shimmer animation matches the
+ * product's animate-shimmer-slide keyframe in
+ * web/assets/styles.css.
+ *
+ * Switching a placeholder to a real screenshot is a one-line edit at
+ * the call site (pass `src`).
+ */
+interface Props {
+  alt: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+}
+const { alt, caption, width = 1440, height = 900 } = Astro.props;
+const aspectRatio = (height / width) * 100;
+---
+
+<figure class="screenshot-skel" aria-label={alt}>
+  <div
+    class="skel-frame"
+    style={`padding-top: ${aspectRatio}%`}
+    role="img"
+    aria-label={alt}
+  >
+    <div class="skel-inner">
+      <div class="skel-shimmer" aria-hidden="true"></div>
+      <div class="skel-content">
+        <svg
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <path d="m21 15-5-5L5 21"></path>
+        </svg>
+        <p>Screenshot pending</p>
+        <p class="skel-alt">{alt}</p>
+      </div>
+    </div>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .screenshot-skel {
+    margin: 1.5rem 0;
+    border: 1px solid
+      oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.20);
+    border-radius: 0.625rem;
+    overflow: hidden;
+    background: var(--card);
+  }
+
+  .skel-frame {
+    position: relative;
+    width: 100%;
+  }
+
+  .skel-inner {
+    position: absolute;
+    inset: 0;
+    background: oklch(
+      from var(--sl-color-accent, var(--primary)) l c h / 0.04
+    );
+    overflow: hidden;
+  }
+
+  .skel-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.10) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    animation: shimmer-slide 3.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-slide {
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skel-shimmer {
+      animation: none;
+    }
+  }
+
+  .skel-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    color: var(--muted-foreground);
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .skel-content :global(svg) {
+    color: var(--sl-color-accent, var(--primary));
+    margin-bottom: 0.5rem;
+  }
+
+  .skel-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  .skel-alt {
+    font-weight: 400 !important;
+    font-size: 0.8rem !important;
+    color: var(--muted-foreground) !important;
+    max-width: 28rem;
+  }
+
+  .screenshot-skel figcaption {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.85rem;
+    color: var(--muted-foreground);
+    background: oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.04);
+    border-top: 1px solid
+      oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.20);
+  }
+</style>

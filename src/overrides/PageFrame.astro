@@ -1,0 +1,48 @@
+---
+/**
+ * PageFrame override — sets data-section on <html> so accents.css can
+ * tint per top-level section without per-page configuration.
+ *
+ * Derives the section from the current page slug:
+ *   /user/...      -> data-section="user"
+ *   /admin/...     -> data-section="admin"
+ *   /selfhost/...  -> data-section="selfhost"
+ *   /api/...       -> data-section="api"
+ *   /concepts/...  -> data-section="concepts"
+ *   /reference/... -> data-section="reference"
+ *   /changelog/... -> data-section="changelog"
+ *   /glossary      -> data-section="reference"
+ *   (default)      -> no data-section (uses --primary)
+ */
+import Default from "@astrojs/starlight/components/PageFrame.astro";
+
+const slug: string = Astro.props?.entry?.slug ?? "";
+const top = slug.split("/")[0] ?? "";
+
+const SECTION_MAP: Record<string, string> = {
+  user: "user",
+  admin: "admin",
+  selfhost: "selfhost",
+  api: "api",
+  concepts: "concepts",
+  reference: "reference",
+  changelog: "changelog",
+  glossary: "reference",
+};
+
+const section = SECTION_MAP[top] ?? "";
+---
+
+<Default {...Astro.props}>
+  <slot name="header" slot="header" />
+  <slot name="sidebar" slot="sidebar" />
+  <slot />
+</Default>
+
+{
+  section && (
+    <script is:inline define:vars={{ section }}>
+      document.documentElement.setAttribute("data-section", section);
+    </script>
+  )
+}

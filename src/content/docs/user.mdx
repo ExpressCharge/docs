@@ -1,0 +1,45 @@
+---
+title: User Guide
+description: Drivers — sign in, find a charger, start a session, and manage your account.
+sidebar:
+  label: Overview
+  order: 0
+---
+
+import { LinkCard, CardGrid } from "@astrojs/starlight/components";
+import Persona from "@components/Persona.astro";
+
+<Persona for="Driver">
+  This guide is for drivers using Polaris Express to charge an EV. It
+  covers both the web portal and the iOS app.
+</Persona>
+
+The user guide is split by surface: the **web portal** (example.com)
+and the **iOS app**. Most flows exist on both. When a task is
+surface-specific, the article will say so up front.
+
+## Common questions
+
+<CardGrid>
+  <LinkCard title="How do I sign in?" href="/user/web/account/sign-in-magic-link/" />
+  <LinkCard title="How do I start a charging session?" href="/user/web/sessions/start-a-charge/" />
+  <LinkCard title="How do I view my invoice?" href="/user/web/billing/view-invoice/" />
+  <LinkCard title="I lost my EV card" href="/user/web/cards/report-lost-card/" />
+  <LinkCard title="How do I install the iOS app?" href="/user/ios/install/download-and-install/" />
+  <LinkCard title="The app says my card isn't supported" href="/user/ios/troubleshooting/nfc-not-reading/" />
+</CardGrid>
+
+## What's covered
+
+- **Account & sign-in** — magic-link email sign-in, QR sign-in,
+  password changes, session management, account deletion.
+- **EV cards** — adding cards, reporting lost cards, transferring
+  between users.
+- **Sessions** — starting, stopping, viewing history, disputing.
+- **Reservations** — creating, canceling, rules and limits.
+- **Billing** — viewing invoices, downloading PDFs, managing payment
+  methods, changing plans.
+- **iOS app** — install, sign-in flows, charger discovery, NFC
+  scanning, notifications, deep links.
+
+Use the sidebar to navigate, or press <kbd>/</kbd> to search.

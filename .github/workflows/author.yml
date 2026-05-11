@@ -1,0 +1,113 @@
+name: Author article(s)
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: Single article slug (e.g. user.web.sessions.start-a-charge). Leave blank if using tier.
+        required: false
+      tier:
+        description: Authoring tier (P0 | P1 | P2). Leave blank if using slug.
+        required: false
+      dry_run:
+        description: Print planned actions without calling the API
+        type: boolean
+        default: false
+      concurrency:
+        description: Parallel authoring slots
+        default: "1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  author:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      - name: Author
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SLUG: ${{ inputs.slug }}
+          TIER: ${{ inputs.tier }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          CONCURRENCY: ${{ inputs.concurrency }}
+        run: |
+          ARGS=""
+          if [ -n "$SLUG" ]; then ARGS="$ARGS --slug $SLUG"; fi
+          if [ -n "$TIER" ]; then ARGS="$ARGS --tier $TIER"; fi
+          if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ -n "$CONCURRENCY" ]; then ARGS="$ARGS --concurrency $CONCURRENCY"; fi
+          npx tsx scripts/author-article.ts $ARGS
+
+      - name: Run autolinker on new articles
+        if: inputs.dry_run != true
+        run: npm run autolink
+
+      - name: Open PR
+        if: inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_TAG: ${{ inputs.slug != '' && inputs.slug || inputs.tier }}
+        run: |
+          BRANCH="agent/author/${BRANCH_TAG}"
+          git config user.name "polaris-docs-bot"
+          git config user.email "docs-bot@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "agent: author ${BRANCH_TAG}"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "agent: author ${BRANCH_TAG}" \
+            --body "Authored by the Polaris docs authoring fleet. Reviewer comment to follow." \
+            --base main \
+            --head "$BRANCH"
+
+      - name: Review (advisory)
+        if: inputs.dry_run != true && inputs.slug != ''
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SLUG: ${{ inputs.slug }}
+        run: npx tsx scripts/review-article.ts --slug "$SLUG" --out review.json
+
+      - name: Post reviewer verdict
+        if: inputs.dry_run != true && inputs.slug != ''
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          BRANCH_TAG: ${{ inputs.slug }}
+        with:
+          script: |
+            const fs = require('fs');
+            const branch = `agent/author/${process.env.BRANCH_TAG}`;
+            const verdict = fs.existsSync('review.json')
+              ? fs.readFileSync('review.json', 'utf-8')
+              : 'No reviewer verdict available.';
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branch}`,
+              state: 'open',
+            });
+            if (prs.data.length === 0) return;
+            await github.rest.issues.createComment({
+              issue_number: prs.data[0].number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### Reviewer (advisory)\n\n\`\`\`json\n${verdict}\n\`\`\``,
+            });

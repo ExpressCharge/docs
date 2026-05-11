@@ -1,0 +1,305 @@
+---
+/**
+ * BrandHero — landing-only headline surface.
+ *
+ * Wears the BorderBeam motif from web/components/magicui/border-beam.tsx
+ * — a conic gradient rotated via @property --angle. Per
+ * web/CLAUDE.md the motif is reserved for "live/in-progress" semantics;
+ * applying it here on the landing page signals motion + recency without
+ * confetti elsewhere in the docs.
+ *
+ * Honors prefers-reduced-motion.
+ */
+import { Icon } from "astro-icon/components";
+
+const sections = [
+  {
+    title: "User Guide",
+    description:
+      "Sign in, charge, manage cards and reservations, and see your invoices — on web and iOS.",
+    href: "/user/",
+    icon: "lucide:user",
+    section: "user",
+  },
+  {
+    title: "Admin Guide",
+    description:
+      "Register chargers, link cards to customers, run sync, replay webhooks, and finalize invoices.",
+    href: "/admin/",
+    icon: "lucide:settings",
+    section: "admin",
+  },
+  {
+    title: "Selfhost",
+    description:
+      "Run Polaris Express on your own infrastructure: 11-phase install, ops runbooks, troubleshooting.",
+    href: "/selfhost/",
+    icon: "lucide:server",
+    section: "selfhost",
+  },
+];
+---
+
+<section class="brand-hero" aria-labelledby="brand-hero-title">
+  <div class="beam-wrap">
+    <div class="beam" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">
+        <Icon name="lucide:zap" /> Polaris Express
+      </div>
+      <h1 id="brand-hero-title">
+        Charge anywhere. <span class="accent-text">Bill anything.</span>
+        Own the stack.
+      </h1>
+      <p class="hero-lede">
+        Public documentation for the Polaris Express platform — the customer
+        app, the admin console, and the self-hostable charging stack behind
+        them.
+      </p>
+    </div>
+  </div>
+
+  <div class="hero-cards">
+    {
+      sections.map((s) => (
+        <a
+          class="hero-card"
+          href={s.href}
+          data-section={s.section}
+          aria-label={s.title}
+        >
+          <div class="hero-card-icon">
+            <Icon name={s.icon} />
+          </div>
+          <div class="hero-card-body">
+            <h3>{s.title}</h3>
+            <p>{s.description}</p>
+          </div>
+          <div class="hero-card-arrow" aria-hidden="true">
+            <Icon name="lucide:arrow-right" />
+          </div>
+        </a>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  /* ===== BorderBeam (matches web/components/magicui/border-beam.tsx) ===== */
+  @property --angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+  }
+
+  .brand-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin: 0 auto 2rem;
+    max-width: 64rem;
+  }
+
+  .beam-wrap {
+    position: relative;
+    padding: 2px;
+    border-radius: 1rem;
+    background-image: conic-gradient(
+      from var(--angle),
+      transparent 0%,
+      var(--glow-cyan, oklch(0.65 0.20 220)) 25%,
+      var(--glow-green, oklch(0.70 0.22 145)) 50%,
+      transparent 75%
+    );
+    animation: rotate-beam 15s linear infinite;
+  }
+
+  .hero-inner {
+    background: var(--card);
+    border-radius: calc(1rem - 2px);
+    padding: 2.5rem 2rem;
+    text-align: center;
+  }
+
+  @keyframes rotate-beam {
+    to {
+      --angle: 360deg;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .beam-wrap {
+      animation: none;
+      background: linear-gradient(
+        135deg,
+        var(--glow-cyan, oklch(0.65 0.20 220)),
+        var(--glow-green, oklch(0.70 0.22 145))
+      );
+    }
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    background: oklch(from var(--primary) l c h / 0.10);
+    border: 1px solid oklch(from var(--primary) l c h / 0.20);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .hero-eyebrow :global(svg) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .brand-hero h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    line-height: 1.15;
+    font-weight: 700;
+    margin: 0 0 1rem;
+    color: var(--foreground);
+  }
+
+  .accent-text {
+    background: linear-gradient(
+      90deg,
+      var(--primary, #0082bb),
+      var(--accent, #349c29)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-lede {
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    color: var(--muted-foreground);
+    max-width: 38rem;
+    margin: 0 auto;
+  }
+
+  /* ===== Persona cards ===== */
+  .hero-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1rem;
+  }
+
+  .hero-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    text-decoration: none;
+    color: var(--foreground);
+    transition:
+      transform 200ms ease-out,
+      border-color 200ms ease-out,
+      box-shadow 200ms ease-out;
+  }
+
+  .hero-card[data-section="user"] {
+    border-color: oklch(0.60 0.22 145 / 0.30);
+  }
+  .hero-card[data-section="user"]:hover {
+    border-color: oklch(0.60 0.22 145 / 0.65);
+    box-shadow: 0 12px 32px -16px oklch(0.60 0.22 145 / 0.45);
+  }
+
+  .hero-card[data-section="admin"] {
+    border-color: oklch(0.55 0.20 220 / 0.30);
+  }
+  .hero-card[data-section="admin"]:hover {
+    border-color: oklch(0.55 0.20 220 / 0.65);
+    box-shadow: 0 12px 32px -16px oklch(0.55 0.20 220 / 0.45);
+  }
+
+  .hero-card[data-section="selfhost"] {
+    border-color: oklch(0.75 0.18 85 / 0.30);
+  }
+  .hero-card[data-section="selfhost"]:hover {
+    border-color: oklch(0.75 0.18 85 / 0.65);
+    box-shadow: 0 12px 32px -16px oklch(0.75 0.18 85 / 0.45);
+  }
+
+  .hero-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .hero-card-icon {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.625rem;
+    background: oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.10);
+    color: var(--sl-color-accent, var(--primary));
+  }
+
+  .hero-card[data-section="user"] .hero-card-icon {
+    background: oklch(0.60 0.22 145 / 0.10);
+    color: oklch(0.60 0.22 145);
+  }
+  .hero-card[data-section="admin"] .hero-card-icon {
+    background: oklch(0.55 0.20 220 / 0.10);
+    color: oklch(0.55 0.20 220);
+  }
+  .hero-card[data-section="selfhost"] .hero-card-icon {
+    background: oklch(0.75 0.18 85 / 0.10);
+    color: oklch(0.55 0.18 85);
+  }
+
+  .hero-card-icon :global(svg) {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .hero-card-body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .hero-card-body h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+  }
+
+  .hero-card-body p {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--muted-foreground);
+    margin: 0;
+  }
+
+  .hero-card-arrow {
+    flex: 0 0 auto;
+    color: var(--muted-foreground);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition:
+      opacity 200ms ease-out,
+      transform 200ms ease-out;
+  }
+
+  .hero-card:hover .hero-card-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .hero-card-arrow :global(svg) {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+</style>

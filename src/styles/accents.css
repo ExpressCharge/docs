@@ -1,0 +1,109 @@
+/* Per-section accent overrides.
+ *
+ * The PageFrame override sets data-section on <html> based on the
+ * current page's top-level content collection. Each section selector
+ * below rewires --sl-color-accent so sidebar accents, link colors,
+ * focus rings, and selection state tint per-section automatically.
+ *
+ * Accent palette mirrors the product's stripToneClasses
+ * (web/src/lib/colors.ts) — same OKLch values, same semantic
+ * conventions.
+ */
+
+/* User Guide — Volt green */
+:root[data-section="user"] {
+  --sl-color-accent-low: oklch(0.60 0.22 145 / 0.10);
+  --sl-color-accent: oklch(0.60 0.22 145);
+  --sl-color-accent-high: oklch(0.70 0.22 145);
+  --sl-color-text-accent: oklch(0.60 0.22 145);
+}
+
+:root[data-theme="dark"][data-section="user"] {
+  --sl-color-accent-low: oklch(0.75 0.22 145 / 0.15);
+  --sl-color-accent: oklch(0.75 0.22 145);
+  --sl-color-accent-high: oklch(0.85 0.22 145);
+  --sl-color-text-accent: oklch(0.75 0.22 145);
+}
+
+/* Admin Guide — Electric cyan (product primary) */
+:root[data-section="admin"] {
+  --sl-color-accent-low: oklch(0.55 0.20 220 / 0.10);
+  --sl-color-accent: oklch(0.55 0.20 220);
+  --sl-color-accent-high: oklch(0.65 0.20 220);
+  --sl-color-text-accent: oklch(0.55 0.20 220);
+}
+
+:root[data-theme="dark"][data-section="admin"] {
+  --sl-color-accent-low: oklch(0.75 0.15 200 / 0.15);
+  --sl-color-accent: oklch(0.75 0.15 200);
+  --sl-color-accent-high: oklch(0.85 0.15 200);
+  --sl-color-text-accent: oklch(0.75 0.15 200);
+}
+
+/* Selfhost — Amber */
+:root[data-section="selfhost"] {
+  --sl-color-accent-low: oklch(0.75 0.18 85 / 0.10);
+  --sl-color-accent: oklch(0.75 0.18 85);
+  --sl-color-accent-high: oklch(0.82 0.18 85);
+  --sl-color-text-accent: oklch(0.55 0.18 85);
+}
+
+:root[data-theme="dark"][data-section="selfhost"] {
+  --sl-color-accent-low: oklch(0.85 0.18 85 / 0.15);
+  --sl-color-accent: oklch(0.85 0.18 85);
+  --sl-color-accent-high: oklch(0.90 0.18 85);
+  --sl-color-text-accent: oklch(0.85 0.18 85);
+}
+
+/* API Reference — Violet */
+:root[data-section="api"],
+:root[data-section="reference"] {
+  --sl-color-accent-low: oklch(0.55 0.22 280 / 0.10);
+  --sl-color-accent: oklch(0.55 0.22 280);
+  --sl-color-accent-high: oklch(0.65 0.22 280);
+  --sl-color-text-accent: oklch(0.55 0.22 280);
+}
+
+:root[data-theme="dark"][data-section="api"],
+:root[data-theme="dark"][data-section="reference"] {
+  --sl-color-accent-low: oklch(0.70 0.22 280 / 0.15);
+  --sl-color-accent: oklch(0.70 0.22 280);
+  --sl-color-accent-high: oklch(0.80 0.22 280);
+  --sl-color-text-accent: oklch(0.72 0.25 280);
+}
+
+/* Concepts — Slate (neutral, no special tint) */
+:root[data-section="concepts"] {
+  /* falls through to the default --primary mapping in brand.css */
+}
+
+/* Changelog — Rose */
+:root[data-section="changelog"] {
+  --sl-color-accent-low: oklch(0.50 0.24 25 / 0.10);
+  --sl-color-accent: oklch(0.50 0.24 25);
+  --sl-color-accent-high: oklch(0.60 0.24 25);
+  --sl-color-text-accent: oklch(0.50 0.24 25);
+}
+
+:root[data-theme="dark"][data-section="changelog"] {
+  --sl-color-accent-low: oklch(0.65 0.24 25 / 0.15);
+  --sl-color-accent: oklch(0.65 0.24 25);
+  --sl-color-accent-high: oklch(0.75 0.24 25);
+  --sl-color-text-accent: oklch(0.65 0.24 25);
+}
+
+/* Section badge — small accent pill rendered near the page title */
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sl-color-accent);
+  background-color: var(--sl-color-accent-low);
+  border: 1px solid oklch(from var(--sl-color-accent) l c h / 0.20);
+  border-radius: var(--radius-md);
+}

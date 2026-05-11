@@ -1,0 +1,59 @@
+name: Refresh cspell vocab
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  vocab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout aggregator (for sibling submodules)
+        uses: actions/checkout@v4
+        with:
+          repository: expresscharge/monorepo
+          path: monorepo
+          submodules: recursive
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      - name: Extract vocab
+        run: |
+          cd monorepo
+          ln -s ../ docs-overlay
+          cd docs-overlay
+          npm run vocab
+          cp .cspell.json ../../.cspell.json
+
+      - name: Open PR if changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet .cspell.json; then
+            echo "No changes"
+            exit 0
+          fi
+          BRANCH="bot/vocab-refresh"
+          git config user.name "polaris-docs-bot"
+          git config user.email "docs-bot@users.noreply.github.com"
+          git checkout -b "$BRANCH" || git checkout "$BRANCH"
+          git add .cspell.json
+          git commit -m "chore: refresh cspell vocab"
+          git push -fu origin "$BRANCH"
+          gh pr create --title "chore: refresh cspell vocab" \
+            --body "Auto-extracted from sibling submodule sources." \
+            --base main --head "$BRANCH" || \
+          gh pr edit "$BRANCH" --body "Auto-extracted from sibling submodule sources."

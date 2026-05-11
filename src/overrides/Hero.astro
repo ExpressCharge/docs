@@ -1,0 +1,23 @@
+---
+/**
+ * Hero override — only takes effect on the landing page (template:
+ * splash). Renders the brand BrandHero with the BorderBeam motif and a
+ * three-card persona grid. Falls back to Starlight's default Hero for
+ * non-splash pages.
+ */
+import Default from "@astrojs/starlight/components/Hero.astro";
+import BrandHero from "@components/BrandHero.astro";
+
+const isLanding = Astro.props?.entry?.id === "index" ||
+  Astro.props?.entry?.slug === "";
+---
+
+{
+  isLanding ? (
+    <BrandHero />
+  ) : (
+    <Default {...Astro.props}>
+      <slot />
+    </Default>
+  )
+}

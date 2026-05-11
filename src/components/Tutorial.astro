@@ -1,0 +1,88 @@
+---
+/**
+ * Tutorial — accent-tinted numbered tutorial container.
+ *
+ * Composes Starlight's built-in <Steps> behavior visually but exposes
+ * structure-level affordances (intro, goal, prereqs) authors expect from
+ * a tutorial. Each <TutorialStep> child renders as a numbered card.
+ *
+ * Usage:
+ *   <Tutorial goal="Start a charging session from the web app">
+ *     <TutorialStep title="Sign in">...</TutorialStep>
+ *     <TutorialStep title="Pick a charger">...</TutorialStep>
+ *   </Tutorial>
+ */
+interface Props {
+  goal?: string;
+  estimatedMinutes?: number;
+}
+const { goal, estimatedMinutes } = Astro.props;
+---
+
+<div class="tutorial">
+  {
+    (goal || estimatedMinutes) && (
+      <div class="tutorial-header">
+        {goal && (
+          <p class="tutorial-goal">
+            <span class="label">Goal</span>
+            {goal}
+          </p>
+        )}
+        {estimatedMinutes && (
+          <p class="tutorial-time">
+            <span class="label">Time</span>~{estimatedMinutes} min
+          </p>
+        )}
+      </div>
+    )
+  }
+  <ol class="tutorial-steps">
+    <slot />
+  </ol>
+</div>
+
+<style>
+  .tutorial {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--sl-color-accent, var(--primary));
+    border-radius: 0.625rem;
+    background: var(--card);
+    overflow: hidden;
+  }
+
+  .tutorial-header {
+    padding: 0.875rem 1.125rem;
+    background: oklch(
+      from var(--sl-color-accent, var(--primary)) l c h / 0.05
+    );
+    border-bottom: 1px solid
+      oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.20);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    font-size: 0.875rem;
+  }
+
+  .tutorial-header p {
+    margin: 0;
+  }
+
+  .tutorial-header .label {
+    display: inline-block;
+    margin-right: 0.5rem;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--sl-color-accent, var(--primary));
+  }
+
+  .tutorial-steps {
+    list-style: none;
+    counter-reset: tut-step;
+    margin: 0;
+    padding: 0.5rem 1.125rem 1.125rem;
+  }
+</style>

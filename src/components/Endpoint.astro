@@ -1,0 +1,97 @@
+---
+/**
+ * Endpoint — formatted METHOD /path chip, auto-colored by verb.
+ *
+ * GET    -> primary cyan
+ * POST   -> volt green
+ * PATCH  -> amber
+ * PUT    -> amber (saturated)
+ * DELETE -> destructive rose
+ */
+interface Props {
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  path: string;
+  href?: string;
+}
+const { method, path, href } = Astro.props;
+const VERB_TONE: Record<string, string> = {
+  GET: "cyan",
+  POST: "green",
+  PATCH: "amber",
+  PUT: "amber",
+  DELETE: "rose",
+};
+const tone = VERB_TONE[method] ?? "cyan";
+const Tag = href ? "a" : "span";
+---
+
+<Tag href={href} class="endpoint" data-tone={tone}>
+  <span class="endpoint-method">{method}</span>
+  <code class="endpoint-path">{path}</code>
+</Tag>
+
+<style>
+  .endpoint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.375rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    font-family: var(--sl-font-system-mono);
+    font-size: 0.85em;
+    text-decoration: none;
+    line-height: 1.4;
+  }
+
+  a.endpoint:hover {
+    border-color: oklch(
+      from var(--sl-color-accent, var(--primary)) l c h / 0.50
+    );
+  }
+
+  .endpoint-method {
+    font-weight: 700;
+    font-size: 0.75em;
+    letter-spacing: 0.04em;
+    padding: 0.0625rem 0.375rem;
+    border-radius: 0.25rem;
+  }
+
+  .endpoint[data-tone="cyan"] .endpoint-method {
+    background: oklch(0.55 0.20 220 / 0.12);
+    color: oklch(0.45 0.20 220);
+  }
+  .endpoint[data-tone="green"] .endpoint-method {
+    background: oklch(0.60 0.22 145 / 0.12);
+    color: oklch(0.45 0.22 145);
+  }
+  .endpoint[data-tone="amber"] .endpoint-method {
+    background: oklch(0.75 0.18 85 / 0.15);
+    color: oklch(0.50 0.18 85);
+  }
+  .endpoint[data-tone="rose"] .endpoint-method {
+    background: oklch(0.50 0.24 25 / 0.12);
+    color: oklch(0.45 0.24 25);
+  }
+
+  :root[data-theme="dark"] .endpoint[data-tone="cyan"] .endpoint-method {
+    color: oklch(0.75 0.18 200);
+  }
+  :root[data-theme="dark"] .endpoint[data-tone="green"] .endpoint-method {
+    color: oklch(0.80 0.22 145);
+  }
+  :root[data-theme="dark"] .endpoint[data-tone="amber"] .endpoint-method {
+    color: oklch(0.85 0.18 85);
+  }
+  :root[data-theme="dark"] .endpoint[data-tone="rose"] .endpoint-method {
+    color: oklch(0.75 0.18 25);
+  }
+
+  .endpoint-path {
+    background: transparent;
+    color: var(--foreground);
+    padding: 0;
+  }
+</style>

@@ -1,0 +1,37 @@
+---
+/**
+ * Glossary — inline term with tooltip that links to /glossary.
+ *
+ * Builds the term anchor from the term itself: "OCPP Tag" -> #ocpp-tag.
+ * The autolink-glossary.ts build script rewrites bare occurrences in
+ * MDX so authors don't have to hand-tag every mention.
+ */
+interface Props {
+  term: string;
+}
+const { term } = Astro.props;
+
+const anchor = term
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-|-$/g, "");
+---
+
+<a class="gloss-term" href={`/glossary#${anchor}`} title={`Glossary: ${term}`}>
+  <slot>{term}</slot>
+</a>
+
+<style>
+  .gloss-term {
+    color: var(--foreground);
+    border-bottom: 1px dashed
+      oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.50);
+    text-decoration: none;
+    cursor: help;
+  }
+
+  .gloss-term:hover {
+    border-bottom-style: solid;
+    color: var(--sl-color-accent, var(--primary));
+  }
+</style>

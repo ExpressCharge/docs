@@ -1,0 +1,253 @@
+---
+title: Glossary
+description: Domain terms used across Polaris Express documentation.
+sidebar:
+  order: 99
+---
+
+This page defines every domain term that appears across the
+documentation. Glossary terms are auto-linked on first mention — hover
+over any underlined term to see its definition.
+
+## A
+
+### Accent color system
+{/* anchor: accent-color-system */}
+The one-accent-per-page discipline used across the product and
+documentation. Each top-level section adopts a single accent (User =
+Volt green, Admin = Cyan, Selfhost = Amber, Reference = Violet) that
+tints sidebar accents, link colors, focus rings, and selection state.
+Defined in `web/src/lib/colors.ts` and mirrored in the docs site
+under `src/styles/accents.css`.
+
+### Adaptive Cadence (Phase C)
+{/* anchor: adaptive-cadence */}
+The scheduler that demotes inactive chargers from Active (15-min sync)
+→ Idle (1-hour sync) → Dormant (1-week sync), with hysteresis to
+avoid thrashing. See [Sync runs](/concepts/sync-runs/).
+
+### Audit log
+{/* anchor: audit-log */}
+Forensic record of auth events, customer-impacting admin actions, and
+privilege changes. Stored in the `auth_audit` table; visible in the
+admin console for sensitive actions like impersonation.
+
+## B
+
+### BetterAuth
+{/* anchor: betterauth */}
+The authentication framework Polaris Express uses for both the
+customer portal and the admin console. Provides magic-link email,
+generic OIDC (Pocket ID, etc.), and session management. Configured via
+`AUTH_SECRET` and surface-specific base URLs.
+
+### BorderBeam
+{/* anchor: borderbeam */}
+A decorative animated conic gradient sweep around the perimeter of an
+element. By convention, reserved for **live / in-progress** semantics:
+the docs landing hero, the admin page-root card, an active sync run,
+a live charging session, and the NFC scan modal's waiting state.
+Never decorative. Defined at
+`web/components/magicui/border-beam.tsx`.
+
+## C
+
+### Capability
+{/* anchor: capability */}
+A device-level permission token assigned by the server. The iOS app
+recognizes four: `scanner` (NFC reader hardware), `user` (charger
+discovery and control), `kiosk` (single-appliance mode), and
+`managed` (admin-fleet location visibility). The legal set is checked
+in `Capabilities/Capabilities.swift`.
+
+### ChargeBox
+{/* anchor: chargebox */}
+OCPP term for a single charging station / unit. Each ChargeBox has a
+`chargeBoxId` (visible on stickers and QR codes) and one or more
+connectors. Synonymous with "charger" in user-facing copy.
+
+### Charging profile
+{/* anchor: charging-profile */}
+An OCPP power-limiting rule applied to a charger — sets maximum
+current/power, optionally on a schedule. Admins can configure them per
+device in the admin console.
+
+### Connector
+{/* anchor: connector */}
+A physical charging outlet on a charger. A 2-socket charger has 2
+connectors, each addressable independently in OCPP. Connector IDs are
+integers starting at 1.
+
+## D
+
+### Deep link
+{/* anchor: deep-link */}
+A URL that opens directly into an in-app surface. Polaris Express uses
+both `expchg://` (custom scheme) and `https://example.com/{c,u,m}/...`
+(universal links). See
+[Concepts → Deep-link routing](/concepts/deep-link-routing/).
+
+## E
+
+### EV card
+{/* anchor: ev-card */}
+The customer-facing name for an OCPP tag (idTag) — a physical RFID
+card or NFC token used to identify a driver to a charger. Issued by
+the operator; linked to a customer account.
+
+### expreScan
+{/* anchor: expre-scan */}
+Polaris Express's NFC reader device fleet — phones, tablets, or
+purpose-built scanners running the iOS app with the `.scanner`
+capability. Operators use them to start charging sessions on behalf of
+drivers who don't have their own EV card.
+
+## F
+
+### Feature flag
+{/* anchor: feature-flag */}
+A runtime toggle that enables or disables a behavior without a code
+release. Polaris Express supports global flags, per-user overrides,
+and per-device overrides. Managed under
+[Admin → Feature flags](/admin/feature-flags/toggle-global-flag/).
+
+## I
+
+### idTag
+{/* anchor: idtag */}
+OCPP term for an EV card's identifier. Polaris Express's customer
+copy calls these "EV cards" — but the API and the SteVe backend use
+"idTag" / "OCPP tag" / "tag" interchangeably.
+
+### Impersonation
+{/* anchor: impersonation */}
+An admin viewing the customer portal as a specific customer for
+support. Read-only by default. Every impersonation event is logged to
+the audit log; the customer sees a notice in their account that an
+admin viewed their data.
+
+## K
+
+### Kiosk mode
+{/* anchor: kiosk-mode */}
+A device configuration where the iOS app runs in single-appliance
+mode: no toolbar, no status bar, no settings, a single focused screen.
+Used for unattended chargers. Five rapid taps on the top-right corner
+opens the escape sheet for operator recovery.
+
+## L
+
+### Lago
+{/* anchor: lago */}
+The metering + billing platform Polaris Express uses for invoices,
+subscriptions, and billable-metric tracking. Lago can be self-hosted
+or used as a cloud service. The platform talks to it via the REST API
+and receives invoice webhooks back.
+
+### Lago customer
+{/* anchor: lago-customer */}
+A billable entity in Lago. Polaris Express maps every charging
+customer to a Lago customer via `lagoCustomerExternalId`.
+
+### Lago metric
+{/* anchor: lago-metric */}
+A billable dimension in Lago. The default in Polaris Express is
+`ev_charging_kwh` (kilowatt-hours consumed), configurable via the
+`LAGO_METRIC_CODE` environment variable.
+
+### Lago subscription
+{/* anchor: lago-subscription */}
+An active billing subscription tying a Lago customer to a plan with
+specific entitlements and usage metrics.
+
+## M
+
+### Magic link
+{/* anchor: magic-link */}
+A one-time, time-limited URL sent by email for passwordless sign-in.
+TTL is configurable (default 15 min for sign-in, 24h for first-time
+invites).
+
+### Meter value
+{/* anchor: meter-value */}
+An OCPP meter reading sent by a charger during a transaction — kWh,
+power, timestamp, and other fields. SteVe collects them and forwards
+the relevant samples to the Fresh app via the meter-value webhook.
+
+## O
+
+### OCPP
+{/* anchor: ocpp */}
+Open Charge Point Protocol — the open standard for communication
+between EV chargers and charging-station management systems. Polaris
+Express supports OCPP 1.6 via the SteVe backend (JSON over WebSocket
+or SOAP).
+
+### OCPP tag
+{/* anchor: ocpp-tag */}
+See [idTag](#idtag) and [EV card](#ev-card).
+
+## P
+
+### Pre-authorize
+{/* anchor: pre-authorize */}
+The webhook a SteVe charger fires before allowing a session start —
+asks Polaris Express whether the presented idTag is valid and in
+good standing. HMAC-signed.
+
+### Public ID
+{/* anchor: public-id */}
+An 8-character Crockford-base32 identifier issued to every user.
+Printed on EV cards as a QR code and used for the iOS app's QR
+sign-in flow (`https://example.com/u/<publicId>`).
+
+## R
+
+### Reservation
+{/* anchor: reservation */}
+A future-time-slot booking for a specific charger. Customers can
+create them in the web portal or iOS app; admins can override.
+
+## S
+
+### Scan-arm
+{/* anchor: scan-arm */}
+The state in which an NFC reader device is ready to capture an idTag
+read. Triggered by an admin from the web console; opens a 60-second
+window during which the operator must tap a card to the device.
+
+### Sync run
+{/* anchor: sync-run */}
+A single execution of the background sync worker. Each run pulls
+recent transactions from SteVe, reconciles them against Lago, and
+emits billing events. Visible at
+[Admin → Sync runs](/admin/sync/read-sync-run-detail/).
+
+### SSE (Server-Sent Events)
+{/* anchor: sse */}
+A persistent HTTP streaming transport used for live updates —
+notification feeds, sync-run status, device logs, charger status. The
+admin console and the iOS app both subscribe.
+
+### SteVe
+{/* anchor: steve */}
+The open-source OCPP charging station management backend Polaris
+Express forks (branch `expressync-preauth`). Handles charger
+registration, transaction logging, MeterValues collection, and OCPP
+operations. See [Concepts → OCPP and SteVe](/concepts/ocpp-and-steve/).
+
+## T
+
+### Tariff
+{/* anchor: tariff */}
+A pricing plan — what a customer pays per kWh, plus any fixed fees or
+tiered consumption brackets. Configured in Lago and surfaced in the
+customer's subscription view.
+
+## U
+
+### User mapping
+{/* anchor: user-mapping */}
+The relational record linking a Polaris user to their SteVe idTag,
+their Lago customer record, and their active subscription. Stored in
+the `user_mappings` table.

@@ -1,0 +1,133 @@
+# Master glossary for Polaris Express docs.
+# Each entry: anchor (URL fragment) + term (display) + aliases (variants
+# the autolink script will recognize and rewrite into the canonical term).
+#
+# Keep this in sync with src/content/docs/glossary.mdx.
+
+- anchor: accent-color-system
+  term: Accent color system
+  aliases: ["accent system"]
+
+- anchor: adaptive-cadence
+  term: Adaptive Cadence
+  aliases: ["Phase C", "adaptive scheduler"]
+
+- anchor: audit-log
+  term: Audit log
+  aliases: []
+
+- anchor: betterauth
+  term: BetterAuth
+  aliases: []
+
+- anchor: borderbeam
+  term: BorderBeam
+  aliases: []
+
+- anchor: capability
+  term: Capability
+  aliases: ["device capability"]
+
+- anchor: chargebox
+  term: ChargeBox
+  aliases: ["chargeBoxId", "charge box"]
+
+- anchor: charging-profile
+  term: Charging profile
+  aliases: []
+
+- anchor: connector
+  term: Connector
+  aliases: []
+
+- anchor: deep-link
+  term: Deep link
+  aliases: ["universal link", "deep linking"]
+
+- anchor: ev-card
+  term: EV card
+  aliases: ["EV cards"]
+
+- anchor: expre-scan
+  term: expreScan
+  aliases: ["ExpreScan"]
+
+- anchor: feature-flag
+  term: Feature flag
+  aliases: ["feature flags"]
+
+- anchor: idtag
+  term: idTag
+  aliases: ["OCPP tag", "OCPP idTag"]
+
+- anchor: impersonation
+  term: Impersonation
+  aliases: ["impersonate"]
+
+- anchor: kiosk-mode
+  term: Kiosk mode
+  aliases: ["kiosk"]
+
+- anchor: lago
+  term: Lago
+  aliases: []
+
+- anchor: lago-customer
+  term: Lago customer
+  aliases: []
+
+- anchor: lago-metric
+  term: Lago metric
+  aliases: ["billable metric"]
+
+- anchor: lago-subscription
+  term: Lago subscription
+  aliases: []
+
+- anchor: magic-link
+  term: Magic link
+  aliases: ["magic-link"]
+
+- anchor: meter-value
+  term: Meter value
+  aliases: ["MeterValues", "meter values"]
+
+- anchor: ocpp
+  term: OCPP
+  aliases: ["Open Charge Point Protocol"]
+
+- anchor: pre-authorize
+  term: Pre-authorize
+  aliases: ["pre-auth", "preauthorize"]
+
+- anchor: public-id
+  term: Public ID
+  aliases: []
+
+- anchor: reservation
+  term: Reservation
+  aliases: ["reservations"]
+
+- anchor: scan-arm
+  term: Scan-arm
+  aliases: ["scan arm"]
+
+- anchor: sync-run
+  term: Sync run
+  aliases: ["sync runs"]
+
+- anchor: sse
+  term: SSE
+  aliases: ["Server-Sent Events"]
+
+- anchor: steve
+  term: SteVe
+  aliases: ["Steve"]
+
+- anchor: tariff
+  term: Tariff
+  aliases: []
+
+- anchor: user-mapping
+  term: User mapping
+  aliases: ["user mappings"]

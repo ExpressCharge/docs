@@ -1,0 +1,133 @@
+---
+/**
+ * Persona — colored callout for persona-targeted notes.
+ *
+ * Each persona maps to a section accent:
+ *   Driver       -> Volt green (user)
+ *   Operator     -> Electric cyan (admin)
+ *   Selfhoster   -> Amber (selfhost)
+ *   Developer    -> Violet (api / reference)
+ */
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  for: "Driver" | "Operator" | "Selfhoster" | "Developer" | "All";
+}
+const { for: persona } = Astro.props;
+
+const PERSONA_META: Record<
+  string,
+  { icon: string; label: string; accent: string }
+> = {
+  Driver: { icon: "lucide:user", label: "For drivers", accent: "user" },
+  Operator: {
+    icon: "lucide:settings",
+    label: "For operators",
+    accent: "admin",
+  },
+  Selfhoster: {
+    icon: "lucide:server",
+    label: "For self-hosters",
+    accent: "selfhost",
+  },
+  Developer: {
+    icon: "lucide:code",
+    label: "For developers",
+    accent: "api",
+  },
+  All: {
+    icon: "lucide:users",
+    label: "For everyone",
+    accent: "concepts",
+  },
+};
+
+const meta = PERSONA_META[persona];
+---
+
+<aside class="persona" data-accent={meta.accent} aria-label={meta.label}>
+  <div class="persona-header">
+    <Icon name={meta.icon} />
+    <span>{meta.label}</span>
+  </div>
+  <div class="persona-body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .persona {
+    margin: 1.25rem 0;
+    padding: 0.875rem 1rem;
+    border: 1px solid;
+    border-left-width: 3px;
+    border-radius: 0.625rem;
+  }
+
+  .persona[data-accent="user"] {
+    background: oklch(0.60 0.22 145 / 0.05);
+    border-color: oklch(0.60 0.22 145 / 0.30);
+    border-left-color: oklch(0.60 0.22 145);
+    color: var(--foreground);
+  }
+
+  .persona[data-accent="admin"] {
+    background: oklch(0.55 0.20 220 / 0.05);
+    border-color: oklch(0.55 0.20 220 / 0.30);
+    border-left-color: oklch(0.55 0.20 220);
+  }
+
+  .persona[data-accent="selfhost"] {
+    background: oklch(0.75 0.18 85 / 0.05);
+    border-color: oklch(0.75 0.18 85 / 0.30);
+    border-left-color: oklch(0.75 0.18 85);
+  }
+
+  .persona[data-accent="api"] {
+    background: oklch(0.55 0.22 280 / 0.05);
+    border-color: oklch(0.55 0.22 280 / 0.30);
+    border-left-color: oklch(0.55 0.22 280);
+  }
+
+  .persona[data-accent="concepts"] {
+    background: var(--muted);
+    border-color: var(--border);
+    border-left-color: var(--muted-foreground);
+  }
+
+  .persona-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.375rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .persona[data-accent="user"] .persona-header {
+    color: oklch(0.60 0.22 145);
+  }
+  .persona[data-accent="admin"] .persona-header {
+    color: oklch(0.55 0.20 220);
+  }
+  .persona[data-accent="selfhost"] .persona-header {
+    color: oklch(0.55 0.18 85);
+  }
+  .persona[data-accent="api"] .persona-header {
+    color: oklch(0.55 0.22 280);
+  }
+  .persona[data-accent="concepts"] .persona-header {
+    color: var(--muted-foreground);
+  }
+
+  .persona-header :global(svg) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .persona-body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>

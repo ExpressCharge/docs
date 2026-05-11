@@ -1,0 +1,54 @@
+---
+title: Admin Guide
+description: Operators — register chargers, manage EV cards, run sync, handle billing.
+sidebar:
+  label: Overview
+  order: 0
+---
+
+import { LinkCard, CardGrid } from "@astrojs/starlight/components";
+import Persona from "@components/Persona.astro";
+
+<Persona for="Operator">
+  This guide is for operators running Polaris Express. It covers the
+  admin web console (manage.example.com) and the iOS scanner /
+  kiosk app.
+</Persona>
+
+The admin guide is organized by domain. Common pairs (Devices &
+Cards, Transactions & Reservations, Billing & Webhooks) live together
+in the sidebar.
+
+## Frequent tasks
+
+<CardGrid>
+  <LinkCard title="Register a charger" href="/admin/devices/register-charger/" />
+  <LinkCard title="Link an EV card to a customer" href="/admin/cards/link-card-to-customer/" />
+  <LinkCard title="Finalize an invoice" href="/admin/billing/finalize-invoice/" />
+  <LinkCard title="Replay a failed Lago webhook" href="/admin/webhooks/replay-webhook/" />
+  <LinkCard title="Trigger a manual sync" href="/admin/sync/trigger-manual-sync/" />
+  <LinkCard title="Impersonate a customer" href="/admin/users/impersonate-customer/" />
+  <LinkCard title="Activate iOS kiosk mode" href="/admin/ios/kiosk/activate-kiosk-mode/" />
+  <LinkCard title="Recover a stuck kiosk (5-tap)" href="/admin/ios/kiosk/recover-stuck-kiosk-5-tap/" />
+</CardGrid>
+
+## What's covered
+
+- **Devices** — registering chargers and NFC scanners, configuration,
+  health, charging profiles.
+- **EV cards** — linking, unlinking, bulk imports, diagnosing
+  "card not charging".
+- **Transactions** — browsing, inspecting meter values, force-closing
+  stuck sessions, exports.
+- **Reservations** — managing, overriding.
+- **Billing (Lago)** — finalize, void, credit notes, subscription
+  management, reconciliation.
+- **Users** — admin accounts, impersonation, session revocation,
+  user mappings.
+- **Sync runs** — manual triggers, run inspection, adaptive cadence.
+- **Webhooks** — event log, replay, circuit breaker.
+- **iOS app** — scanner install, NFC scanning, diagnostics, kiosk
+  mode setup and recovery.
+
+Operator iOS workflows live under
+[Admin → iOS app](/admin/ios/install-scanner-build/).

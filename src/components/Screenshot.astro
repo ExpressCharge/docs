@@ -1,0 +1,65 @@
+---
+/**
+ * Screenshot — wraps astro:assets <Image> with caption + zoom support.
+ *
+ * If src is null/undefined (no captured screenshot yet), renders a
+ * <ScreenshotSkeleton> placeholder so authors can leave call sites in
+ * place and we can drop real images in later with no diff to the prose.
+ *
+ * Authoring rule: always provide alt text; describe what the user
+ * accomplishes, not what the pixels show.
+ */
+import ScreenshotSkeleton from "./ScreenshotSkeleton.astro";
+
+interface Props {
+  src?: string;
+  alt: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+  pending?: boolean;
+}
+const {
+  src,
+  alt,
+  caption,
+  width = 1440,
+  height = 900,
+  pending = false,
+} = Astro.props;
+
+const showSkeleton = pending || !src;
+---
+
+{
+  showSkeleton ? (
+    <ScreenshotSkeleton alt={alt} caption={caption} width={width} height={height} />
+  ) : (
+    <figure class="screenshot">
+      <img src={src} alt={alt} width={width} height={height} loading="lazy" />
+      {caption && <figcaption>{caption}</figcaption>}
+    </figure>
+  )
+}
+
+<style>
+  .screenshot {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border);
+    border-radius: 0.625rem;
+    overflow: hidden;
+    background: var(--card);
+  }
+  .screenshot img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .screenshot figcaption {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.85rem;
+    color: var(--muted-foreground);
+    background: oklch(from var(--sl-color-accent, var(--primary)) l c h / 0.04);
+    border-top: 1px solid var(--border);
+  }
+</style>

@@ -1,0 +1,79 @@
+name: Drift check
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Pull sibling submodules into the checkout layout that the docs
+      # site expects (docs/ + web/ + ios/ + steve/ + email-worker/
+      # at the same level). We pull them from the aggregator monorepo.
+      - name: Checkout aggregator (for sibling submodules)
+        uses: actions/checkout@v4
+        with:
+          repository: expresscharge/monorepo
+          path: monorepo
+          submodules: recursive
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      - name: Drift check
+        run: |
+          cd monorepo
+          ln -s ../ docs-overlay
+          cd docs-overlay
+          npm run drift > ../../drift.txt || true
+
+      - name: Post drift to issue
+        if: hashFiles('drift.txt') != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const text = fs.readFileSync('drift.txt', 'utf-8');
+            if (!text.includes('Drift detected')) {
+              console.log('No drift');
+              return;
+            }
+            const title = 'docs drift detected';
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'drift',
+              state: 'open',
+            });
+            const body = `\`\`\`\n${text}\n\`\`\``;
+            if (existing.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['drift'],
+              });
+            } else {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body,
+              });
+            }

@@ -6,6 +6,8 @@ sidebar:
   order: 0
 ---
 
+import Glossary from "@components/Glossary.astro";
+
 import { LinkCard, CardGrid } from "@astrojs/starlight/components";
 
 This section holds material that isn't a step-by-step task: background
@@ -13,8 +15,8 @@ on how the platform works, every endpoint in the API, every term
 defined, and a record of what shipped when.
 
 <CardGrid>
-  <LinkCard title="Concepts" href="/concepts/" description="OCPP, SteVe, Lago billing, sync runs, webhook contracts, capabilities, deep-link routing — the conceptual model behind the platform." />
-  <LinkCard title="API reference" href="/api/overview/" description="Every endpoint, grouped by namespace. Auth, customer, admin, devices, OCPP webhooks, SSE streams, Lago webhooks, public." />
-  <LinkCard title="Glossary" href="/glossary/" description="Every domain term defined in one place — OCPP, idTag, charging profile, tariff, sync cadence, capability, and more." />
+  <LinkCard title="Concepts" href="/concepts/" description="<Glossary term="OCPP">OCPP</Glossary>, <Glossary term="SteVe">SteVe</Glossary>, <Glossary term="Lago">Lago</Glossary> billing, <Glossary term="Sync run">sync runs</Glossary>, webhook contracts, capabilities, deep-link routing — the conceptual model behind the platform." />
+  <LinkCard title="API reference" href="/api/overview/" description="Every endpoint, grouped by namespace. Auth, customer, admin, devices, OCPP webhooks, <Glossary term="SSE">SSE</Glossary> streams, Lago webhooks, public." />
+  <LinkCard title="Glossary" href="/glossary/" description="Every domain term defined in one place — OCPP, <Glossary term="idTag">idTag</Glossary>, charging profile, tariff, sync cadence, capability, and more." />
   <LinkCard title="Changelog" href="/changelog/" description="Release notes for the Polaris Express platform." />
 </CardGrid>

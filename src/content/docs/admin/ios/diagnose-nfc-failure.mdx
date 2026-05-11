@@ -1,0 +1,204 @@
+---
+title: Diagnose an NFC scan failure
+description: Identify which of the five scan-error variants an operator hit and recover the device using the Diagnostics sheet.
+sidebar:
+  order: 10
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Scan/ErrorView.swift
+  - ios/App/Features/Scan/DiagnosticsSheet.swift
+last_authored: 2026-06-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+When an operator-staffed iPhone running <Glossary term="expreScan">expreScan</Glossary> shows a red-x error
+after an NFC tap, you need to identify which of the five error
+variants the device hit and decide whether the fix is at the device,
+the card, or the backend. This runbook walks you through reading the
+error screen, opening the on-device Diagnostics sheet, and confirming
+connectivity before you ask the customer to try again.
+
+## Prerequisites
+
+- You have physical access to the iPhone running expreScan, or a
+  remote operator who can read the screen and tap for you.
+- The device is signed in to an admin account. The Diagnostics sheet
+  is only reachable from Settings when the signed-in account is an
+  admin — the link card is hidden in customer mode.
+- You know the <Glossary term="ChargeBox">ChargeBox</Glossary> the device was scanning for. You'll need it
+  to cross-check <Glossary term="Sync run">sync runs</Glossary> in the web console.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Read the error variant on screen">
+
+The error screen auto-dismisses back to ready after 10 seconds; a
+white countdown ring in the top-right shows time remaining. If the
+ring is almost empty, tap the back chevron in the top-left to hold
+the screen, or ask the operator to read the title before it
+disappears.
+
+There are five variants. The title text is the fastest way to
+identify which one:
+
+- **Scan timed out** — no card was seen. Card was not held close
+  enough, or not long enough.
+- **Card not supported** — the card was read but isn't a recognized
+  <Glossary term="EV card">EV card</Glossary>.
+- **Couldn't reach ExpressCharge** — the device is offline or the
+  API is unreachable.
+- **Scan expired** — the scan-arm window closed before the tap. No
+  retry button; the operator must arm a new scan.
+- **Signed out** — an admin revoked this device. The button reads
+  "Sign in".
+
+<Screenshot alt="The five error variants side by side: timed out, unsupported card, network, expired, signed out." />
+
+</TutorialStep>
+
+<TutorialStep title="Open Diagnostics">
+
+Dismiss the error (tap the back chevron, or let the countdown
+expire). From the ready screen, open **Settings**, then tap
+**Diagnostics**.
+
+<Aside>
+If you don't see a Diagnostics row in Settings, the device is signed
+in as a customer, not an admin. Sign out and back in with an admin
+account, or escalate to whoever owns the device-to-user mapping.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Check the Connection card">
+
+The first card is **Connection**. Read these four values:
+
+- **Status pill** — Online, Connecting, Reconnecting, or Offline.
+- **Reconnects** — count since the session started. A number that
+  ticks up while you watch means the device is flapping.
+- **Last sync** — relative time. Should be within the last few
+  seconds when Online.
+- **Pending uploads** — scan results queued locally. Non-zero means
+  prior scans haven't been delivered to the backend yet.
+
+If status is anything other than **Online** and you saw a
+**Couldn't reach ExpressCharge** error, the diagnosis is network.
+Skip to step 5.
+
+</TutorialStep>
+
+<TutorialStep title="Check the Device card">
+
+Scroll to the **Device** card. Note:
+
+- **Push permission** — should be Authorized. Denied means the
+  device won't receive scan-arm notifications and you'll see
+  **Scan expired** errors a lot.
+- **APNs environment** — sanity-check this matches the build you
+  expect (production vs. sandbox).
+- **Server** — confirm this points at the right backend. Tap the
+  copy icon to copy it into a bug report.
+- **Device ID** — copy this; you'll need it to find sync runs in
+  the web console.
+
+</TutorialStep>
+
+<TutorialStep title="Run a test sync">
+
+Scroll to the **Test** card and tap **Run test sync**. This forces
+an immediate device-state sync against the server using the
+device's bearer token. The button shows a spinner while in flight,
+then a toast reports `Sync OK` or `Sync failed`.
+
+- `Sync OK` confirms bearer auth and connectivity are healthy. The
+  failure was either card-side (unsupported card, timeout) or
+  scan-arm timing.
+- `Sync failed` confirms the device cannot reach the backend with
+  its current credentials. Continue to step 6.
+
+</TutorialStep>
+
+<TutorialStep title="Match the error to the fix">
+
+| Error variant | Likely cause | Operator action |
+|---|---|---|
+| Scan timed out | Card not close enough | Ask customer to hold card to the top of the iPhone and re-arm. |
+| Card not supported | Wrong card type, or <Glossary term="idTag">idTag</Glossary> not provisioned | Verify the EV card is registered in the web console. |
+| Couldn't reach ExpressCharge | Device offline or backend unreachable | Confirm via Connection card; if Online, escalate. |
+| Scan expired | <Glossary term="Scan-arm">Scan-arm</Glossary> window elapsed | Re-arm scan from the web console. |
+| Signed out | Device token revoked by admin | Sign in again from the error screen's primary button. |
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+- The Connection card shows **Online** with a fresh **Last sync**
+  timestamp.
+- **Pending uploads** is zero, or trending toward zero on subsequent
+  refreshes (pull down to refresh the sheet).
+- A repeat scan with a known-good EV card produces a green success
+  state, not the red-x error.
+- In the web console, the device's most recent sync run for this
+  Device ID is recent and successful.
+
+<!-- TODO: confirm sync-run viewer path under web/routes/api/... -->
+
+## If something goes wrong
+
+<Aside type="caution">
+**"Run test sync" reports Sync failed but Connection shows Online.**
+The socket is up but bearer auth is failing. The token may have been
+revoked between the connection handshake and the API call. Sign the
+device out and back in.
+</Aside>
+
+<Aside type="caution">
+**Reconnect count climbs while you watch.** The device is flapping —
+usually weak Wi-Fi or a captive portal. Move the device, or switch
+to cellular, and re-check Last sync.
+</Aside>
+
+<Aside type="caution">
+**Recent logs card is missing.** The card only appears when the
+on-device log drain has records buffered. If you need logs and the
+card isn't there, tap **Run test sync** to generate activity, then
+pull-to-refresh the sheet.
+</Aside>
+
+<Aside type="caution">
+**"Signed out" error appears repeatedly after sign-in.** Another
+admin is actively revoking this device, or the device mapping is
+fighting with a kiosk-mode policy. Stop signing in and check the
+audit log for revocation events on this Device ID before retrying.
+</Aside>
+
+## Audit and reversibility
+
+This runbook is read-only on the device itself — running a test sync
+and copying diagnostics values do not modify state. The only
+state-changing action available from the error flow is **Sign in**
+on the `tokenRevoked` variant, which creates a fresh device session.
+That sign-in is logged through the normal device-registration audit
+trail.
+
+<!-- TODO: confirm device-registration audit event name -->
+
+If you copied logs to clipboard via the **Recent logs** card's copy
+button, those logs are also retained server-side once the drain
+flushes — tapping the up-arrow icon on the Recent logs card forces a
+flush immediately.
+
+## Related
+
+- [Arm a scan for a customer](/admin/web/arm-scan)
+- [Revoke a device](/admin/web/revoke-device)
+- [Register a new EV card](/admin/web/register-ev-card)

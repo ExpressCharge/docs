@@ -1,0 +1,193 @@
+---
+title: Perform an NFC card scan
+description: Run an NFC card scan on the ExpresScan iPhone to capture an EV card's idTag for an admin pairing.
+sidebar:
+  order: 10
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Scan/ReadyView.swift
+  - ios/App/Services/ScanCoordinator.swift
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+You're an operator with the ExpresScan iPhone in hand and you need to
+capture a customer's <Glossary term="EV card">EV card</Glossary> so an admin in the web console can finish
+pairing it. This runbook walks the device side of that flow — what the
+phone should look like before the admin presses **Tap to add**, what
+happens when the scan request lands, and how to recover when the read
+fails.
+
+## Prerequisites
+
+- ExpresScan is signed in to the right Polaris Express account. The
+  Ready screen shows the brand and the "Ready to Scan" hero.
+- The status pill is **not** visible, or shows **Online**. Any other
+  state (Connecting, Reconnecting, Offline) means the device isn't
+  receiving scan requests yet.
+- The admin who will trigger the scan has the customer's account open
+  in the web console and is about to press **Tap to add** in the EV
+  cards panel.
+- The customer's physical EV card is in reach. The app supports
+  standard ISO 14443 cards; MIFARE Classic is **not** supported.
+
+<Aside type="note">
+  ExpresScan auto-fires the iOS NFC reader sheet as soon as a scan
+  request arrives. You do not tap a "Scan" button on the device — the
+  admin's press is the trigger.
+</Aside>
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Confirm the device is online">
+
+Open ExpresScan and look at the Ready screen. If you see a status pill
+above the "How this works" disclosure, the device isn't fully linked
+yet:
+
+- **Connecting** — the <Glossary term="SSE">SSE</Glossary> link is being established. Wait a few
+  seconds.
+- **Reconnecting** — the link dropped and is retrying. Wait, or tap
+  the pill to open diagnostics.
+- **Offline** — the device has no network. Restore connectivity
+  before continuing.
+
+When the device is healthy the pill disappears and the hero reads
+**Ready to Scan**.
+
+<Screenshot alt="ExpresScan Ready screen with no status pill" />
+
+</TutorialStep>
+
+<TutorialStep title="Have the admin start the pairing">
+
+Ask the admin to press **Tap to add** on the customer's record in the
+web console. The phone vibrates and the iOS NFC reader sheet opens
+automatically with the prompt **Hold your card to the top of your
+iPhone.**
+
+You have 60 seconds before the sheet times out, and the pairing itself
+expires 90 seconds after the admin pressed the button — whichever is
+shorter wins.
+
+</TutorialStep>
+
+<TutorialStep title="Present the card">
+
+Hold the EV card flat against the **top edge** of the iPhone (the NFC
+antenna sits just above the front camera on modern iPhones). Keep it
+still until you feel the success haptic.
+
+The screen advances to the success view showing the resolved card and
+account, and the admin's console updates within ~1 second.
+
+<Screenshot alt="ExpresScan success view after a card read" />
+
+</TutorialStep>
+
+<TutorialStep title="Dismiss the result">
+
+Tap **Done** on the success screen to return to **Ready to Scan**.
+There is no auto-dismiss — the result stays on screen until you
+acknowledge it, so the operator and customer can both confirm the
+right card was read.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've completed a scan successfully when:
+
+- The phone shows the green success screen with the EV card details.
+- The admin's web console closes the **Tap to add** modal and the new
+  card appears on the customer's record.
+- The Ready screen shows no **pending upload** badge. If you see
+  "Saving your scans…" or "N pending upload", the result hasn't reached
+  the server yet — see the next section.
+
+To audit a completed scan from the web console, check the customer's
+EV cards list and the audit log entry for the card-add event.
+
+## If something goes wrong
+
+### The iOS NFC sheet shows "Could not read card"
+
+The card is either an unsupported type or wasn't held still long
+enough. The phone returns to **Ready to Scan**. Ask the admin to press
+**Tap to add** again and retry.
+
+If the card is MIFARE Classic (common on older building access cards),
+it cannot be used as an EV card — the iOS NFC stack does not support
+it.
+
+### The user cancelled the iOS sheet
+
+Tapping **Cancel** inside the system NFC sheet is the canonical cancel
+gesture. ExpresScan treats this as a full scan cancel and tells the
+server, so the admin's **Tap to add** modal closes immediately. The
+phone returns to **Ready to Scan**.
+
+### The admin cancelled from the web
+
+If the admin closes the **Tap to add** modal while the NFC sheet is
+open, ExpresScan dismisses the system sheet automatically and returns
+to **Ready to Scan**. No error is shown — admin-cancel is normal flow.
+
+### "Pairing expired"
+
+The 90-second pairing window elapsed before the card was read. Ask the
+admin to press **Tap to add** again. There is nothing to clean up —
+the pairing is server-side TTL'd.
+
+### "Network error" with a pending upload badge
+
+The card read succeeded but the result POST to `/api/devices/scan-result`
+failed. ExpresScan queues the result locally and retries when the link
+recovers; the **N pending upload** badge on the Ready screen tracks
+the queue depth.
+
+<Aside type="caution">
+  Do not sign the device out while pending uploads are queued. Signing
+  out wipes the keychain and the queued results cannot be re-signed.
+  Wait for the badge to clear, or open the diagnostics sheet to confirm
+  the queue has drained.
+</Aside>
+
+### "Signed out by an admin"
+
+An admin revoked this device's token, or another device claimed the
+same registration. ExpresScan wipes its credentials and returns to the
+welcome screen. Re-register the device before attempting another scan.
+
+### The Ready screen is stuck on "Reconnecting"
+
+Tap the **Reconnecting** pill to open the diagnostics sheet and check
+the last heartbeat time and reconnect count. If reconnects keep piling
+up, the device has a flaky network — move it to a known-good Wi-Fi or
+restart the app.
+
+## Audit and reversibility
+
+NFC scans are read-only at the device layer: the phone signs an
+`idTag` with the device secret and POSTs it to the backend. The
+phone itself doesn't modify customer records — the web admin's
+**Tap to add** confirmation is what writes the card to the database.
+
+To reverse a card-add, remove the EV card from the customer's record
+in the web console. The original scan event remains in the audit log
+for forensic review.
+
+## Related
+
+- [Register an ExpresScan device](/ios/register-device/)
+- [Diagnose ExpresScan connection issues](/ios/diagnostics/)
+- [Add an EV card to a customer from the web console](/admin/customers/add-ev-card/)
+- [Revoke an ExpresScan device](/admin/devices/revoke/)

@@ -1,0 +1,176 @@
+---
+title: Phase 11 — Register your first chargers
+description: Register ChargeBoxes in SteVe so charge points can connect and Polaris Express can see them.
+sidebar:
+  order: 11
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - steve/README.md
+last_authored: 2025-01-22
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
+
+You have a running stack: <abbr title="Polaris Express web app">web</abbr>, <Glossary term="SteVe">SteVe</Glossary>, the database, and the email Worker. Now you need to register at least one <Glossary term="ChargeBox">ChargeBox</Glossary> in SteVe and point a real (or simulated) charge point at it. Until you do, the Polaris Express dashboard has nothing to display and no transactions to authorize.
+
+This phase wires up the <Glossary term="OCPP">OCPP</Glossary> side of your installation. After it, you have a charge point sending heartbeats and a row in SteVe's `charge_box` table that Polaris Express can join against.
+
+## Prerequisites
+
+- Phases 1–10 complete: stack is up, DNS resolves, TLS works, admin user can log in to Polaris Express.
+- You can reach the SteVe web UI at `https://<your-steve-host>/steve/manager` (or `http://<host>:8180/steve/manager` if you are running plain HTTP behind a reverse proxy).
+- You have the SteVe web credentials you set in `application-docker.properties` (`webapp.userName` / `webapp.password`).
+- You have at least one of:
+  - A physical OCPP 1.6J charge point you can configure, or
+  - A charge point simulator (for example, `micro-ocpp-simulator` or `ocpp-go` cli).
+- You know the **ChargeBox ID** the charge point will identify itself with. This is a vendor-set or operator-set string; it must be unique within SteVe.
+
+<Aside type="note">
+  The ChargeBox ID is not the serial number printed on the unit. It is whatever string the charge point sends in OCPP `BootNotification.chargePointSerialNumber` / the URL path of the WebSocket connection. Check your vendor's configuration UI for the exact field — it is sometimes labeled "OCPP ID", "Identity", or "Station ID".
+</Aside>
+
+## Steps
+
+### 1. Log in to SteVe
+
+Open `https://<your-steve-host>/steve/manager` and sign in with the SteVe web credentials.
+
+You should see the SteVe dashboard with **Home**, **Data Management**, **Operations**, **Events and Certificates**, and **Settings** in the navigation.
+
+<Aside type="caution">
+  These credentials are SteVe's, not Polaris Express's. Polaris Express has its own admin login via <Glossary term="BetterAuth">BetterAuth</Glossary> (set up in an earlier phase). Do not reuse the same password.
+</Aside>
+
+### 2. Add the ChargeBox in SteVe
+
+1. Go to **Data Management → Charge Points → Add**.
+2. Enter the **ChargeBox ID** exactly as the charge point will report it. This field is case-sensitive.
+3. Leave the optional metadata fields blank for now (description, location, vendor) unless you already know them — you can edit later.
+4. Click **Add**.
+
+The new ChargeBox appears in the list with status `Unknown` until the first heartbeat arrives.
+
+### 3. Configure the charge point
+
+Point the charge point at SteVe. The endpoint depends on the OCPP transport.
+
+<Tabs>
+  <TabItem label="OCPP 1.6J (WebSocket)">
+    ```
+    ws://<your-steve-host>:<port>/steve/websocket/CentralSystemService/<ChargeBoxId>
+    ```
+
+    If you are terminating TLS in front of SteVe, use `wss://` and the public hostname:
+
+    ```
+    wss://steve.example.com/steve/websocket/CentralSystemService/<ChargeBoxId>
+    ```
+  </TabItem>
+  <TabItem label="OCPP 1.5/1.6 SOAP">
+    ```
+    http://<your-steve-host>:<port>/steve/services/CentralSystemService
+    ```
+
+    Behind TLS:
+
+    ```
+    https://steve.example.com/steve/services/CentralSystemService
+    ```
+  </TabItem>
+</Tabs>
+
+Set the charge point's OCPP version to match (the URL path is the same; SteVe routes based on the protocol of the inbound message).
+
+<Aside type="tip">
+  If your charge point supports it, set the heartbeat interval to 60–300 seconds during setup. You can relax it later. A short interval makes it obvious whether the connection is healthy without waiting.
+</Aside>
+
+### 4. Reboot the charge point
+
+Most charge points only re-read OCPP configuration on reboot. Power-cycle it or trigger a soft reset from the vendor UI.
+
+Within ~30 seconds you should see a `BootNotification` and then `Heartbeat` traffic.
+
+## Configure environment variables
+
+No new env vars are introduced in this phase, but the following — set in earlier phases — must be correct for SteVe to be reachable by both your charge points and the Polaris Express web app.
+
+| Variable | Default | Required | Source file |
+|---|---|---|---|
+| `STEVE_DATABASE_URL` | _(unset)_ | yes | `web/.env` |
+| `STEVE_DATABASE_USER` | `steve` | yes | `web/.env` |
+| `STEVE_DATABASE_PASSWORD` | _(unset)_ | yes | `web/.env` |
+| `steve.host` | `0.0.0.0` | yes | `application-docker.properties` |
+| `steve.context.path` | `steve` | no | `application-docker.properties` |
+| `webapp.userName` | `admin` | yes | `application-docker.properties` |
+| `webapp.password` | _(unset)_ | yes | `application-docker.properties` |
+
+Polaris Express reads <EnvVar name="STEVE_DATABASE_URL" /> to query the SteVe schema directly for ChargeBox, <Glossary term="Connector">Connector</Glossary>, and transaction data. If you change SteVe's database credentials, also update the web `.env` and restart the web container.
+
+<!-- TODO: confirm exact env var names against web/.env.example -->
+
+## Verify
+
+### 1. Check the ChargeBox status in SteVe
+
+Go to **Data Management → Charge Points**. Your ChargeBox should now show:
+
+- A recent **Last Heartbeat** timestamp (within the heartbeat interval).
+- A non-empty **OCPP Protocol** column (e.g., `OCPP1.6J`).
+
+### 2. Check the connector status
+
+Go to **Home** (or **Connector Status**). Each physical connector on the charge point should appear with a status such as `Available`, `Preparing`, or `Charging`.
+
+### 3. Check that Polaris Express sees the ChargeBox
+
+Open the Polaris Express admin console and navigate to the chargers/locations view. The ChargeBox should appear with the same ID. If it does not appear, the web app is reading from SteVe's database, so the most likely cause is a database connection misconfiguration.
+
+```sh
+# From the host, confirm the row exists in SteVe's DB
+docker compose exec mysql mysql -usteve -p stevedb \
+  -e "SELECT charge_box_id, ocpp_protocol, last_heartbeat_timestamp FROM charge_box;"
+```
+
+### 4. Check OCPP traffic at the wire (optional)
+
+```sh
+docker compose logs -f steve | grep -iE 'boot|heartbeat|statusnotification'
+```
+
+You should see incoming `BootNotification` and periodic `Heartbeat` messages.
+
+## If something goes wrong
+
+### The charge point never connects
+
+- **Wrong URL.** The path must include `/steve/` (or whatever you set `steve.context.path` to) and the correct transport segment (`websocket/CentralSystemService` for JSON, `services/CentralSystemService` for SOAP).
+- **TLS mismatch.** If your reverse proxy terminates TLS, the charge point must use `wss://` / `https://`, not `ws://` / `http://`. Some firmware silently fails the upgrade if the scheme is wrong.
+- **WebSocket upgrade stripped.** Confirm your reverse proxy forwards `Upgrade` and `Connection` headers for the `/steve/websocket/` path.
+- **ChargeBox ID not registered.** SteVe rejects unknown IDs by default. Re-check that the ID in **Charge Points** matches what the charge point sends (including case).
+
+### Charge point connects but Polaris Express does not show it
+
+- Confirm `STEVE_DATABASE_URL` in the web container points at the same database as SteVe.
+- Restart the web container after any env change: `docker compose restart web`.
+- Check web logs for query errors against the `charge_box` table.
+
+### Heartbeats stop arriving
+
+- Check that the charge point still has network reachability to your SteVe host.
+- If you are behind a proxy with a short idle timeout, increase the timeout for the `/steve/websocket/` path to at least 2× your heartbeat interval.
+
+<Aside type="danger">
+  Do **not** delete a ChargeBox from SteVe to "reset" it. Deleting cascades to transactions, <Glossary term="Meter value">meter values</Glossary>, and <Glossary term="Reservation">reservations</Glossary> referencing it, which will leave the Polaris Express dashboard with broken references. To re-register a charge point, edit the existing row or contact your operator.
+</Aside>
+
+## Next phase
+
+You have a live ChargeBox. Next, register your first idTags and link them to users so Polaris Express can authorize charging sessions.
+
+→ **Phase 12 — Register idTags and link to users**

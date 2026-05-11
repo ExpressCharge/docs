@@ -1,0 +1,142 @@
+---
+title: Browse charging transactions
+description: Find, filter, and inspect synced charging sessions in the Polaris Express admin console.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/transactions/index.tsx
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+The Charging Sessions page is your primary view into every transaction
+that has synced from <Glossary term="SteVe">SteVe</Glossary>. Use it when a customer disputes a bill,
+when you need to confirm a session is still active, or when you're
+spot-checking the last 24 hours of fleet activity.
+
+## Prerequisites
+
+- An admin account signed in to the Polaris Express web console.
+- At least one [sync run](/glossary#sync-run) has completed so that
+  `transaction_sync_state` rows exist. An empty table on a fresh
+  environment is expected.
+- For tag-based searches, know the [<Glossary term="idTag">idTag</Glossary>](/glossary#idtag) or a
+  substring of it.
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open Charging Sessions">
+    From the admin sidebar, navigate to **Charging Sessions**. The page
+    loads with the 15 most recently updated sessions, ordered by last
+    update descending.
+
+    <Screenshot alt="Charging Sessions landing view with stat strip and table" />
+  </TutorialStep>
+
+  <TutorialStep title="Read the stat strip">
+    Four counters sit above the filters:
+
+    - **Sessions today** — distinct transactions touched since midnight
+      local time.
+    - **kWh delivered (7d)** — sum of `kwhDelta` across synced events
+      in the last 7 days.
+    - **Active now** — count of sessions where `isFinalized` is `false`.
+    - **Avg kWh / session (7d)** — 7-day kWh divided by the number of
+      distinct transactions with synced events in that window.
+
+    These reflect the entire dataset, not the filtered view.
+  </TutorialStep>
+
+  <TutorialStep title="Filter by status">
+    Use the **Status** control to switch between `all`, `active`, and
+    `completed`. `active` shows only sessions where `isFinalized` is
+    `false`; `completed` shows the inverse. Any other value falls back
+    to `all`.
+  </TutorialStep>
+
+  <TutorialStep title="Filter by date range">
+    Set **From** and **To** dates. The filter applies to the session's
+    `updatedAt` timestamp, not its start time. The **To** date is
+    inclusive — it expands to `23:59:59` on the selected day.
+  </TutorialStep>
+
+  <TutorialStep title="Filter by <Glossary term="EV card">EV card</Glossary> / idTag">
+    Type any substring into the **Tag** field. The query does a
+    case-insensitive partial match against
+    `user_mappings.steveOcppIdTag`. When this filter is active the
+    query joins through `synced_transaction_events` and
+    `user_mappings`, and the result count is de-duplicated by
+    transaction id.
+
+    <Aside type="note">
+      Sessions whose events are not yet linked to a
+      [user mapping](/glossary#user-mapping) will not match a tag
+      filter even if the underlying idTag is identical. Clear the tag
+      filter to see them.
+    </Aside>
+  </TutorialStep>
+
+  <TutorialStep title="Load more results">
+    The table renders 15 rows at a time. Click **Load more** to fetch
+    the next page. The filter chips above the table stay active across
+    pages.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+- The header beneath **Charging Sessions** shows the total matching
+  count, e.g. *"42 sessions match current filters"*. Compare this to
+  the row count you expect.
+- The live banner at the top of the page reflects new
+  [<Glossary term="SSE">SSE</Glossary>](/glossary#sse) events as sessions update in real time. If a
+  session you just started is missing, give the banner a moment to
+  tick before assuming a sync failure.
+- For any individual row, confirm the **Last synced** timestamp is
+  recent. Stale timestamps point at a [sync run](/glossary#sync-run)
+  problem, not a display problem.
+
+## If something goes wrong
+
+<Aside type="caution">
+  **Stat strip shows all zeros.** The handler swallows database errors
+  in `computeStats` and returns zeros. Check the web server logs for
+  `Failed to compute charging session stats` before assuming the fleet
+  is idle.
+</Aside>
+
+<Aside type="caution">
+  **Tag filter returns fewer rows than expected.** The join path is
+  `transaction_sync_state → synced_transaction_events → user_mappings`.
+  A transaction with zero synced events, or events lacking a
+  `userMappingId`, will be excluded. Drop the tag filter and search by
+  date range instead.
+</Aside>
+
+<Aside type="caution">
+  **"Active now" never decreases.** The counter is driven by
+  `isFinalized = false`. A session that never receives a
+  `StopTransaction` event will remain active indefinitely. Investigate
+  the underlying [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) rather than the
+  console.
+</Aside>
+
+## Audit and reversibility
+
+Browsing is read-only. This page issues `SELECT` queries against
+`transaction_sync_state`, `synced_transaction_events`, and
+`user_mappings` only. There is nothing to reverse and no
+[audit log](/glossary#audit-log) entry is written.
+
+## Related
+
+- <!-- TODO: confirm transaction detail route exists --> Transaction
+  detail view
+- [Sync runs overview](/admin/sync-runs)
+- [User mappings](/admin/user-mappings)

@@ -1,0 +1,159 @@
+---
+title: View the Lago webhook event log
+description: Audit incoming Lago webhooks, filter by status or customer, and triage failed deliveries from the admin console.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/webhook-events/index.tsx
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+Use this runbook when you need to confirm that [<Glossary term="Lago">Lago</Glossary>](/glossary#lago)
+sent us a webhook, why it succeeded or failed, and whether a customer
+or subscription event was acted on. Common triggers: a customer
+reports a missing invoice notification, billing reconciliation shows
+a gap, or the circuit breaker banner appeared in the admin shell.
+
+## Prerequisites
+
+- Admin role on your Polaris Express account. Non-admin users see
+  an "Admin access required" screen on this surface.
+- You know at least one of: the Lago webhook type, the external
+  customer ID, the external subscription ID, or the approximate
+  time window when the event was sent.
+- If you are triaging a degraded state, check the circuit breaker
+  banner at the top of the page before filtering.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the webhook audit surface">
+
+Navigate to **Admin → Lago webhook audit** in the sidebar. The page
+header shows the total count of events currently recorded against
+your filter set (or all events if no filter is applied).
+
+<Screenshot alt="Lago webhook audit page with filters and event table" />
+
+</TutorialStep>
+
+<TutorialStep title="Check the circuit breaker state">
+
+If the **Circuit breaker** banner is visible at the top of the page,
+the webhook handler is currently rejecting or deferring incoming
+events. Note its state before you start filtering — events received
+while the breaker is open are recorded with a `skipped` status, not
+a delivery failure.
+
+</TutorialStep>
+
+<TutorialStep title="Narrow the event list with filters">
+
+Use the filter card to scope the table. Each filter maps to a query
+string parameter so you can share the resulting URL with another
+operator:
+
+- **Type** — exact match on the Lago webhook type (for example
+  `invoice.created`, `subscription.terminated`).
+- **Status** — one of `pending`, `processed`, `failed`, or `skipped`.
+  `skipped` returns only events where processing was short-circuited
+  by an open breaker.
+- **Customer** — substring match on the external customer ID.
+- **Subscription** — substring match on the external subscription ID.
+- **Start / End** — bounds on `receivedAt`. The end date is inclusive
+  through 23:59:59 of that day.
+- **Notification fired** — filter to events that did or did not
+  trigger an in-app notification.
+
+Click **Apply** to reload the table.
+
+</TutorialStep>
+
+<TutorialStep title="Inspect an event">
+
+Click any row to expand its detail panel. The detail view exposes
+the Lago object type, the Lago object ID, the external customer and
+subscription IDs, the received and processed timestamps, the
+processing error (if any), whether a notification was fired, and
+replay metadata if the event was previously replayed.
+
+The table is sorted by `receivedAt` descending and paginates 25
+events at a time.
+
+</TutorialStep>
+
+<TutorialStep title="Confirm what happened downstream">
+
+For a `processed` event with `notificationFired = true`, check the
+relevant customer's notification feed to confirm the in-app message
+landed. For billing-affecting events (`invoice.*`,
+`subscription.*`), cross-reference the [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer)
+record in Lago itself.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You should be able to:
+
+- See the event you were looking for in the filtered list, with
+  the expected `receivedAt` timestamp.
+- Read a non-null `processedAt` for successfully handled events
+  and a populated `processingError` for failed ones.
+- Reconcile `notificationFired` with what the customer actually saw
+  in their notification feed.
+
+If the event is genuinely missing from the table, Lago never reached
+us — investigate on the Lago side (webhook endpoint configuration,
+delivery retries) before assuming a Polaris Express bug.
+
+## If something goes wrong
+
+<Aside type="caution">
+A `failed` status means the handler raised an error other than
+`circuit_breaker_open`. A `skipped` status means the breaker was
+open when the event arrived and the handler deliberately deferred
+processing. These are not interchangeable — do not replay skipped
+events without first confirming the breaker has closed.
+</Aside>
+
+- **All events show as `skipped`** — the circuit breaker is open.
+  Resolve the underlying handler health issue before replaying.
+  See the related runbook on the breaker.
+- **Filter returns zero results but you expect events** — check
+  that your date range covers `receivedAt` (when Polaris received
+  the webhook), not when Lago says it sent it. Clock skew between
+  the two systems can push events into an adjacent day.
+- **`processedAt` is set but `notificationFired` is false** — the
+  handler succeeded but intentionally did not fire a notification
+  (for example, the event type isn't user-facing, or the customer
+  has no user mapping). This is not a failure on its own.
+- **Event has a `replayedFromId`** — this row is a replay, not the
+  original delivery. Follow `replayedFromId` to find the original
+  event and read its `processingError` for the root cause.
+
+## Audit and reversibility
+
+Viewing the webhook event log is read-only and not destructive. No
+audit entry is written for browsing.
+
+Replay actions taken from this surface are recorded on the resulting
+event row via `replayedFromId`, `replayedAt`, and `replayedByUserId`.
+See the related runbook on replaying webhook events for the
+destructive path and its reversal options.
+
+## Related
+
+- [Replay a failed Lago webhook event](/admin/webhooks/replay-event)
+- [Resolve an open webhook circuit breaker](/admin/webhooks/circuit-breaker)
+- [Glossary: Lago](/glossary#lago)
+- [Glossary: <Glossary term="Audit log">Audit log</Glossary>](/glossary#audit-log)

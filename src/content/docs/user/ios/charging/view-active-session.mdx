@@ -1,0 +1,75 @@
+---
+title: View your active session
+description: See live progress for a charging session in progress on your iPhone, including energy delivered and elapsed time.
+sidebar:
+  order: 30
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Chargers/ChargerDetailView.swift
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+Once you've started charging from your iPhone, the charger's detail screen turns into a live view of your session. This tutorial shows you where to find that view, what it tells you, and how to stop the session when you're done.
+
+## Before you start
+
+- You have the ExpresScan app installed and you're signed in.
+- You have a charging session already running on a charger you can open in the app.
+
+<Tutorial goal="See your live session and stop it when you're ready" estimatedMinutes={2}>
+
+<TutorialStep title="Open the charger you're using">
+
+From the chargers list, tap the charger that's running your session. The detail screen loads with a hero image and the charger's name at the top.
+
+<Screenshot alt="Charger detail screen showing an active session" caption="The charger detail screen for a charger you're actively using." />
+
+</TutorialStep>
+
+<TutorialStep title="Read the active session card">
+
+When a session is running, the detail screen shows an **active session card** below the hero. The card updates once per second, so the elapsed time ticks forward while you watch it. Energy delivered is shown in kWh.
+
+</TutorialStep>
+
+<TutorialStep title="Refresh if something looks stale">
+
+Tap the circular arrow icon in the top-right toolbar to refresh the screen. You can also pull down on the screen to refresh.
+
+</TutorialStep>
+
+<TutorialStep title="Stop the session when you're done">
+
+Tap **Stop charging** at the bottom of the screen. A confirmation dialog appears asking "Stop charging?" — it shows the energy delivered so far (for example, "Stop the session at 12.4 kWh delivered?").
+
+Tap **Stop charging** in the dialog to confirm, or **Keep charging** to dismiss it and leave the session running.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You know the session stopped when the **Stop charging** button is replaced by **Start charging**, and the active session card disappears from the screen.
+
+## Troubleshooting
+
+**The active session card doesn't appear, but I started charging.**
+Tap the refresh icon in the top-right toolbar. If the card still doesn't appear, the charger may not have reported the session back yet — wait a few seconds and refresh again.
+
+**The screen shows "Out of service" or "Offline" instead of my session.**
+The charger has lost its connection or has been taken out of service. Your session data will reappear once the charger reconnects. <!-- TODO: confirm session resumes in the UI after charger reconnects in code_refs -->
+
+:::caution
+Stopping a session ends energy delivery immediately. If you tap **Stop charging** by mistake, you'll need to tap **Start charging** again to begin a new session — the previous one can't be resumed.
+:::
+
+## Related
+
+- [Start a charging session](/user/ios/charging/start-session/)
+- [Cancel a reservation](/user/ios/<Glossary term="Reservation">reservations</Glossary>/cancel/)

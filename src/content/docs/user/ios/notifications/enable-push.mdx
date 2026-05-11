@@ -1,0 +1,99 @@
+---
+title: Enable push notifications
+description: Turn on push notifications in ExpressCharge for iPhone so you never miss a scan request when the app is closed.
+sidebar:
+  order: 20
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/NotificationPriming/NotificationPrimingView.swift
+  - ios/App/Services/PushService.swift
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This tutorial is for drivers using ExpressCharge on iPhone. You'll allow push notifications so the app can wake your phone the moment a scan request arrives. Without notifications on, scan requests can slip past you when the app isn't on screen.
+
+You'll need your iPhone, the ExpressCharge app installed, and a minute of time.
+
+## Before you start
+
+- Install ExpressCharge from the App Store.
+- Open the app at least once so the priming screen can appear.
+- Make sure your iPhone is connected to the internet — the app registers your device with our servers after you grant permission.
+
+<Tutorial goal="Turn on push notifications for ExpressCharge" estimatedMinutes={1}>
+
+<TutorialStep title="Open ExpressCharge and reach the priming screen">
+
+Launch ExpressCharge. After sign-in, the app shows a screen titled **Allow notifications** with a bell icon at the top.
+
+The screen explains why notifications matter: ExpressCharge uses them to wake your iPhone the moment you need to scan a card.
+
+<Screenshot alt="ExpressCharge priming screen asking permission to send notifications" caption="The priming screen appears before the iOS system prompt." />
+
+</TutorialStep>
+
+<TutorialStep title="Tap Allow Notifications">
+
+Tap the **Allow Notifications** button at the bottom of the screen.
+
+iOS then shows its own system prompt asking whether ExpressCharge can send you notifications.
+
+</TutorialStep>
+
+<TutorialStep title="Tap Allow on the iOS system prompt">
+
+On the iOS prompt, tap **Allow**.
+
+This grants ExpressCharge permission to show alerts, play sounds, and update the app badge. The app then registers your iPhone with our notification servers in the background.
+
+<Aside type="tip">
+If you tap **Don't Allow** on the iOS prompt, you can change your mind later in **Settings → ExpressCharge → Notifications**.
+</Aside>
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+After you allow notifications, ExpressCharge moves on from the priming screen on its own. You're done.
+
+To double-check the permission stuck:
+
+1. Open the iOS **Settings** app.
+2. Scroll to **ExpressCharge**.
+3. Tap **Notifications**.
+4. Confirm **Allow Notifications** is on.
+
+## Troubleshooting
+
+**I tapped "Not now" by mistake.**
+The priming screen won't come back. Open iOS **Settings → ExpressCharge → Notifications** and turn **Allow Notifications** on yourself.
+
+**I tapped "Don't Allow" on the iOS prompt.**
+iOS only asks once. To reverse it, go to **Settings → ExpressCharge → Notifications** and switch **Allow Notifications** on.
+
+**I allowed notifications but I'm still missing scan requests.**
+Open the app's **Settings → Permissions** screen. If it shows that APNs registration failed, your iPhone couldn't reach Apple's push servers when you granted permission. Try these in order:
+
+- Check that your iPhone has a working internet connection.
+- Force-quit ExpressCharge and reopen it. The app retries registration on launch.
+- Restart your iPhone.
+
+<Aside type="caution">
+If **Settings → Permissions** keeps showing an APNs failure after a restart, contact support. The app retries the token upload on a short schedule (1 second, then 3, then 8) and again on every relaunch, so a persistent failure usually points at a network or account issue rather than the app itself.
+</Aside>
+
+**Notifications work, but they're silent.**
+iOS controls notification sounds separately. Open **Settings → ExpressCharge → Notifications** and turn **Sounds** on. Also check that your iPhone isn't in silent mode or a Focus that mutes ExpressCharge.
+
+## Related
+
+- [Sign in to ExpressCharge on iPhone](/user/ios/auth/sign-in/)
+- [Respond to a scan request](/user/ios/scanning/respond-to-scan-request/)
+- [Manage app permissions](/user/ios/settings/permissions/)

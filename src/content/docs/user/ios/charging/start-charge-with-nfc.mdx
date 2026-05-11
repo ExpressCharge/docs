@@ -1,0 +1,112 @@
+---
+title: Tap your card to start a charge
+description: Use your iPhone and your EV card together to start a charging session from the ExpresScan app.
+sidebar:
+  order: 10
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Scan/ReadyView.swift
+  - ios/App/Features/Scan/ScanActiveView.swift
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This guide is for drivers who use the ExpresScan app on iPhone to start a charge with an <Glossary term="EV card">EV card</Glossary>. You'll open the app, wait for a scan prompt, and hold your card to the top of your iPhone. You need the app installed, a signed-in account, and your EV card in hand.
+
+## Before you start
+
+- You're signed in to ExpresScan on your iPhone.
+- Your iPhone is connected to the internet (Wi-Fi or cellular).
+- You have your EV card with you.
+- A charging station or an admin is ready to start a scan for you.
+
+<Tutorial goal="Start a charge by tapping your EV card" estimatedMinutes={2}>
+
+<TutorialStep title="Open ExpresScan and wait on the Ready screen">
+
+Launch the app. You'll land on the **Ready to Scan** screen with an animated NFC glyph in the middle.
+
+Keep the app open and your iPhone unlocked. The app holds a secure connection to ExpressCharge in the background and listens for scan requests.
+
+<Screenshot alt="ExpresScan home screen showing the Ready to Scan hero" caption="The Ready to Scan screen. Keep this open while you wait for a scan prompt." />
+
+</TutorialStep>
+
+<TutorialStep title="Check that you're online">
+
+Look for a status chip below the hero text.
+
+- If no chip is shown, you're online and ready.
+- If you see **Connecting**, wait a moment — the app is linking to ExpressCharge.
+- If you see **Offline**, reconnect to Wi-Fi or cellular. The app will reconnect on its own.
+
+You can tap the chip to open the diagnostics sheet for more detail.
+
+</TutorialStep>
+
+<TutorialStep title="Wait for the scan prompt">
+
+When the charging station or an admin starts a scan for you, your iPhone vibrates and the screen changes. You'll see:
+
+- A large upward chevron pointing at the top edge of your iPhone.
+- A countdown indicator in the top-right corner showing how many seconds you have left.
+- A subheading describing what the scan is for — for example, "Use this card to sign in" or "Add this card to your account."
+
+The iPhone's built-in NFC reader sheet also slides up from the bottom of the screen.
+
+<Screenshot alt="Scan active screen with an upward chevron and countdown" caption="The chevron points at your iPhone's NFC antenna. The countdown shows time remaining." />
+
+</TutorialStep>
+
+<TutorialStep title="Hold your EV card to the top of your iPhone">
+
+Hold your EV card flat against the **top edge** of your iPhone — that's where the NFC antenna is. Keep it there until the phone reads the card.
+
+<Aside type="tip">
+If your iPhone is in a thick case, hold the card a bit firmer or remove the case. NFC range is short.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Confirm the result on screen">
+
+Once the card is read, the app switches to a result screen showing whether the scan succeeded.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've started the charge when:
+
+- The success screen appears in ExpresScan.
+- The charging station begins charging your vehicle (a light turns on, the connector locks, or your car shows charging in progress).
+
+## Troubleshooting
+
+**The countdown ran out before I could tap.**
+Ask the charging station or admin to start a new scan. Each scan request has a server-set expiry — once it runs out, you need a fresh one.
+
+**My iPhone didn't vibrate.**
+Check the status chip on the Ready screen. If it shows **Offline** or **Connecting**, your phone wasn't linked to ExpressCharge when the scan was sent. Reconnect to the internet and ask for a new scan.
+
+**The card didn't read.**
+Hold the card against the very top edge of your iPhone, not the back or middle. If you have a thick case or a wallet with other cards, remove them and try again.
+
+**I want to stop a scan in progress.**
+Tap **Cancel** on the iOS NFC sheet, or tap the **Cancel** button on the ExpresScan screen. The person who started the scan will be notified.
+
+:::caution
+Don't sign out while you're waiting for a scan. Signing out drops the connection to ExpressCharge, and you won't receive scan requests until you sign back in.
+:::
+
+## Related
+
+- [How ExpresScan keeps you connected](/user/ios/connection/)
+- [Add a new EV card to your account](/user/ios/cards/add-card/)
+- [Sign in with your EV card](/user/ios/auth/sign-in-with-card/)

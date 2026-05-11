@@ -1,0 +1,343 @@
+---
+title: Phase 2 — Configure DNS + Cloudflare email
+description: Set up DNS records, email authentication, and the Cloudflare Email Worker before Polaris Express can send transactional mail.
+sidebar:
+  order: 20
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - email-worker/README.md
+  - web/docs/POLARIS-DEPLOY.md
+last_authored: 2025-01-15
+prompt_template: selfhost-phase
+---
+
+import { Tutorial, TutorialStep } from "@trayce/starlight-tutorial";
+import { Aside, FileTree } from "@astrojs/starlight/components";
+import EnvVar from "~/components/EnvVar.astro";
+import { PackageManagers } from "starlight-package-managers";
+
+This phase prepares the DNS surface and outbound email path for Polaris
+Express. By the end of it, your domain will resolve to your Traefik
+entry, mail sent from Polaris will be SPF/DKIM/DMARC-authenticated, and
+the Cloudflare Email Worker will be live at `mail.<your-domain>` ready
+to accept signed `POST /send` requests from the Fresh app.
+
+This phase runs **after** you've provisioned a host and decided on a
+domain (Phase 1), and **before** you start the Fresh container and
+flip Traefik (Phase 3). Skipping it means magic links never reach
+inboxes — there is no fallback SMTP path.
+
+## Prerequisites
+
+- Phase 1 (host provisioning) complete. You know the public IPv4 / IPv6
+  of your Traefik entry.
+- DNS control over the domain you intend to use (referred to below as
+  `example.com`). You can edit A, AAAA, CNAME, and TXT records.
+- A Cloudflare account on the **Workers Paid plan** (~$5/mo). The free
+  plan cannot bind `send_email`.
+- The zone added to Cloudflare with **Email Routing** enabled.
+- An R2 bucket (or other public-readable origin) for brand assets,
+  reachable at `assets.<your-domain>`.
+- `npm` and `npx wrangler` available locally — you'll deploy the
+  Worker from your workstation, not the production host.
+- A mailbox you can read for `dmarc-reports@<your-domain>` (a
+  forwarding rule via Email Routing is fine).
+
+## Steps
+
+<Tutorial>
+
+<TutorialStep title="Add DNS records for the three hostnames">
+
+Create A (and AAAA, if you have v6) records pointing the customer,
+admin, and mail hostnames at the same Traefik entry. Add a CNAME for
+the assets host pointing at your R2 bucket.
+
+```dns title="zone: example.com"
+manage.example.com   3600  IN  A      <traefik-ipv4>
+example.com          3600  IN  A      <traefik-ipv4>
+mail.example.com     3600  IN  A      <traefik-ipv4>
+assets.example.com   3600  IN  CNAME  <r2-bucket>.r2.cloudflarestorage.com.
+```
+
+The `mail.example.com` record is the public route for the Email
+Worker; Cloudflare's edge will intercept it once you add a Worker
+Route in step 4. Until then it harmlessly resolves at Traefik and 404s.
+
+<Aside type="note">
+If you're migrating from a legacy hostname (e.g. `expressync.polaris.gdn`),
+keep its DNS pointing at the same Traefik entry for the 301-redirect
+grace period. Plan to remove it after ~90 days.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Publish SPF, DKIM, and DMARC records">
+
+These three TXT records authorize Cloudflare to send on behalf of your
+domain and tell receiving mail servers what to do with messages that
+fail authentication.
+
+```dns title="zone: example.com"
+;; SPF — authorize Cloudflare's outbound mail
+example.com.   3600  IN  TXT
+  "v=spf1 include:_spf.mx.cloudflare.net -all"
+
+;; DMARC — start in monitoring mode
+_dmarc.example.com.   3600  IN  TXT
+  "v=DMARC1; p=none; rua=mailto:dmarc-reports@example.com; fo=1; aspf=r; adkim=r; pct=100"
+```
+
+DKIM is **not** added by hand. Once Email Service is enabled on the
+zone (next step) Cloudflare auto-generates a selector and shows a
+CNAME in the dashboard — add that record then.
+
+<Aside type="caution">
+Start DMARC at `p=none`. Escalate only after you see clean reports:
+
+- 30 days clean → `p=quarantine`
+- 60 days clean → `p=reject`
+
+Jumping straight to `p=reject` will silently drop legitimate mail
+during cutover if SPF or DKIM aren't aligned.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Enable Cloudflare Email Service on the zone">
+
+In the Cloudflare dashboard for the zone:
+
+1. Navigate to **Email → Email Routing** and confirm routing is enabled
+   (it should be from the prerequisites).
+2. Navigate to **Email → Email Sending** (or **Email Service**) and
+   enable the service. This is currently in public beta on Workers Paid.
+3. Cloudflare will display a DKIM CNAME. Add it to your zone:
+
+   ```dns
+   <selector>._domainkey.example.com.   3600  IN  CNAME  <selector>.dkim.cloudflare.net.
+   ```
+
+4. Wait for the dashboard to mark DKIM as **Verified** before
+   continuing. This typically takes a few minutes.
+
+<Aside type="note">
+Email Service availability varies by account age and region. If the
+option isn't visible, contact Cloudflare support — the rest of this
+phase will fail at deploy time without it.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Upload brand assets to the R2 origin">
+
+The email templates inline-reference four PNGs by URL. They **must**
+exist before the first send or images will appear broken in customer
+inboxes (Outlook strips inline SVG, so PNG is mandatory).
+
+Upload to `https://assets.example.com/email/`:
+
+<FileTree>
+- email/
+  - polaris-logo-160.png  160×40, customer brand
+  - polaris-logo-320.png  320×80, retina
+  - expressync-logo-160.png  160×40, admin brand
+  - expressync-logo-320.png  320×80, retina
+</FileTree>
+
+Verify each is reachable over HTTPS:
+
+```sh
+curl -I https://assets.example.com/email/polaris-logo-160.png
+# HTTP/2 200
+# content-type: image/png
+```
+
+</TutorialStep>
+
+<TutorialStep title="Create the KV namespace for nonce dedup">
+
+The Email Worker rejects replayed requests by hashing each request's
+nonce into a Cloudflare KV namespace. Create the namespace (production
+and preview) from your workstation:
+
+<PackageManagers type="exec" pkg="wrangler" args="kv namespace create EMAIL_NONCE_DEDUP" />
+
+<PackageManagers type="exec" pkg="wrangler" args="kv namespace create EMAIL_NONCE_DEDUP --preview" />
+
+Each command prints an ID. Open `cloudflare/email-worker/wrangler.jsonc`
+and replace the placeholders:
+
+```jsonc title="cloudflare/email-worker/wrangler.jsonc"
+{
+  "kv_namespaces": [
+    {
+      "binding": "EMAIL_NONCE_DEDUP",
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID",
+      "preview_id": "REPLACE_WITH_KV_PREVIEW_ID"
+    }
+  ]
+}
+```
+
+with the real IDs from the two `wrangler` commands.
+
+</TutorialStep>
+
+<TutorialStep title="Generate and store the signing secret">
+
+The Fresh app HMAC-signs every request to the Worker; the Worker
+verifies the signature before sending. Generate a fresh secret and push
+it to the Worker:
+
+```sh
+openssl rand -base64 32
+# Copy the output — you'll paste it twice.
+
+cd cloudflare/email-worker
+npx wrangler secret put POLARIS_SECRET_A
+# Paste the secret when prompted.
+```
+
+**Save the same value** — you'll set it as <EnvVar name="CF_EMAIL_WORKER_SECRET" />
+on the Fresh app in Phase 3. The two sides must match exactly.
+
+<Aside type="danger">
+Do not commit this secret to git, do not paste it into chat logs, and
+do not reuse it across environments. If it leaks, rotate per the
+[Worker secret rotation runbook](/selfhost/runbooks/rotate-email-worker-secret/).
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Deploy the Worker">
+
+Confirm the config parses, then deploy:
+
+<PackageManagers type="exec" pkg="wrangler" args="deploy --dry-run" />
+
+If that succeeds:
+
+<PackageManagers type="exec" pkg="wrangler" args="deploy" />
+
+The output will include the Worker's `*.workers.dev` URL. Don't use
+that URL from the Fresh app — bind it to your domain instead.
+
+</TutorialStep>
+
+<TutorialStep title="Bind the Worker to mail.example.com">
+
+In the Cloudflare dashboard:
+
+1. Open **Workers & Pages → polaris-email-worker → Settings → Triggers**.
+2. Add a **Custom Domain** or **Route**:
+   - Pattern: `mail.example.com/*`
+   - Worker: `polaris-email-worker`
+3. Wait for the route to propagate (usually under a minute).
+
+</TutorialStep>
+
+</Tutorial>
+
+## Configure environment variables
+
+These vars belong on the **Worker** side (set via `wrangler secret put`
+or in `wrangler.jsonc` `vars`). The Fresh-side counterparts are set in
+Phase 3.
+
+| Name | Default | Required | Source |
+|---|---|---|---|
+| `POLARIS_SECRET_A` | _(none)_ | ✅ | `wrangler secret put` |
+| `POLARIS_SECRET_B` | _(none)_ | ⛔ optional — only set during rotation | `wrangler secret put` |
+| `TS_WINDOW_MS` | `300000` (5 min) | ⛔ | `wrangler.jsonc` `vars` |
+| `NONCE_TTL_SECONDS` | `600` | ⛔ | `wrangler.jsonc` `vars` |
+| `RATE_LIMIT_MAX` | `10` <!-- TODO: confirm --> | ⛔ | `wrangler.jsonc` `vars` |
+| `RATE_LIMIT_WINDOW_SECONDS` | `3600` <!-- TODO: confirm --> | ⛔ | `wrangler.jsonc` `vars` |
+
+If a value is unset, the Worker falls back to the defaults shown above
+— suitable for production. Override only if you have a specific reason
+(e.g. tighter replay window for a high-value tenant).
+
+The `from:` allowlist (`noreply@example.com`,
+`admin-noreply@example.com`) is hard-coded against the
+`send_email` bindings in `wrangler.jsonc`. Update both the binding
+names and the allowlist if you use different sender addresses.
+
+## Verify
+
+DNS:
+
+```sh
+dig +short example.com
+dig +short manage.example.com
+dig +short mail.example.com
+dig +short assets.example.com
+# All four should return your Traefik IP (or the R2 host for assets).
+
+dig +short TXT example.com | grep spf1
+# "v=spf1 include:_spf.mx.cloudflare.net -all"
+
+dig +short TXT _dmarc.example.com
+# "v=DMARC1; p=none; rua=mailto:dmarc-reports@example.com; …"
+```
+
+Worker reachability:
+
+```sh
+curl -i https://mail.example.com/send
+# HTTP/2 405 (Method Not Allowed) or 401 (unsigned) — both prove the
+# Worker is bound. A 522 or 404 means the route hasn't propagated.
+```
+
+Worker signature enforcement:
+
+```sh
+curl -i -X POST https://mail.example.com/send \
+  -H 'Content-Type: application/json' \
+  -d '{"to":"test@example.com"}'
+# HTTP/2 401 (missing X-Polaris-Sig)
+```
+
+DKIM:
+
+In the Cloudflare dashboard, **Email → Email Sending** should show
+DKIM as **Verified** and SPF as **Aligned**.
+
+A real end-to-end mail test waits until Phase 3, when the Fresh app
+exists to sign requests.
+
+## If something goes wrong
+
+**`wrangler deploy` fails with "send_email binding not supported"** —
+Email Service isn't enabled on the zone. Re-run step 3 and wait for
+DKIM verification before redeploying.
+
+**`mail.example.com` returns 522 / Cloudflare error** — the Worker
+Route in step 8 hasn't propagated, or the DNS record from step 1 is
+missing. Verify both.
+
+**DKIM stuck on "Pending" for >1 hour** — the CNAME in step 3 was
+copied incorrectly. Compare the trailing `.dkim.cloudflare.net.` part
+exactly. Some DNS UIs auto-append the zone — paste only the host part.
+
+**DMARC reports never arrive** — `dmarc-reports@example.com` doesn't
+resolve. Add an Email Routing rule in Cloudflare forwarding it to a
+real inbox.
+
+**`POLARIS_SECRET_A` accidentally committed** — rotate immediately
+following the [secret-rotation runbook](/selfhost/runbooks/rotate-email-worker-secret/).
+The two-secret design exists precisely for this.
+
+**Brand assets return 403 from R2** — the bucket isn't public. Either
+enable public access on the bucket or front it with a Cloudflare
+Worker that serves from R2.
+
+## Next phase
+
+With DNS, mail authentication, and the Worker live, you're ready for
+[Phase 3 — Deploy the Fresh container and flip Traefik](/selfhost/install/phase-3-deploy-fresh/),
+which brings up the customer and admin surfaces and wires
+<EnvVar name="CF_EMAIL_WORKER_URL" /> + <EnvVar name="CF_EMAIL_WORKER_SECRET" />
+into the app.

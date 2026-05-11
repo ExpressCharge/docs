@@ -1,0 +1,196 @@
+---
+title: Register an NFC scanner device
+description: Pair a new iPhone or laptop NFC scanner with Polaris Express using a one-time code and PKCE-gated registration flow.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/devices/[deviceId].tsx
+  - web/routes/api/devices/register.ts
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+When a new iPhone or laptop joins your scanner fleet, you pair it with
+the admin console so it can authenticate scans against Polaris Express.
+The handshake mints a `(deviceToken, deviceSecret)` pair that the
+iOS app holds in Keychain and presents on every subsequent request.
+Use this runbook when you unbox a new scanner, replace a lost device,
+or re-pair a device whose token you previously revoked.
+
+## Prerequisites
+
+- You are signed in to the admin console with the **admin** role.
+  Non-admins receive a 403 on the registration endpoint.
+- You have physical access to the device you want to register, and the
+  Polaris Express iOS app is installed on it.
+- The device is on a network that can reach `docs.polaris.express` (and
+  the API origin behind it).
+- You know the **owner** of the device — registration binds the device
+  to your admin user account as `ownerUserId`.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the Devices section">
+
+In the admin console, navigate to **Devices** in the sidebar, then
+click **Register device** in the page header.
+
+<Screenshot alt="Devices index page with the Register device button in the header" />
+
+</TutorialStep>
+
+<TutorialStep title="Generate a one-time code">
+
+The registration dialog mints a single-use code valid for **60 seconds**.
+The code is bound to a PKCE verifier that only your browser session
+holds — the iOS app must present the matching proof to redeem it.
+
+<Aside type="caution">
+The code is single-use and time-limited. If 60 seconds pass before the
+device redeems it, generate a new code. Do not screenshot or paste the
+code into chat — it's a credential.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Enter the code on the device">
+
+On the iPhone or laptop, open the Polaris Express app and tap **Pair
+with admin**. Enter the one-time code shown in the browser.
+
+The app collects these fields and submits them to
+<Endpoint method="POST" path="/api/devices/register" />:
+
+- **Label** — a human-readable name for the device (max 120 chars).
+  Use something operators will recognise in the fleet list, e.g.
+  "Front-desk iPhone 14" or "Service van laptop".
+- **Platform** — `ios`, `macos`, or `ipados`.
+- **Model**, **OS version**, **App version** — collected by the app.
+- **APNs environment** — `sandbox` for TestFlight builds, `production`
+  for App Store builds.
+- **Requested capabilities** — at least one of the supported
+  capabilities (e.g. `managed`).
+
+</TutorialStep>
+
+<TutorialStep title="Confirm pairing on the device">
+
+The app submits the code along with its PKCE proof. On success the
+server responds with the device's `deviceToken`, `deviceSecret`, and
+the token's `expiresAtIso`. The app writes both values to Keychain
+immediately — they are never shown on screen and never returned again.
+
+<Aside type="danger">
+The `deviceToken` and `deviceSecret` are returned exactly once, in a
+`Cache-Control: no-store` response. If the device fails to persist
+them (app crash, Keychain write error), you must deregister the device
+and start over — there is no API to re-issue credentials for an
+existing device.
+</Aside>
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+After the device confirms pairing:
+
+1. Return to **Devices** in the admin console. The new device appears
+   in the fleet list with its label, platform, and owner email.
+2. Open the device's detail page (`/admin/devices/<deviceId>`). Confirm:
+   - **Registered** timestamp matches when you just paired.
+   - **Token count** is `1` and the active token's expiry is in the
+     future.
+   - **Push token** shows the last 8 characters if the app uploaded
+     an APNs token during registration.
+   - The device shows as **online** if the app has heartbeated within
+     the last 90 seconds.
+3. Check the audit log for two entries authored by your admin user:
+   - `device.registered`
+   - `device.token.issued`
+
+   Both carry the new `deviceId` in their metadata.
+
+<Screenshot alt="Device detail page showing the identity card, live status, and a single active token" />
+
+## If something goes wrong
+
+<Aside type="caution">
+
+**The app reports `invalid_code`.** The one-time code is wrong,
+expired (>60s old), or has already been redeemed. Generate a fresh
+code in the admin console and try again. The server deliberately
+collapses all four failure modes (mismatch, expired, replay,
+PKCE-fail) into a single response to prevent enumeration, so the app
+can't tell you which it was.
+
+</Aside>
+
+<Aside type="caution">
+
+**The app reports `invalid_platform` or `invalid_capabilities`.** The
+app sent a value the server doesn't recognise. Confirm the app version
+is current; the server only accepts `ios`, `macos`, and `ipados` as
+platforms.
+
+</Aside>
+
+<Aside type="caution">
+
+**The browser dialog times out before the device redeems the code.**
+Codes expire after 60 seconds. Close the dialog, reopen **Register
+device**, and generate a new code. The expired code is permanently
+unusable — no cleanup needed.
+
+</Aside>
+
+<Aside type="caution">
+
+**The request reaches the server but returns 500 `internal`.** Either
+the `devices` insert or the `device_tokens` insert failed. The server
+rolls back the device row automatically if the token insert fails, so
+you won't see a tokenless ghost device. Generate a new code and retry.
+If the error persists, check the server logs for `DeviceRegister`
+entries and escalate.
+
+</Aside>
+
+<Aside type="caution">
+
+**The device pairs but never appears online.** Open the device detail
+page and check **Last seen**. If it's blank or stale, the app isn't
+heartbeating — verify the device has network connectivity and that the
+app is running in the foreground. Push permission, NFC permission, and
+background refresh status are surfaced on the **Live status** card.
+
+</Aside>
+
+## Audit and reversibility
+
+Every registration writes two audit-log entries: `device.registered`
+(captures `deviceId`, `kind`, `platform`, `model`, `appVersion`, and
+the granted `capabilities`) and `device.token.issued` (captures
+`deviceId`, `tokenId`, and the first 8 chars of the token hash). Both
+are attributed to the admin user who minted the one-time code.
+
+To reverse a registration, open the device detail page and use the
+**Deregister** action in the header menu. Deregistration is
+soft-delete: the device row is marked `deletedAt`, its tokens are
+revoked, and the device can no longer authenticate. The audit trail
+is preserved. To pair the same physical device again afterwards, run
+this runbook from the top — you'll get a new `deviceId`.
+
+## Related
+
+- [Deregister an NFC scanner](/admin/devices/deregister/)
+- [Trigger a remote scan](/admin/devices/trigger-scan/)
+- [Manage device capabilities](/admin/devices/capabilities/)
+- [<Glossary term="Audit log">Audit log</Glossary> reference](/admin/audit-log/)

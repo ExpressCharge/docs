@@ -1,0 +1,93 @@
+---
+title: Cancel a reservation
+description: Cancel an upcoming charger reservation from its detail page on the Polaris Express web app.
+sidebar:
+  order: 30
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/reservations/[id].tsx
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+If your plans change and you no longer need a charger you booked, you can cancel the reservation from its detail page. This tutorial walks you through finding the reservation and cancelling it on the web app. You need a Polaris Express account with at least one active reservation.
+
+## Before you start
+
+- Sign in to the web app at `polaris.express`.
+- Have the reservation you want to cancel in mind — the date, time, or charger helps you find it.
+
+<Tutorial goal="Cancel an upcoming reservation" estimatedMinutes={2}>
+
+<TutorialStep title="Open your reservations list">
+
+From the sidebar, go to **Reservations**. You'll see your bookings listed there.
+
+<Screenshot alt="Reservations list in the customer sidebar" caption="The Reservations page lists every booking on your account." />
+
+</TutorialStep>
+
+<TutorialStep title="Open the reservation you want to cancel">
+
+Click the reservation you want to cancel. The detail page opens, titled **<Glossary term="Reservation">Reservation</Glossary> #** followed by the reservation's number. The header shows the reservation's status badge next to a **Cancel** button.
+
+<Screenshot alt="Reservation detail page with status badge and Cancel button in the header" caption="The detail page header shows the current status and the cancel control." />
+
+</TutorialStep>
+
+<TutorialStep title="Check the summary">
+
+Under **Summary**, confirm you have the right reservation. The tiles show:
+
+- **Date** — the day the reservation starts.
+- **Time** — the start and end time.
+- **Duration** — how long the slot lasts.
+- **Charger** — the <Glossary term="ChargeBox">ChargeBox</Glossary> and connector you booked.
+- **Card** — the <Glossary term="EV card">EV card</Glossary> linked to the reservation.
+
+If the identity strip is visible above the summary, you can also match the charger's <Glossary term="Public ID">Public ID</Glossary> to the sticker on the physical unit.
+
+</TutorialStep>
+
+<TutorialStep title="Cancel the reservation">
+
+In the header, click **Cancel**. Confirm when prompted.
+
+<Aside type="caution">
+  Cancelling is final. You'll need to create a new reservation if you change your mind.
+</Aside>
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+After you cancel:
+
+- The status badge in the header switches to the cancelled state.
+- A new **Cancelled** tile appears in the **Summary** section, showing the date and time the cancellation went through.
+
+If both of those appear, the cancellation is in.
+
+## Troubleshooting
+
+**The Cancel button isn't there.**
+The cancel control only appears for reservations that are still cancellable. If the reservation has already started, already finished, or is already cancelled, the button is hidden. <!-- TODO: confirm exact statuses that hide Cancel in CustomerReservationActions island -->
+
+**The page says "Reservation not found".**
+The reservation either doesn't exist or isn't on your account. Go back to **Reservations** and pick one from your own list.
+
+:::danger
+If a charging session has already started from this reservation, cancelling won't stop the session. Stop the session from the charger or from the session's detail page instead.
+:::
+
+## Related
+
+- [View your reservations](/user/web/reservations/list)
+- [Book a reservation](/user/web/reservations/create)
+- [Manage your EV cards](/user/web/cards/list)

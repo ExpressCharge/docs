@@ -1,0 +1,112 @@
+---
+title: Recover a stuck kiosk with the 5-tap gesture
+description: Use the hidden top-right corner gesture to reach Settings on an iPad in kiosk mode when web admin is unreachable.
+sidebar:
+  order: 10
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Kiosk/KioskShell.swift
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+When a kiosked iPad or iPhone is wedged — frozen on a screen, showing a stale connectivity error, or pointing at the wrong <Glossary term="ChargeBox">ChargeBox</Glossary> — your usual remedy is to remote-deregister it from web admin. This runbook covers the fallback for when web admin can't reach the device: a hidden on-device gesture that surfaces Settings so you can reconfigure or sign out by hand.
+
+## Prerequisites
+
+- Physical access to the kiosked device.
+- The device is in [<Glossary term="Kiosk mode">Kiosk mode</Glossary>](/glossary#kiosk-mode) (chrome stripped, no toolbar, status bar hidden). If you can see the Settings gear in the toolbar, you are not in kiosk mode and should follow the normal Settings flow instead.
+- You know the device's expected ChargeBox and connector assignment, in case you need to re-pair after sign-out.
+
+<Aside type="note">
+  The 5-tap gesture is a UX escape valve, not a security control.
+  Anyone with hands on the device can reach Settings this way. Kiosk
+  mode is for simplifying the operator experience, not for locking
+  the device down against tampering.
+</Aside>
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Locate the top-right corner zone">
+    The escape gesture lives in a 96-point square in the top-right corner of the screen, inset roughly 20 points from the top edge so it clears the iOS system-gesture strip. There is no visible affordance — the zone is the same place the Settings gear sits on an un-kiosked screen, so aim there.
+
+    <Screenshot alt="Kiosked screen with the top-right tap zone highlighted" />
+  </TutorialStep>
+
+  <TutorialStep title="Tap five times in quick succession">
+    Tap the corner five times in a row. Each of the first four taps fires a light haptic so you know the zone is registering. Don't pause for more than two seconds between taps — the counter resets after a pause so a stray tap during normal use can't slowly arm the escape.
+
+    If you feel no haptic on the first tap, you are missing the zone. Aim slightly lower and further from the very top edge, then start over.
+  </TutorialStep>
+
+  <TutorialStep title="Confirm the escape with the success haptic">
+    On the fifth tap you'll feel a stronger success haptic and the Settings sheet will slide up over the kiosked content. The kiosked screen stays loaded underneath — you have not signed out yet.
+
+    <Screenshot alt="Settings sheet presented over a kiosked screen" />
+  </TutorialStep>
+
+  <TutorialStep title="Do what you came to do">
+    The sheet is the standard Settings UI. From here you can:
+
+    - Sign out of the device (Settings → Account).
+    - Re-pair to a different ChargeBox or connector.
+    - Open **Connectivity → Diagnostics** to inspect the WebSocket state, last [sync run](/glossary#sync-run), and recent errors.
+    - Toggle [<Glossary term="Feature flag">feature flags</Glossary>](/glossary#feature-flag) if you're chasing a known issue.
+
+    When you're done, swipe the sheet down to dismiss it. The device returns to kiosk chrome with no other state changed.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+- The haptic pattern (four light, one success) is your in-the-moment confirmation that the gesture fired.
+- After you dismiss the sheet, the device should be back in kiosk chrome — no toolbar, no status bar, no tab bar.
+- If you signed the device out or re-paired it, check the **Devices** section of web admin: the device's last-seen timestamp should update within a few seconds of it reconnecting, and any pairing change will appear in the [audit log](/glossary#audit-log).
+
+## If something goes wrong
+
+<Aside type="caution">
+  **The first tap or two get eaten.** The zone is inset 20 points
+  from the top to clear iOS's reserved system-gesture strip, but if
+  you tap too close to the very top edge you may pull down Control
+  Center or Notification Center instead. Aim for the middle of the
+  corner zone, not the edge.
+</Aside>
+
+<Aside type="caution">
+  **You pause mid-sequence and nothing happens.** The tap counter
+  resets after roughly two seconds of inactivity. Start over and tap
+  the full five times without pausing.
+</Aside>
+
+<Aside type="caution">
+  **A modal or alert is on top of the content.** The escape zone is
+  layered on the kiosk wrapper, so a full-screen system alert (for
+  example an iOS permission prompt) can sit above it and absorb your
+  taps. Dismiss the alert first, then retry the gesture.
+</Aside>
+
+<Aside type="danger">
+  **You sign out and the device can't reach the network.** Once
+  signed out, the device needs network connectivity to pair again. If
+  the underlying issue is connectivity, do not sign out — use
+  **Settings → Connectivity → Diagnostics** to investigate first. A
+  signed-out device on a dead network is a truck roll.
+</Aside>
+
+## Audit and reversibility
+
+- The gesture itself is not audited — it only opens a local sheet and changes no server state.
+- Any action you take inside Settings (sign-out, re-pair, flag toggles) is audited the same way it would be from a non-kiosked device. Check the audit log for the device's [<Glossary term="Public ID">Public ID</Glossary>](/glossary#public-id) to confirm.
+- The gesture leaves no persistent state on the device. Dismissing the sheet returns the device to its previous kiosked screen.
+
+## Related
+
+- [Kiosk mode overview](/admin/ios/kiosk/overview)
+- [Remote-deregister a device from web admin](/admin/web/devices/remote-deregister)
+- [Run diagnostics on a kiosked device](/admin/ios/kiosk/diagnostics)

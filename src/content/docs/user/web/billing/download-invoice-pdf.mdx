@@ -1,0 +1,84 @@
+---
+title: Download an invoice PDF
+description: Save a PDF copy of any invoice on your Polaris Express account from the web dashboard.
+sidebar:
+  order: 20
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/customer/invoices/[id]/pdf.ts
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+You want a PDF of one of your charging invoices — for expense reports, tax records, or your own files. This guide walks you through requesting that PDF from the web dashboard. You need a Polaris Express account and at least one invoice on file.
+
+## Before you start
+
+- Sign in to the web dashboard at `polaris.express` with the account that owns the invoice.
+- Have the invoice open or know its number, so you can find it in your billing history.
+
+<Tutorial goal="Download a PDF copy of an invoice" estimatedMinutes={2}>
+
+<TutorialStep title="Open your billing history">
+
+From the dashboard, go to the **Billing** section. You'll see a list of your invoices, most recent first.
+
+<Screenshot alt="Billing history page listing the driver's invoices" caption="Your invoices appear with date, amount, and status." />
+
+</TutorialStep>
+
+<TutorialStep title="Open the invoice you want">
+
+Click the invoice you want to save. The invoice detail page opens with the line items and totals.
+
+</TutorialStep>
+
+<TutorialStep title="Request the PDF">
+
+Click **Download PDF**. The dashboard asks our billing system to prepare the file.
+
+<Aside type="note">
+The PDF is generated on demand. If this is the first time anyone has asked for this invoice as a PDF, it may take a few seconds.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Wait for the file, or retry">
+
+One of two things happens:
+
+- **The PDF is ready.** Your browser downloads the file, or opens it in a new tab.
+- **The PDF is still being prepared.** The dashboard tells you generation is pending. Wait a few seconds, then click **Download PDF** again.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've succeeded when the PDF opens in your browser or lands in your Downloads folder. Open it and confirm the invoice number and total match what you saw on screen.
+
+## Troubleshooting
+
+**"Invoice not found."**
+This invoice isn't linked to the account you're signed in with. Sign out and sign back in with the account that received the invoice. If you believe the invoice belongs to you, contact support.
+
+**"Failed to request PDF."**
+Our billing system didn't respond. Wait a minute and try again. If it keeps failing, contact support with the invoice number.
+
+**The download never finishes, and retrying keeps showing "pending."**
+PDF generation usually completes within a few seconds. If it stays pending for more than a minute or two, contact support — something on the billing side is stuck.
+
+:::caution
+Don't share invoice PDFs publicly. They contain your name, address, and charging history.
+:::
+
+## Related
+
+- [View your charging history](/user/web/charging/history/)
+- [Update your billing address](/user/web/billing/update-address/)
+- [Glossary: <Glossary term="Lago">Lago</Glossary> customer](/glossary/#lago-customer)

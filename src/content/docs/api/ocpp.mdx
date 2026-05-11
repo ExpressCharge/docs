@@ -1,0 +1,37 @@
+---
+title: OCPP webhook endpoints
+description: Webhook receivers for OCPP events forwarded from SteVe.
+sidebar:
+  order: 50
+persona: Developer
+surface: n/a
+tier: P0
+code_refs:
+  - web/routes/api/ocpp/
+last_authored: 2025-01-15
+prompt_template: api-reference
+---
+
+import Glossary from "@components/Glossary.astro";
+
+<!-- TODO: handler not found -->
+
+The `/api/ocpp/*` namespace receives webhook callbacks from [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve) when [<Glossary term="OCPP">OCPP</Glossary>](/glossary#ocpp) events occur on a [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) — session lifecycle, [<Glossary term="Meter value">meter values</Glossary>](/glossary#meter-value), status notifications, and authorization checks. Polaris Express consumes these events to drive session state, billing, and live UI updates.
+
+These endpoints are server-to-server. They are not part of the customer or admin API surface.
+
+## Base URL
+
+```
+https://admin.polaris.express
+```
+
+## Authentication
+
+<!-- TODO: handler not found — auth scheme (shared secret header, mTLS, or IP allowlist) cannot be confirmed without the route handlers. -->
+
+## Endpoints
+
+<!-- TODO: handler not found -->
+
+No route handlers were available under `web/routes/api/ocpp/` at the time of authoring. Endpoint contracts (paths, payload shapes, response codes) cannot be documented without inspecting the handler source. This page will be filled in once the handler files are accessible.

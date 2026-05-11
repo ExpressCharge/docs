@@ -1,0 +1,290 @@
+---
+title: Phase 9 — First boot and health checks
+description: Bring the stack up for the first time and confirm every service is healthy before opening it to traffic.
+sidebar:
+  order: 9
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - docker-compose.yml
+last_authored: 2025-01-15
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import { Aside, FileTree } from "@astrojs/starlight/components";
+import EnvVar from "../../../components/EnvVar.astro";
+
+This is the moment of truth. With DNS, certificates, the database, the
+reverse proxy, [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve), and the email worker all wired
+up, you bring the Polaris Express web stack online for the first time
+and verify that every container reports healthy.
+
+This phase does not put load on the system. It confirms that the
+plumbing works. The next phase covers creating the first admin account
+and exercising a real charging session.
+
+## Prerequisites
+
+- Phases 1–8 complete. In particular:
+  - `web/.env` exists and is populated for your domain.
+  - Postgres credentials in `web/.env` match what you intend to use.
+  - DNS for your app hostname resolves to this host.
+  - TLS termination (Caddy, Traefik, or your fronting proxy) is
+    configured and pointed at `localhost:8000`.
+  - SteVe is reachable from the app container on its OCPP-J port.
+  - The email worker is deployed (or running under `wrangler dev`) and
+    its URL is in <EnvVar name="CF_EMAIL_WORKER_URL" />.
+- The `polaris-express` repo is checked out at the commit you intend to
+  deploy, with the `web/` submodule initialised:
+
+  ```sh
+  git submodule update --init --recursive
+  ```
+
+- Docker Engine 24+ and the Compose v2 plugin (`docker compose`, not
+  `docker-compose`).
+
+## Steps
+
+<Tutorial>
+
+<TutorialStep title="Verify the compose file resolves">
+
+From the repo root, ask Compose to parse the stack without starting
+anything. This catches missing env vars and bad references before
+containers spin up.
+
+```sh
+docker compose config --quiet
+```
+
+If this prints nothing, the file is valid. If it complains about an
+undefined variable, fix `web/.env` before continuing — Compose will not
+fall back to defaults for required values.
+
+</TutorialStep>
+
+<TutorialStep title="Build the web image">
+
+The `app`, `migrate`, and `sync` services all share the same image
+built from `web/Dockerfile`. Build it once explicitly so the first
+`up` doesn't conflate build errors with runtime errors.
+
+```sh
+docker compose build app
+```
+
+First builds take 3–6 minutes depending on the host.
+
+</TutorialStep>
+
+<TutorialStep title="Start Postgres alone and wait for it to be healthy">
+
+Postgres is the foundation. Bring it up first and wait for its
+healthcheck to pass before letting the migrate job touch it.
+
+```sh
+docker compose up -d postgres
+docker compose ps postgres
+```
+
+Re-run `docker compose ps postgres` until the `STATUS` column shows
+`healthy` (not just `running`). This usually takes 10–20 seconds.
+
+The healthcheck runs `pg_isready -U ocpp_user -d ocpp_billing`. If your
+<EnvVar name="POSTGRES_USER" /> or <EnvVar name="POSTGRES_DB" /> in
+`web/.env` differ from those defaults, the healthcheck will never pass
+and the dependent services will refuse to start.
+
+<Aside type="caution">
+The `pg_isready` check is hardcoded against `ocpp_user` and
+`ocpp_billing`. Keep those names in `web/.env` unless you're prepared
+to override the healthcheck in a compose override file.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Run the migration job">
+
+The `migrate` service runs `deno task db:migrate` once and exits. It
+depends on `postgres` being healthy, so Compose will block until that
+condition is met.
+
+```sh
+docker compose up migrate
+```
+
+Watch the output. Expected outcome:
+
+- Migration messages stream past.
+- The container exits with code `0`.
+- Compose returns you to the shell.
+
+If you see a non-zero exit, **do not proceed**. Read the logs, fix the
+underlying problem (almost always a bad `DATABASE_URL`, a Postgres
+permission issue, or a schema collision with a pre-existing database),
+and re-run this step. The migrate job is idempotent — re-running on a
+partially-migrated database is safe.
+
+</TutorialStep>
+
+<TutorialStep title="Start the app and sync worker">
+
+With the schema in place, bring up the long-running services.
+
+```sh
+docker compose up -d app sync
+```
+
+Both should reach `running` within ~10 seconds. Tail logs to watch the
+boot sequence:
+
+```sh
+docker compose logs -f app sync
+```
+
+You're looking for, in the `app` logs:
+
+- A `Listening on http://0.0.0.0:8000` (or equivalent) line.
+- No repeated stack traces.
+
+And in the `sync` logs:
+
+- A "[sync run](/glossary#sync-run) started" or scheduler line.
+- No connection errors against Postgres or SteVe.
+
+Press `Ctrl-C` to detach from logs — the containers keep running.
+
+</TutorialStep>
+
+<TutorialStep title="Confirm all four containers are up">
+
+```sh
+docker compose ps
+```
+
+You should see:
+
+| Service    | Expected state                  |
+| ---------- | ------------------------------- |
+| `postgres` | `running` (healthy)             |
+| `migrate`  | `exited (0)`                    |
+| `app`      | `running`                       |
+| `sync`     | `running`                       |
+
+`migrate` having exited is correct — it's a one-shot job. If it shows
+`restarting`, something is wrong; see [If something goes
+wrong](#if-something-goes-wrong).
+
+</TutorialStep>
+
+</Tutorial>
+
+## Configure environment variables
+
+Every service in the compose stack loads `web/.env` via `env_file`.
+There is no per-service env block — all variables live in one file.
+
+| Name | Default | Required | Source |
+| --- | --- | --- | --- |
+| <EnvVar name="POSTGRES_USER" /> | `ocpp_user` | yes | `web/.env` |
+| <EnvVar name="POSTGRES_PASSWORD" /> | _(none)_ | yes | `web/.env` |
+| <EnvVar name="POSTGRES_DB" /> | `ocpp_billing` | yes | `web/.env` |
+| <EnvVar name="DATABASE_URL" /> | _(none)_ | yes | `web/.env` |
+| <EnvVar name="CF_EMAIL_WORKER_URL" /> | _(none)_ | yes | `web/.env` |
+
+<Aside type="note">
+The compose file mounts `/var/run/docker.sock` into the `app`
+container. This is required for features that introspect or manage
+containers from the admin UI. If your host's Docker socket lives
+elsewhere (rootless Docker, Podman), adjust the bind mount in a
+compose override.
+</Aside>
+
+## Verify
+
+Run these from the host. They confirm the stack is reachable and
+internally consistent.
+
+**1. Direct app reachability.**
+
+```sh
+curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:8000/
+```
+
+Expect `200` or a `3xx` redirect to the login page. A `502` or
+connection refused means the `app` container isn't actually listening.
+
+**2. Through your reverse proxy.**
+
+```sh
+curl -fsS -o /dev/null -w "%{http_code}\n" https://app.example.com/
+```
+
+Substitute your real hostname. Expect the same as above. If this fails
+but step 1 succeeded, the problem is in your TLS-terminating proxy, not
+Polaris Express.
+
+**3. Database schema present.**
+
+```sh
+docker compose exec postgres \
+  psql -U ocpp_user -d ocpp_billing -c "\dt" | head -20
+```
+
+Expect a list of tables. An empty result means migrations didn't run.
+
+**4. Sync worker is alive.**
+
+```sh
+docker compose logs --tail 50 sync
+```
+
+You should see periodic activity. A worker that logged once at startup
+and has been silent for many minutes is suspicious — check that it can
+reach SteVe.
+
+## If something goes wrong
+
+**`migrate` keeps restarting.**
+The migrate service has `restart: "no"`, so if you see it restarting,
+you've added a restart policy in an override file. Remove it — migrate
+is meant to run once and exit.
+
+**`app` exits immediately with a Postgres connection error.**
+<EnvVar name="DATABASE_URL" /> in `web/.env` does not match the
+`postgres` service. Inside the compose network the host is `postgres`,
+not `localhost` or `127.0.0.1`. A working value looks like
+`postgresql://ocpp_user:PASSWORD@postgres:5432/ocpp_billing`.
+
+**`app` boots but `/` returns 500.**
+Usually a missing secret. Check `docker compose logs app` for the first
+stack trace after startup — it almost always names the missing
+variable.
+
+**Reverse proxy returns 502 but `curl http://localhost:8000/` works.**
+Your proxy is targeting the wrong upstream. Confirm it points at
+`localhost:8000` (or the Docker bridge IP if the proxy itself runs in
+a container that isn't on the host network).
+
+**Healthcheck on `postgres` never goes green.**
+The `pg_isready` command inside the container is checking for
+`ocpp_user` / `ocpp_billing` specifically. If you changed those names
+in `web/.env`, either change them back or override the healthcheck in
+`compose.override.yml`.
+
+<Aside type="danger">
+Do not `docker compose down -v` to "start clean" once you've run
+migrate against a real database. The `-v` flag deletes the
+`postgres_data` volume. Use `docker compose down` (no `-v`) to stop
+containers while keeping data.
+</Aside>
+
+## Next phase
+
+With the stack healthy, you're ready to [create the first admin
+account and run a smoke-test charging session](/selfhost/phase-10-first-admin/).

@@ -1,0 +1,147 @@
+---
+title: Unlink or reassign an EV card
+description: Move an EV card to a different customer, or detach it entirely, without deleting the card from SteVe.
+sidebar:
+  order: 20
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/tags/[tagPk]/edit.tsx
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+Use this runbook when a customer hands back an <Glossary term="EV card">EV card</Glossary>, when a card was
+linked to the wrong [<Glossary term="Lago">Lago</Glossary> customer](/glossary#lago-customer), or when
+you need to move a card under a different [parent tag](/glossary#idtag)
+in the hierarchy. The card itself stays in [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve);
+only its [user mapping](/glossary#user-mapping) and parent relationship
+change.
+
+## Prerequisites
+
+- You have operator access to the admin web console.
+- SteVe is reachable. If it isn't, the edit page falls back to a
+  mapping-only view and the parent picker will be empty.
+  <!-- TODO: confirm fallback UX copy -->
+- You know the card's `idTag` or its `ocppTagPk`.
+- If you're reassigning to a different parent, the destination parent
+  already exists and is marked as a meta tag.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the card's detail page">
+
+From **Tags** in the sidebar, find the card by its `idTag` or display
+name and click into it. You should land on `/tags/[pk]`.
+
+<Screenshot alt="Tags list with a card selected" />
+
+</TutorialStep>
+
+<TutorialStep title="Open the edit form">
+
+Click **Edit**. You'll be taken to `/admin/tags/[tagPk]/edit`, titled
+**Edit EV Card**.
+
+The `idTag` field is read-only — the <Glossary term="OCPP">OCPP</Glossary> identifier can't be renamed.
+Everything else (display name, notes, tag type, parent, active flag)
+is editable.
+
+<Screenshot alt="Edit EV Card form" />
+
+</TutorialStep>
+
+<TutorialStep title="Reassign the parent (optional)">
+
+To move the card under a different customer or group:
+
+1. Scroll to the **Parent** picker.
+2. Pick the new parent from the grid. Only tags flagged as meta tags
+   appear here, and the card itself is excluded from the list.
+3. To detach the card from any parent, clear the selection.
+
+<Aside type="caution">
+  Changing the parent changes which [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer)
+  the card's sessions roll up to on the next [sync run](/glossary#sync-run).
+  Sessions that already closed under the previous parent are not
+  retroactively re-billed.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Unlink without reassigning (optional)">
+
+If the card should no longer authorize charging at all:
+
+1. Clear the parent.
+2. Toggle **Active** off.
+
+This leaves the card in SteVe but stops it from starting new sessions.
+
+</TutorialStep>
+
+<TutorialStep title="Save">
+
+Click **Save**. If you arrived here from the create-card wizard
+(`?next=link`), the button reads **Continue** instead and you'll be
+sent on to the link step.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+- The card's detail page at `/tags/[pk]` shows the new parent (or no
+  parent) and the updated active flag.
+- The [audit log](/glossary#audit-log) shows a tag-edit entry for your
+  operator account.
+  <!-- TODO: confirm audit log entry shape for tag edits -->
+- On the next [sync run](/glossary#sync-run), new sessions on this card
+  attribute to the new [Lago customer](/glossary#lago-customer). Check
+  the sync run feed to confirm the mapping flowed through.
+
+## If something goes wrong
+
+<Aside type="caution">
+  **The parent picker is empty.** SteVe is likely unreachable, so the
+  loader fell back to mapping-only mode. You can still edit display
+  name, notes, and the active flag, but reparenting requires SteVe.
+  Wait for SteVe to come back, then retry.
+</Aside>
+
+<Aside type="caution">
+  **The page redirected you to `/tags`.** Either the `tagPk` in the URL
+  isn't a number, or no tag and no user mapping exist for that PK.
+  Re-find the card from the **Tags** list and try again.
+</Aside>
+
+<Aside type="caution">
+  **The customer reports the card still starts sessions after you set
+  it inactive.** SteVe caches authorization state. Sessions that were
+  already authorized before you saved may complete normally. New
+  authorization attempts will be rejected.
+</Aside>
+
+## Audit and reversibility
+
+- Every save writes an entry to the [audit log](/glossary#audit-log)
+  with the previous and new values for parent, active state, tag type,
+  display name, and notes.
+- To reverse a reassignment, edit the card again and pick the original
+  parent. The `idTag` never changes, so prior session history stays
+  attached to the card itself.
+- Toggling **Active** is non-destructive: re-enabling the card restores
+  authorization on the next SteVe sync.
+
+## Related
+
+- [Link a new EV card to a customer](/admin/cards/link-new-card)
+- [Sync runs and what they reconcile](/admin/sync/overview)
+- [Glossary: user mapping](/glossary#user-mapping)

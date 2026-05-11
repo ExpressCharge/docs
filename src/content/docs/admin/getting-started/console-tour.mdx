@@ -1,0 +1,141 @@
+---
+title: Admin console tour
+description: Orient yourself in the ExpressCharge admin console — the dashboard, the navigation, and what each section is for.
+sidebar:
+  order: 1
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/index.tsx
+  - web/src/lib/admin-navigation.ts
+last_authored: 2026-05-12
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside } from "@astrojs/starlight/components";
+import { Tutorial, TutorialStep } from "@/components/Tutorial";
+import { Screenshot } from "@/components/Screenshot";
+
+The admin console is your war-room for the ExpressCharge fleet. This runbook walks a new operator through the dashboard and the sidebar so you know where to look when something needs attention — live sessions, an in-flight [sync run](/glossary#sync-run), or a [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) that's gone offline.
+
+## Prerequisites
+
+- An admin account on `manage.polaris.express`. Non-admins see a reduced sidebar (the System section and a few admin-only items are hidden).
+- At least one [ChargeBox](/glossary#chargebox) registered in [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve), or you'll land on the first-run welcome banner instead of the dashboard.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Sign in and land on the dashboard">
+
+Sign in at `manage.polaris.express`. The root path renders the ExpressCharge dashboard — system pulse, live sessions, and fleet health on a single page.
+
+<Screenshot alt="ExpressCharge dashboard with header strip, KPI tiles, and 2×2 section grid" />
+
+If you've never registered a charger and have no [<Glossary term="Sync run">sync runs</Glossary>](/glossary#sync-run) yet, you'll see a welcome banner instead of the dashboard tiles. Follow its **Register an <Glossary term="EV card">EV card</Glossary>** link to start the onboarding flow.
+
+</TutorialStep>
+
+<TutorialStep title="Read the header strip">
+
+The strip across the top of the dashboard is the system pulse. From left to right it shows:
+
+- **Sync tier** and the time of the next scheduled run.
+- An **in-flight sync indicator** when a run is currently executing.
+- **Chargers online** out of total.
+- **Unread alerts** count.
+
+Click the in-flight indicator to jump straight to the active run's progress page.
+
+</TutorialStep>
+
+<TutorialStep title="Scan the KPI strip">
+
+Below the header is the interactive stat strip. Each cell is a navigational shortcut:
+
+- **kWh today** — total energy delivered since midnight.
+- **Active sessions** — count of currently charging sessions.
+- **Chargers online / offline**.
+- **Pending <Glossary term="Reservation">reservations</Glossary>**.
+- **Sync success (7d)** — percent of [sync runs](/glossary#sync-run) that completed cleanly in the last seven days.
+
+Click any cell to drill into its source surface.
+
+</TutorialStep>
+
+<TutorialStep title="Use the four section cards">
+
+The 2×2 grid below the KPI strip is the operator's main view:
+
+- **Live now** (top-left, emerald) — currently active charging sessions, kept fresh over [<Glossary term="SSE">SSE</Glossary>](/glossary#sse). The card glows while sessions are present.
+- **Active sync run / Sync schedule** (top-right, blue) — when a [sync run](/glossary#sync-run) is in flight, this card shows live segment progress and glows. Otherwise it shows the current tier and next run.
+- **Health** (bottom-left, cyan) — operational warning rollups. Auto-revalidates every 30 seconds.
+- **This week** (bottom-right, cyan) — last 7-day rollups for kWh delivered, [sync runs](/glossary#sync-run), [EV cards](/glossary#ev-card) activated, and reservations completed. Each tile carries the accent of its destination page.
+
+Card bodies scroll internally on `lg+` viewports — the page itself is locked to the viewport so the dashboard never scrolls the whole window.
+
+</TutorialStep>
+
+<TutorialStep title="Learn the sidebar">
+
+The sidebar groups every operator surface into four sections:
+
+- **Devices** — `/admin/devices`. Unified listing of chargers and scanners. Legacy `/admin/chargers` links 302-redirect here with `?type=charger`.
+- **Sessions** — Charging Sessions (`/transactions`) and Reservations (`/reservations`).
+- **Billing & Customers** — Invoices (`/invoices`), Users (`/users`), and EV Cards (`/tags`).
+- **System** *(admin-only)* — Sync (`/sync`), Feature Flags (`/admin/feature-flags`), Notifications (`/admin/notifications`), and Webhook Events (`/admin/webhook-events`).
+
+Non-admin users don't see the System section or any item marked admin-only.
+
+</TutorialStep>
+
+<TutorialStep title="Open the command palette">
+
+Press `⌘K` (or `Ctrl+K` on Windows/Linux) anywhere in the console to open the command palette. The **Navigate** group mirrors the sidebar and ranks recently-visited items first, so you can jump to any surface without touching the mouse.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You're oriented correctly when:
+
+- The dashboard renders with the header strip, KPI strip, and four section cards (not the welcome banner).
+- The **Live now** card glows when at least one session is active.
+- The **Sync** card glows and shows segment progress when a [sync run](/glossary#sync-run) is in flight.
+- Clicking a sidebar item highlights it and loads the matching surface.
+- `⌘K` opens the palette and lists every nav item you can access.
+
+## If something goes wrong
+
+<Aside type="caution">
+**You see the welcome banner instead of the dashboard.** This means the system sees zero chargers ever registered AND zero [sync runs](/glossary#sync-run) on record. Register a [ChargeBox](/glossary#chargebox) in [SteVe](/glossary#steve), then return here. The banner clears automatically once either condition is no longer true.
+</Aside>
+
+<Aside type="caution">
+**The System section is missing from the sidebar.** Your account isn't an admin. Ask another admin to elevate you via the Users surface.
+</Aside>
+
+<Aside type="caution">
+**A sidebar item doesn't highlight on its own page.** The admin host rewrites clean URLs (`/sync`) to `/admin/sync` server-side. Active-state matching handles both shapes, so if highlighting is wrong it's a bug — capture the URL and report it rather than working around it.
+</Aside>
+
+<Aside type="caution">
+**The Live now or Sync card never updates.** Both cards rely on [SSE](/glossary#sse). If your network blocks long-lived connections, the cards fall back to the last SSR snapshot and won't refresh until you reload. Check your proxy or VPN.
+</Aside>
+
+## Audit and reversibility
+
+The console tour itself is read-only — viewing the dashboard logs nothing destructive. Any action you take *from* the dashboard (clicking into a session, kicking off a sync, archiving a notification) is audited on its own surface. See the relevant runbook for that action's audit trail.
+
+## Related
+
+- [Register a ChargeBox in SteVe](/admin/devices/register-chargebox)
+- [Trigger a manual sync run](/admin/sync/manual-run)
+- [Link an EV card to a <Glossary term="Lago">Lago</Glossary> customer](/admin/tags/link-customer)
+- [Glossary](/glossary)

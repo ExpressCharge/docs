@@ -1,0 +1,124 @@
+---
+title: Tour of the customer portal
+description: Find your way around the Polaris Express customer dashboard — sessions, reservations, usage, and chargers.
+sidebar:
+  order: 1
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/index.tsx
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This tour is for drivers who just signed in to the Polaris Express customer portal for the first time. You'll learn what each section of the dashboard shows you and where to go next. You need a customer account and a working browser session — nothing else.
+
+## Before you start
+
+- You have signed in at the customer portal.
+- Your account has at least one user mapping set up by your operator. If it doesn't, the dashboard still loads, but most cards will be empty until your operator finishes onboarding you.
+
+<Tutorial goal="Get familiar with the customer dashboard" estimatedMinutes={5}>
+
+<TutorialStep title="Land on the dashboard">
+
+After you sign in, you arrive at the dashboard at `/`. This is your home base every time you return to the portal.
+
+<Screenshot alt="Customer dashboard immediately after sign-in" caption="The dashboard is the first thing you see after signing in." />
+
+If you're an admin signed in to the customer portal by mistake, the portal sends you to the admin site instead. To come back here on purpose, use the account picker at `/switch`.
+
+</TutorialStep>
+
+<TutorialStep title="Check the active session banner">
+
+The banner at the top of the page only appears when you have a charge in progress. It shows the live kWh delivered and, when available, the connector and estimated cost.
+
+If you don't see the banner, you don't have an active session right now. That's normal.
+
+</TutorialStep>
+
+<TutorialStep title="Review your recent sessions">
+
+The recent activity section lists your last five charging sessions. Each row shows the energy delivered (kWh), when the session started and ended, and how long it ran.
+
+<Aside type="note">
+Sessions are grouped by transaction, so a single charge appears once even if it produced many meter readings along the way.
+</Aside>
+
+A session marked as finalized is complete and billed. A session without that marker is still being settled.
+
+</TutorialStep>
+
+<TutorialStep title="See your next reservation">
+
+If you have an upcoming <Glossary term="<Glossary term="Reservation">Reservation</Glossary>">reservation</Glossary>, the dashboard shows the next one — the charger's friendly name, the start time, and the end time.
+
+The card only appears for reservations that haven't ended yet. Past reservations drop off automatically.
+
+</TutorialStep>
+
+<TutorialStep title="Read the usage card">
+
+The usage card shows how much energy you've drawn during the selected period. You can switch the period using the `period` query parameter in the URL:
+
+- `?period=current` — the current billing period (default)
+- `?period=previous` — the previous billing period
+- `?period=year` — the current year
+
+Below the total, a daily chart breaks usage down day by day across the period.
+
+</TutorialStep>
+
+<TutorialStep title="Check your plan">
+
+If your operator has set you up with a billing plan, the plan card shows the plan name, your current usage against any included amount, and the currency.
+
+If the plan card is missing, either your operator hasn't assigned a plan yet, or the billing system was briefly unreachable when the page loaded. Refresh the page to try again.
+
+</TutorialStep>
+
+<TutorialStep title="Browse available chargers">
+
+The chargers section lists up to 50 chargers you can use. Each card shows the charger's friendly name, its connector type and maximum power, and a status:
+
+- **online** — ready to use
+- **in_use** — someone is charging right now
+- **reserved** — held by an active reservation covering this moment
+- **offline** — the charger hasn't checked in for over an hour
+
+A counts pill near the top tells you how many chargers are available right now versus the total visible to you.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've finished the tour when you can:
+
+- Point to the recent activity list and name your last session.
+- Tell whether you have an upcoming reservation.
+- Read your current-period usage in kWh.
+- Find at least one charger with status **online**.
+
+## Troubleshooting
+
+**The dashboard is empty.** If you've never charged before and your operator hasn't finished setting up your account, you'll see a first-run state with no sessions and no usage. Contact your operator to confirm your account is active.
+
+**I see an "acting as" banner at the top.** A support agent is signed in on your behalf. They see what you see. To end the session, they use the link in the banner to return to the admin portal.
+
+**My plan or usage looks wrong.** Usage is grouped into day buckets in your local time zone. If a session crossed midnight, part of it will appear on each day. If the numbers still look off after a refresh, contact your operator.
+
+:::caution
+Charger and reservation data refresh when you reload the page. If you've just made a reservation or plugged in, give the page a moment and reload before reporting a problem.
+:::
+
+## Related
+
+- [Start a charging session](/user/web/charging/start-a-session/)
+- [Make a reservation](/user/web/reservations/create/)
+- [Understand your bill](/user/web/billing/overview/)

@@ -1,0 +1,135 @@
+---
+title: Trigger a manual sync run
+description: Force the sync worker to process new OCPP transactions immediately instead of waiting for the next scheduled tick.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/admin/sync/trigger.ts
+  - web/sync-worker.ts
+  - web/docs/SYNC-TRIGGER.md
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Tutorial, TutorialStep } from "../../../components";
+import Endpoint from "../../../components/Endpoint.astro";
+import Screenshot from "../../../components/Screenshot.astro";
+
+The sync worker normally runs on an [<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>](/glossary#adaptive-cadence) — every 15 minutes when chargers are active, hourly when idle, weekly when dormant. Trigger a manual [sync run](/glossary#sync-run) when you need fresh transactions reflected in billing immediately: after closing out a session with a VIP customer, while investigating a missing [<Glossary term="Lago">Lago</Glossary>](/glossary#lago) event, or before pulling a reconciliation report.
+
+A manual trigger also bumps the scheduler back to the Active tier (15-minute cadence) for the period that follows, so it's the right tool when you know activity is about to pick up.
+
+## Prerequisites
+
+- You are signed in to the admin web console with operator permissions.
+- The sync worker container is running. If it isn't, a manual trigger silently goes nowhere — the NOTIFY is fire-and-forget with no retry.
+- You know which [sync run](/glossary#sync-run) you're trying to produce. If you're debugging a specific [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) or [<Glossary term="idTag">idTag</Glossary>](/glossary#idtag), have its identifier handy for the verify step.
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open the Sync dashboard">
+    From the admin console sidebar, go to **Sync**. The dashboard shows the
+    current scheduler tier, the timestamp of the last run, and the **Trigger
+    Sync** button.
+
+    <Screenshot alt="Sync dashboard with Trigger Sync button visible" />
+  </TutorialStep>
+
+  <TutorialStep title="Click Trigger Sync">
+    Click **Trigger Sync**. The console calls <Endpoint method="POST" path="/api/admin/sync/trigger" />,
+    which sends a PostgreSQL `NOTIFY` on the `sync_trigger` channel and returns
+    immediately with `{"message":"Sync trigger notification sent to worker"}`.
+
+    The button does **not** wait for the sync to finish — it only confirms the
+    notification was sent. The sync itself happens asynchronously in the worker.
+
+    <Aside type="note">
+      The endpoint is idempotent. If you click twice in quick succession, the
+      second click returns the cached response from the first; the worker will
+      not receive two notifications.
+    </Aside>
+  </TutorialStep>
+
+  <TutorialStep title="Wait for the worker to pick it up">
+    The sync worker receives the notification within milliseconds over its
+    dedicated LISTEN connection. It then:
+
+    1. Records the manual activity, bumping the scheduler to the Active tier.
+    2. Calls `handleSync()` — unless a sync is already in flight, in which case
+       the trigger is skipped (the worker logs `Sync already in progress, skipping...`).
+    3. Re-evaluates the cadence tier once the run completes.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+Confirm the manual run actually executed:
+
+1. On the **Sync** dashboard, refresh and check that the "Last run" timestamp has advanced to within the last minute or two.
+2. Open the run detail — you should see a new entry showing `eventsCreated` and `transactionsProcessed` counts.
+3. If you triggered the sync to chase a specific transaction, search the [Lago](/glossary#lago) event log for the matching [<Glossary term="Lago metric">Lago metric</Glossary>](/glossary#lago-metric) event.
+4. Confirm the scheduler tier is now **Active** (15-minute cadence) on the dashboard header.
+
+If you have shell access to the sync worker container, you can also tail its logs and look for:
+
+```
+[Sync Worker] Received sync trigger notification from api
+[Sync Worker] Sync completed in 1.42s: 3 events created, 5 transactions processed
+```
+
+## If something goes wrong
+
+<Aside type="caution">
+  **The dashboard never updates.** The API returned 200 but the sync worker
+  isn't running, or its LISTEN connection has dropped. Check the worker
+  container's status and logs. The worker auto-reconnects its LISTEN every 5
+  seconds on failure, but if the container is down entirely, your notification
+  was lost — there is no retry queue.
+</Aside>
+
+<Aside type="caution">
+  **API returns 500 — `Failed to trigger sync`.** The notifier couldn't open
+  its PostgreSQL connection. Check database connectivity from the web app and
+  retry. No notification was sent, so no state was changed.
+</Aside>
+
+<Aside type="caution">
+  **Worker logs `Sync already in progress, skipping`.** A previous run (manual
+  or scheduled) is still executing. Wait for it to finish — its result will
+  cover whatever you were trying to trigger. If runs are consistently
+  overlapping, the underlying sync is slow and needs investigation; manual
+  triggers won't help.
+</Aside>
+
+<Aside type="caution">
+  **Sync completed but the event you expected isn't there.** The trigger only
+  asks the worker to run; it doesn't change what the sync sees. If the
+  upstream [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve) transaction is missing or malformed, the
+  sync will complete cleanly with that transaction omitted. Check the run's
+  `errors` array and the SteVe transaction log directly.
+</Aside>
+
+## Audit and reversibility
+
+A manual trigger is **not destructive**. It does not write any state directly — it only asks the worker to run the same sync logic that runs on the cron schedule. Anything the resulting sync creates (Lago events, [<Glossary term="User mapping">user mappings</Glossary>](/glossary#user-mapping), reservation resolutions) is created by the sync run itself and is logged the same way as any scheduled run.
+
+What gets recorded:
+
+- The web app logs `Manual sync triggered via notification` at INFO.
+- The worker logs `Received sync trigger notification from api` and the resulting `Sync completed` line with event and transaction counts.
+- The resulting [sync run](/glossary#sync-run) appears in the Sync dashboard's run history alongside scheduled runs. <!-- TODO: confirm whether the run row records `source=api` vs `source=cron` -->
+
+There is no "undo" for a sync run, because a sync run is itself an idempotent reconciliation — running it again won't double-count events. If a manual trigger surfaces a bad event in Lago, the correction happens in Lago, not by reverting the sync.
+
+## Related
+
+- [Adaptive Cadence overview](/concepts/sync/adaptive-cadence)
+- [Investigate a missing Lago event](/admin/billing/missing-lago-event)
+- [Sync worker deployment](/admin/ops/sync-worker)
+- [Glossary: <Glossary term="Sync run">Sync run</Glossary>](/glossary#sync-run)

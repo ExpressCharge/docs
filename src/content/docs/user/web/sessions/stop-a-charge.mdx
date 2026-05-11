@@ -1,0 +1,102 @@
+---
+title: Stop an active charging session
+description: End a charging session from your Polaris Express dashboard before your car is finished, and confirm the charger has released.
+sidebar:
+  order: 30
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/sessions/[id].tsx
+  - web/routes/api/customer/session-stop.ts
+last_authored: 2025-01-30
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This guide is for drivers who started a charging session and want to stop it before the car finishes on its own — for example, because you have enough range, you need to free the bay, or you plugged into the wrong charger. You'll stop the session from the session detail page in your dashboard and confirm the charger released the cable.
+
+## Before you start
+
+- You're signed in to your Polaris Express account on the web.
+- The session you want to stop is yours — sessions started with someone else's <Glossary term="EV card">EV card</Glossary> won't appear on your dashboard.
+- Your account is active. Stopped or suspended accounts can't send stop commands.
+
+<Tutorial goal="Stop a charging session from the web dashboard" estimatedMinutes={2}>
+
+<TutorialStep title="Open the session from your sessions list">
+
+From the sidebar, go to **Sessions**, then click the session you want to stop. Active sessions show an in-progress status badge in the header.
+
+You can also open a session directly at `/sessions/<id>` if you have the link.
+
+<Screenshot alt="Session detail page showing an in-progress session with the live card visible" caption="The session detail page. Live sessions show a green in-progress badge in the header." />
+
+</TutorialStep>
+
+<TutorialStep title="Confirm the session is live">
+
+At the top of the page you'll see **Session #** followed by the transaction number, with an **In progress** badge next to it. Below the header, a live card shows the charger name and the kWh delivered so far.
+
+If you don't see the live card, the session has already finalized and there's nothing to stop. Skip to [Verify](#verify) to confirm the final reading.
+
+</TutorialStep>
+
+<TutorialStep title="Stop the session">
+
+In the live session card, click **Stop charging**.
+
+The dashboard sends the stop command to the charger through your operator's backend. You'll see the button switch to a pending state while the charger acknowledges.
+
+<Aside type="note">
+The stop command goes to the charger over <Glossary term="OCPP">OCPP</Glossary>. The charger decides when to unlock the connector — usually within a few seconds, sometimes longer on slow links.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Unplug your car">
+
+Once the charger releases the connector, unplug the cable from your car and return it to the charger. Some chargers won't release the cable until you tap your EV card again or use the charger's own stop button — follow the on-screen guidance from the charger if so.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You'll know the session stopped when:
+
+- The status badge at the top of the session page changes from **In progress** to **Completed**.
+- The live session card disappears and is replaced by the final summary tiles: total kWh, duration, estimated cost, and average kW.
+- The connector on the charger unlocks and you can remove the cable.
+
+If the page doesn't update on its own, refresh it.
+
+## Troubleshooting
+
+**The Stop charging button is greyed out or missing.**
+Your account may be inactive, or the session may already have finalized. Open your account page to check your status. If your account is active and the session still shows as in progress, contact your operator.
+
+**You see "Session not found" after clicking Stop.**
+The session isn't linked to your account — usually because it was started with a different EV card. Only the driver whose card started the session can stop it from the dashboard.
+
+**You see "Charger could not stop the session. Please try again."**
+The charger didn't accept the stop command. Wait ten seconds and try again. If it fails a second time, stop the session at the charger itself: tap your EV card on the reader, or use the charger's physical stop button.
+
+:::caution
+If the cable stays locked after the session shows **Completed**, don't force it. Tap your EV card on the charger one more time, or use the charger's stop button. Pulling on a locked cable can damage the connector.
+:::
+
+:::danger
+Never unplug from your car while the session still shows **In progress** and current is flowing. Always stop the session first and wait for the charger to release.
+:::
+
+**You're not sure the session actually stopped.**
+Check the **Meter timeline** section at the bottom of the page. When the session finalizes, the last reading is marked as the final reading and no new rows appear.
+
+## Related
+
+- [View your charging history](/user/web/sessions/history)
+- [Understand your session cost](/user/web/billing/session-cost)
+- [Use your EV card at a charger](/user/web/cards/use-at-charger)

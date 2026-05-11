@@ -1,0 +1,187 @@
+---
+title: Install the iOS scanner build
+description: Install the expreScan iOS app on an operator iPhone and confirm it can reach registration.
+sidebar:
+  order: 1
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/README.md
+  - ios/App/Features/Registration/RegistrationView.swift
+last_authored: 2025-01-21
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Tutorial from '../../../../components/Tutorial.astro';
+import TutorialStep from '../../../../components/TutorialStep.astro';
+import Screenshot from '../../../../components/Screenshot.astro';
+
+You need this runbook when standing up a new operator iPhone for the
+field — the device that will scan <Glossary term="EV card">EV cards</Glossary> at chargers. It covers
+getting the <Glossary term="expreScan">expreScan</Glossary> build onto the phone and landing on the
+**Register this iPhone** screen, ready for the PKCE registration flow
+to bind it to your operator account.
+
+## Prerequisites
+
+- An iPhone you intend to dedicate to scanning (the device label is
+  visible to admins, so use a phone you control).
+- Access to the expreScan build distribution channel your team uses
+  (TestFlight invite, internal MDM, or a developer Mac running
+  xcodegen — see "Build channels" below).
+- An operator account on `app.polaris.express` with permission to
+  register devices.
+- iOS 26 or later. The simulator destination the build pipeline
+  targets is iOS-26 (`ios/README.md`), and the registration view uses
+  `iphone.gen3.radiowaves.left.and.right` plus other SF Symbols that
+  assume a current OS.
+- A working APNs path — the device needs to be online and able to
+  reach Apple's push servers before you submit registration, because
+  the registration view waits briefly for an APNs token before
+  submitting.
+
+## Build channels
+
+There is no `.xcodeproj` checked into the repo. The project is
+regenerated from `project.yml` on a developer Mac via xcodegen, and
+the SwiftUI app target lives under `ios/App/` (`ios/README.md`).
+Practically this means an operator iPhone gets the build through one
+of three channels:
+
+- **TestFlight** — the normal path. You receive an email invite from
+  the build operator and install via the TestFlight app.
+- **Internal MDM / ad-hoc** — the build is pushed by your device
+  management profile. The app appears on the home screen without any
+  action from you.
+- **Direct from Xcode** — only when you are sitting at the developer
+  Mac that built the app. Not the path most operators take.
+
+Confirm with your build operator which channel applies before you
+start.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Receive the build invite">
+
+For TestFlight: open the invite email on the iPhone you want to
+register and tap **View in TestFlight**. If you do not already have
+TestFlight installed, the link will send you to the App Store to
+install it first, then back to the invite.
+
+For MDM: wait for the app to appear on the home screen. If it does
+not appear within a few minutes, check that the device is enrolled in
+the correct MDM group with your IT contact.
+
+</TutorialStep>
+
+<TutorialStep title="Install expreScan">
+
+In TestFlight, tap **Install** next to **expreScan**. Wait for the
+download to complete and the **Open** button to appear.
+
+<Screenshot alt="TestFlight detail screen for expreScan with the Install button visible." />
+
+</TutorialStep>
+
+<TutorialStep title="Grant notification permission on first launch">
+
+Tap **Open** (in TestFlight) or tap the expreScan icon on the home
+screen. On first launch, iOS will prompt for notification permission.
+Tap **Allow**.
+
+<Aside type="caution">
+If you deny notifications, the registration view will still load,
+but submission may proceed without an APNs token. The registration
+view-model waits briefly for a token at submit time
+(`ios/App/Features/Registration/RegistrationView.swift` —
+`startWaitingForApnsToken`); without one, you will be able to
+register but the device will not receive scan-arm pushes until
+notifications are re-enabled in Settings.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Land on the welcome screen">
+
+The app should open to the welcome screen with a **Sign in** action.
+Do not tap anything yet — you are done with installation, and the
+next runbook ([Register a scanner device](/admin/ios/register/))
+covers driving the deep-link sign-in flow that hands off to
+**Register this iPhone**.
+
+<Screenshot alt="expreScan welcome screen with a Sign in button." />
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You know installation succeeded when all of the following are true:
+
+- The expreScan app icon is present on the iPhone's home screen.
+- Tapping it launches without crashing and shows the welcome screen.
+- iOS Settings → expreScan → **Notifications** shows notifications
+  **enabled** with banners and sounds permitted.
+- The version string on the welcome screen matches the build your
+  build operator told you to install. If the build operator did not
+  share a version string, ask before proceeding — registering with
+  the wrong build can pin a device to an outdated capability set.
+
+You do not need to check anything in the admin web console yet. The
+device does not exist server-side until you complete registration in
+the next runbook.
+
+## If something goes wrong
+
+**TestFlight says the invite is expired.** TestFlight invites expire
+after 90 days. Ask your build operator to re-send. Nothing to clean
+up on the device.
+
+**The app installs but crashes on launch.** Most often this is an iOS
+version mismatch — confirm the device is on iOS 26 or later. If it
+is, capture the crash via Settings → Privacy & Security → Analytics &
+Improvements → Analytics Data and send the most recent
+`expreScan-*.ips` file to engineering.
+
+**Welcome screen loads but the iPhone has no cell or Wi-Fi.** You can
+still install the app offline if the build was already downloaded,
+but registration in the next runbook will fail with a network error.
+Get the device on a network before continuing.
+
+**You installed on the wrong iPhone.** That is fine — uninstalling
+expreScan from a device that has not yet completed registration has
+no server-side effect. Long-press the icon, tap **Remove App** →
+**Delete App**, and start over on the correct device.
+
+<Aside type="caution">
+If the device **has** already been registered, uninstalling the app
+does not remove it from the operator console. See [Revoke a scanner
+device](/admin/ios/revoke/) for the correct teardown.
+</Aside>
+
+## Audit and reversibility
+
+Installation alone is not an auditable event — nothing is written to
+the audit log until the device completes registration and is bound to
+your account. You can uninstall freely at this stage with no trace
+left in the admin surfaces.
+
+Once you proceed to [Register a scanner
+device](/admin/ios/register/), the picture changes: a successful
+registration writes an audit log entry and surfaces the device in the
+operator console's device list. From that point, removal must go
+through the revoke runbook.
+
+## Related
+
+- [Register a scanner device](/admin/ios/register/)
+- [Revoke a scanner device](/admin/ios/revoke/)
+- [Capabilities reference](/admin/reference/capabilities/)
+- [Glossary: expreScan](/glossary/#expre-scan)

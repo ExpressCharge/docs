@@ -1,0 +1,54 @@
+---
+title: Webhook endpoints
+description: Inbound webhook receivers for third-party services like Lago.
+sidebar:
+  order: 90
+persona: Developer
+surface: n/a
+tier: P0
+code_refs:
+  - web/routes/api/webhook/
+last_authored: 2025-01-21
+prompt_template: api-reference
+---
+
+import Glossary from "@components/Glossary.astro";
+
+<!-- TODO: handler not found — no source files were provided for web/routes/api/webhook/. This page is a stub and must be regenerated once the handler sources are available. -->
+
+Inbound webhook receivers. Polaris Express exposes endpoints under
+`/api/webhook/` for third-party services (notably [<Glossary term="Lago">Lago</Glossary>](/glossary#lago))
+to push events back into the platform — subscription changes, invoice
+state transitions, and similar.
+
+These endpoints are unauthenticated in the <Glossary term="BetterAuth">BetterAuth</Glossary> sense; they are
+authenticated by the sending service via a shared secret or signature
+header. They are not intended to be called by end users or admins.
+
+## Base URL
+
+Webhook endpoints are served from the admin host:
+
+```
+https://admin.polaris.express
+```
+
+Sending services should be configured with the fully-qualified webhook
+URL, not a relative path.
+
+## Authentication
+
+Each provider authenticates differently. See the per-endpoint section
+below for the exact header and verification scheme.
+
+Polaris Express does **not** accept session cookies or
+[BetterAuth](/glossary#betterauth) bearer tokens on webhook routes —
+only the provider's own signature scheme.
+
+## Endpoints
+
+<!-- TODO: handler not found — endpoint inventory pending. Expected handlers under web/routes/api/webhook/lago/ for <Glossary term="Lago subscription">Lago subscription</Glossary>/invoice events. -->
+
+## Examples
+
+<!-- TODO: handler not found — examples pending source walk. -->

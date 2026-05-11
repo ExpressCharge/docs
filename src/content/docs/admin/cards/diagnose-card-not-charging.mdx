@@ -1,0 +1,150 @@
+---
+title: Diagnose a card that won't charge
+description: Walk through why a specific EV card is being rejected at a charger and confirm whether SteVe, ExpresSync, or the card itself is at fault.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/ocpp/pre-authorize.ts
+  - web/routes/admin/tags/[tagPk].tsx
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+A customer taps their <Glossary term="EV card">EV card</Glossary> at a charger and nothing happens — or they get a "card rejected" message at the charger. Use this runbook when you need to figure out whether the card is blocked in <Glossary term="SteVe">SteVe</Glossary>, intentionally intercepted by the scan-to-login flow, or failing for some other reason. It assumes you have the card's `idTag` or the customer's name in front of you.
+
+## Prerequisites
+
+- You can sign into `admin.polaris.express` with an operator account that can read the Tags section.
+- You have one of: the card's `idTag`, the cardholder's display name, or the `chargeBoxId` of the charger they tapped at.
+- You know roughly when the tap happened (within the last hour is easiest to triage).
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the card's detail page">
+
+From the admin sidebar, open **Tags**, find the card by `idTag` or display name, and click into it. The detail page is titled either "EV Card details" or "Meta-EV Card details" depending on whether this row groups child cards.
+
+<Screenshot alt="EV Card details page header with <Glossary term="idTag">idTag</Glossary> and link status" />
+
+If the page banner says **"SteVe is unreachable right now — charging history and hierarchy may be stale,"** stop and treat this as a SteVe outage first — every card will appear broken until SteVe is back.
+
+</TutorialStep>
+
+<TutorialStep title="Check the header strip">
+
+The header strip across the top tells you four things at a glance:
+
+- **`idTag`** — the literal <Glossary term="OCPP">OCPP</Glossary> identifier the charger sees.
+- **Tag type** — operator-assigned classification.
+- **Active flag** — whether the local mapping has marked this card active.
+- **Linked** — whether the card resolves to a <Glossary term="Lago">Lago</Glossary> customer.
+
+If the card is **not active** or **not linked** to a <Glossary term="Lago customer">Lago customer</Glossary>, that alone won't block charging in SteVe — but it does mean any session won't bill correctly. Note it for later and continue.
+
+</TutorialStep>
+
+<TutorialStep title="Confirm SteVe's view of the card">
+
+Click **Open full edit page** in the Metadata card to see the canonical SteVe record (parent `idTag`, blocked flag, expiry).
+
+The most common reasons a charger rejects a card at the SteVe layer:
+
+- The card is blocked in SteVe.
+- The card has expired.
+- The card's parent `idTag` is blocked or expired (children inherit).
+- The card simply doesn't exist in SteVe yet (a brand-new physical card).
+
+For meta-cards, also walk the **Relations** section on the detail page and confirm each child is in the state you expect.
+
+</TutorialStep>
+
+<TutorialStep title="Look at recent transactions">
+
+Scroll to **Recent transactions** on the detail page. This pulls the last 10 sessions from SteVe for this `idTag`, joined with the local sync state.
+
+<Screenshot alt="Recent transactions table with charger, kWh, and last synced timestamp" />
+
+What to look for:
+
+- **No rows at all, ever** — the card may have never authorized successfully. Skip to the pre-authorize check below.
+- **Rows exist but stop abruptly around the time of the complaint** — something changed recently. Check the audit log for edits to this card or its parent.
+- **A row exists for the suspect tap, with `kWh delivered`** — the card actually did charge. The customer may be confused about which tap they're asking about, or about the cost.
+- **A row exists with no `last synced` timestamp** — charging worked but ExpresSync hasn't pushed the session to Lago. This is a billing problem, not a charging problem; see the related sync-run runbook.
+
+</TutorialStep>
+
+<TutorialStep title="Rule out the scan-to-login interceptor">
+
+If the customer was tapping their card to *log in* on the <Glossary term="Kiosk mode">kiosk</Glossary> or web flow at the time, the <a href="/glossary#pre-authorize"><Glossary term="Pre-authorize">Pre-authorize</Glossary></a> hook will deliberately tell SteVe to return `BLOCKED` so the charger does not start a session. This is by design.
+
+To confirm this is what happened:
+
+- Ask the customer whether they were standing at a charger that was showing a pairing code on a screen or in the app.
+- Check whether the tap correlates with a successful login event for that customer around the same minute.
+
+If both are true, the card is fine — the "rejection" was the scan-to-login flow doing its job. The charger only intercepts when there's an *armed* pairing for that specific `chargeBoxId`; a second card tapped at the same charger during the window will charge normally.
+
+<Endpoint method="POST" path="/api/ocpp/pre-authorize" />
+
+</TutorialStep>
+
+<TutorialStep title="Check the charger itself">
+
+If the card looks healthy in SteVe and there's no scan-to-login intercept, the problem may be on the charger side:
+
+- The connector may be faulted or unavailable.
+- The charger may be offline (no OCPP heartbeat).
+- The charger may be on a SteVe version that does not honor the pre-authorize hook's `BLOCKED` override — in which case the hook is logging but the charger is doing whatever it wants.
+
+Open the charger's detail page in the **Chargers** section and verify it's online and the connector is `Available`.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've finished triage when you can answer all of:
+
+1. Does SteVe consider this card valid right now? (not blocked, not expired, parent OK)
+2. Is the card linked to a Lago customer with an active subscription?
+3. Was the failing tap intercepted by the scan-to-login flow?
+4. Did the charger itself accept or reject the authorize request?
+
+Cross-check by tapping the card on a known-good charger (or asking the customer to). If a fresh transaction row appears in **Recent transactions** within a minute, the card is fine.
+
+## If something goes wrong
+
+<Aside type="caution">
+If the Tags page renders but the header banner says SteVe is unreachable, the data on the page is a best-effort fallback. The local mapping is current; the SteVe-derived fields (parent, hierarchy, recent transactions) are not. Do not edit the card based on what you see in this state — fix SteVe first.
+</Aside>
+
+<Aside type="caution">
+If Lago is unreachable, the **Linking** card will show a fetch-failed state. The mapping itself is still authoritative; only the customer/subscription detail is stale. Charging is unaffected by Lago being down.
+</Aside>
+
+Common dead-ends:
+
+- **"The card works on charger A but not charger B."** This is almost never the card. Check whether charger B is online, whether its connector is in `Available`, and whether it's running the SteVe build that honors pre-authorize overrides.
+- **"The card was working yesterday."** Check the <a href="/glossary#audit-log"><Glossary term="Audit log">Audit log</Glossary></a> for edits to this card, its parent meta-card, or the linked <Glossary term="Lago subscription">Lago subscription</Glossary> in the last 24 hours.
+- **"Transactions exist but none are synced."** That's an ExpresSync problem, not a card problem. The card is charging fine.
+
+## Audit and reversibility
+
+This runbook is read-only — diagnosis does not mutate any state. If your diagnosis leads you to unblock a card, change a parent, or relink to a different Lago customer, those actions are written to the <a href="/glossary#audit-log">Audit log</a> and can be reversed from the card's edit page.
+
+The Pre-authorize hook's "steal" of a scan is durable in the database and is logged with a `scan.intercepted` event; you can correlate that event with the customer's login attempt to confirm the rejection was intentional.
+
+## Related
+
+- Unblock or re-block an EV card
+- Relink an EV card to a different Lago customer
+- Investigate a missing sync run
+- Scan-to-login: how the pre-authorize hook works

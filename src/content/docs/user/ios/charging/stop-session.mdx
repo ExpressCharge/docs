@@ -1,0 +1,83 @@
+---
+title: Stop a session from the app
+description: Stop an active charging session from the Polaris Express iOS app, confirm the kWh delivered, and verify the charger has released.
+sidebar:
+  order: 30
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Chargers/ChargerDetailView.swift
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+You started a charging session from the Polaris Express iOS app and now you want to end it. This tutorial walks you through stopping the session from the charger's detail screen and confirming that it ended cleanly. You need the iOS app open, a session already running on the charger, and a network connection on your phone.
+
+## Before you start
+
+- The session must have been started from your account. If someone else started it, you won't see the Stop control.
+- Open the charger's detail screen — the same screen you used to start charging.
+
+<Tutorial goal="Stop a charging session from your iPhone" estimatedMinutes={1}>
+
+<TutorialStep title="Open the charger's detail screen">
+
+From the chargers list, tap the charger that's currently running your session. The detail screen opens with the charger's name at the top and a live session card underneath the hero image. The card updates every second while the session is active.
+
+<Screenshot alt="Charger detail screen showing an active session card and a red Stop charging button" caption="The active session card appears above the Stop charging button while charging is in progress." />
+
+</TutorialStep>
+
+<TutorialStep title="Tap Stop charging">
+
+Scroll to the bottom of the detail screen and tap the red **Stop charging** button. The button shows a stop icon and stays red while the session is running.
+
+</TutorialStep>
+
+<TutorialStep title="Confirm in the dialog">
+
+A confirmation dialog titled **Stop charging?** slides up from the bottom. If the app has a current kWh reading, the message reads "Stop the session at X.X kWh delivered?" — otherwise it reads "Stop the in-progress session?".
+
+Tap **Stop charging** to end the session. Tap **Keep charging** if you changed your mind.
+
+<Aside type="caution">
+The Stop charging action in the dialog is destructive — once you confirm, the charger begins shutting down the session and you can't undo it from the app.
+</Aside>
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+After you confirm, the **Stop charging** button shows a loading spinner while the app sends the request. When the charger acknowledges, the active session card disappears and the button changes back to green **Start charging**.
+
+If the charger supports RFID cards, you'll also see the "Tap your card" notice reappear above the Start button.
+
+You can now unplug your <Glossary term="connector">connector</Glossary> from the vehicle.
+
+## Troubleshooting
+
+**The button stays in the loading state.**
+Pull down on the screen to refresh. The app re-reads the charger's status from the server. If the session is still active after a refresh, the stop command didn't reach the charger — try tapping **Stop charging** again.
+
+**A red error banner appears under the hero.**
+The banner shows the reason the stop failed. Common causes are a charger that went offline mid-session or a temporary network issue. Wait a few seconds and try again.
+
+**The session card is gone but the cable won't release from the car.**
+This is usually a vehicle-side lock, not a charger issue. Unlock your car with the key fob or from the driver's seat, then try removing the connector.
+
+:::caution
+Don't force the connector. If it won't release after unlocking the vehicle, call the site operator listed on the charger.
+:::
+
+<!-- TODO: confirm whether ChargerDetailView surfaces a "cable still locked" state, or whether that's purely a vehicle concern -->
+
+## Related
+
+- [Start a session from the app](/user/ios/charging/start-session/)
+- [Reserve a charger](/user/ios/charging/reserve/)
+- [Use an <Glossary term="EV card">EV card</Glossary> instead of the app](/user/ios/charging/tap-to-charge/)

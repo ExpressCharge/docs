@@ -1,0 +1,113 @@
+---
+title: View an invoice
+description: Open an invoice from your Billing page on the web to see line items, totals, and payment status.
+sidebar:
+  order: 20
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/billing/index.tsx
+  - web/routes/billing/invoices/[id].tsx
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+This tutorial is for drivers who want to look at one of their invoices on the Polaris Express web app — to check what they were charged for, see the billing period, or download a copy. You'll open the Billing page, find the invoice in the list, and open its detail view.
+
+## Before you start
+
+- You're signed in to the Polaris Express web app.
+- Your operator has set up a billing account for you. If the Billing page shows "No billing account on file", contact your operator using the link on that page.
+- You have at least one invoice. New accounts won't show invoices until your operator finalizes one.
+
+<Tutorial goal="Open one of your invoices and review its details" estimatedMinutes={2}>
+
+<TutorialStep title="Open the Billing page">
+
+From the sidebar, select **Billing**.
+
+The page opens with a stat strip across the top — **Amount due**, **Next due**, **Paid last 30d**, and a **kWh** tile for the current period — followed by the **Overview**, **Wallet** (if you have one), and **Invoices** sections.
+
+<Screenshot alt="Billing page showing the stat strip and Invoices section" caption="The Billing page groups your money-related information in one place." />
+
+</TutorialStep>
+
+<TutorialStep title="Find the invoice in the Invoices section">
+
+Scroll to the **Invoices** section near the bottom of the page. Each row shows the invoice number, issuing date, total, and a status badge.
+
+If you have a lot of invoices, narrow the list with the filter bar above the table:
+
+- **Status** — pick **Open**, **Paid**, or **Voided**.
+- **From** / **To** — limit the list to a date range.
+
+<Aside type="tip">
+  You can also click the **Amount due** or **Paid last 30d** tiles at the top of the page to jump straight to the matching filtered view.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Open the invoice">
+
+Select the invoice row you want to view. The invoice detail page loads at `/billing/invoices/<id>`.
+
+The header shows the invoice number and its current status badge — for example, **Paid**, **Open**, **Overdue**, or **Voided**. If the invoice is tied to a subscription, the description shows the billing period start date.
+
+</TutorialStep>
+
+<TutorialStep title="Review the line items and totals">
+
+The detail page lists each fee on the invoice with a label, an optional sublabel (units charged or grouping), and the amount. Below the lines you'll see the fees subtotal, taxes, and the invoice total.
+
+You'll also see:
+
+- The **issuing date** — when the invoice was finalized.
+- The **payment due date** — if the invoice isn't paid yet.
+- A **download link** — if your operator has attached a PDF.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've succeeded when:
+
+- The invoice detail page loads with the invoice number in the title.
+- The status badge in the header matches what you saw in the Invoices table.
+- The line items add up to the total shown at the bottom.
+
+To get back to the full list, select **Back** in the page header, which returns you to `/billing`.
+
+## Troubleshooting
+
+**"Invoice not found"**
+
+If you reach the detail page and see "Invoice not found", one of these is true:
+
+- The invoice belongs to a different account.
+- The invoice link is stale or mistyped.
+- Your billing account was unlinked.
+
+Return to `/billing` and pick the invoice from the list. If it doesn't appear there, contact your operator.
+
+**The Billing page shows "No billing account on file"**
+
+Your operator hasn't provisioned a plan for you yet. Select **Contact operator** on that page to send them an email.
+
+**The Invoices section is empty**
+
+If you have no filters applied and the section shows "No invoices to show", your operator hasn't finalized any invoices on your account yet. New invoices appear here automatically once they're issued.
+
+If you do have filters applied, the empty state suggests **Reset filters** — select it to clear the status and date filters.
+
+:::caution
+Invoice totals and payment status come from your operator's billing system. If a payment you just made hasn't shown up yet, give it a few minutes and refresh the page.
+:::
+
+## Related
+
+- [Understand your Billing page](/user/web/billing/overview)
+- [Top up your wallet](/user/web/billing/wallet-topup)
+- [Review a charging session](/user/web/sessions/view-session)

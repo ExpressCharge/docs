@@ -1,0 +1,64 @@
+---
+title: Admin endpoints
+description: Admin-only HTTP API for managing tenants, charge points, billing, and operational state in Polaris Express.
+sidebar:
+  order: 10
+persona: Developer
+surface: n/a
+tier: P0
+code_refs:
+  - web/routes/api/admin/
+last_authored: 2025-01-29
+prompt_template: api-reference
+---
+
+import Glossary from "@components/Glossary.astro";
+
+The `/api/admin/*` namespace exposes operator-facing endpoints used by
+the Polaris Express admin console. These routes are not intended for
+customer integrations — they assume an authenticated admin session and
+operate across tenant boundaries.
+
+<Aside type="caution">
+  Admin endpoints can mutate billing state, [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox)
+  configuration, and [<Glossary term="User mapping">user mappings</Glossary>](/glossary#user-mapping). Treat them as
+  privileged. Do not expose admin session cookies to untrusted clients.
+</Aside>
+
+## Base URL
+
+```
+https://admin.polaris.express
+```
+
+Admin endpoints are served only from the admin host. Requests to
+`app.polaris.express/api/admin/*` are rejected at the edge.
+
+## Authentication
+
+Every request must carry a valid [<Glossary term="BetterAuth">BetterAuth</Glossary>](/glossary#betterauth)
+session cookie belonging to a principal with the `admin` role. The
+session is established via the admin sign-in flow (out of scope for
+this reference).
+
+Unauthenticated requests receive `401 Unauthorized`. Authenticated
+non-admin sessions receive `403 Forbidden`.
+
+<!-- TODO: handler not found -->
+
+The route inventory references `web/routes/api/admin/`, but no handler
+source files were provided with this task. The endpoint catalog below
+cannot be generated without walking the actual route handlers to
+determine path parameters, request body schemas, response shapes, and
+error cases.
+
+Re-run this page once the following are available:
+
+- `web/routes/api/admin/**/*.ts` (or `.tsx`) handler files
+- Any shared Zod schemas referenced from those handlers
+- Middleware files that gate the namespace (for the authoritative auth
+  contract)
+
+## Endpoints
+
+<!-- TODO: handler not found — populate per-endpoint sections from web/routes/api/admin/ -->

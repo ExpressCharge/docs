@@ -1,0 +1,196 @@
+---
+title: Admin 60-second tour
+description: Get oriented on the ExpressCharge admin dashboard — pulse, live sessions, sync state, health, and weekly rollups.
+sidebar:
+  order: 1
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/index.tsx
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside } from "@astrojs/starlight/components";
+import { Tutorial, TutorialStep } from "@/components/Tutorial";
+import { Screenshot } from "@/components/Screenshot";
+
+The admin landing page at `/admin` is your operational war-room. This
+tour walks you through every panel so you can read the page at a
+glance during an incident, a shift handover, or your first morning
+with a fresh deployment.
+
+## Prerequisites
+
+- An operator account with admin access to the web console.
+- At least one [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) registered in
+  [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve), or you'll land on the first-run welcome
+  state instead of the full dashboard.
+- A [sync run](/glossary#sync-run) has executed at least once (also
+  required to leave the first-run state).
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open the dashboard">
+    Navigate to `/admin`. The page loads a single aggregated overview
+    server-side, then attaches live islands for the signals that
+    change minute-to-minute.
+
+    <Screenshot alt="ExpressCharge admin landing page with header strip, KPI strip, and 2x2 section grid" />
+
+    If you see a "Welcome to ExpressCharge" empty state instead, you
+    are in first-run mode: no chargers have ever been seen and no
+    <Glossary term="Sync run">sync runs</Glossary> have completed. Follow the **Register an <Glossary term="EV card">EV card</Glossary>**
+    action to begin onboarding, or register a ChargeBox in SteVe
+    first.
+  </TutorialStep>
+
+  <TutorialStep title="Read the header strip (system pulse)">
+    The top strip — `DashboardHeaderStrip` — is your at-a-glance
+    pulse. It shows:
+
+    - **Sync tier and next run** — the current [<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>](/glossary#adaptive-cadence)
+      tier and when the next sync is scheduled.
+    - **In-flight sync** — if a sync run is currently executing, its
+      run ID is surfaced here as a link into the run detail.
+    - **Chargers online / total** — fleet availability count.
+    - **Unread alerts** — outstanding operational notifications.
+
+    Treat this strip as the headline. If anything here looks wrong,
+    drill into the relevant section card below before doing anything
+    else.
+  </TutorialStep>
+
+  <TutorialStep title="Scan the KPI strip">
+    `DashboardStatStrip` sits below the header and exposes six
+    interactive KPI cells:
+
+    - **kWh today** — energy delivered since midnight.
+    - **Active sessions** — sessions in `Charging` or `Suspended` state right now.
+    - **Chargers online** and **Chargers offline** — split out so you
+      can click straight into the offline list.
+    - **Pending <Glossary term="Reservation">reservations</Glossary>** — [reservations](/glossary#reservation)
+      awaiting their session to start.
+    - **Sync success (7d)** — percentage of sync runs that finished
+      cleanly in the last seven days.
+
+    Each cell is a navigation target. Click through to investigate;
+    the cell never modifies state.
+  </TutorialStep>
+
+  <TutorialStep title="Watch 'Live now' for active sessions">
+    The emerald card in the top-left of the 2x2 grid is **Live now**.
+    It streams active charging sessions via [<Glossary term="SSE">SSE</Glossary>](/glossary#sse) and
+    shows a [<Glossary term="BorderBeam">BorderBeam</Glossary>](/glossary#borderbeam) while sessions are
+    present. An empty card means no chargers are currently delivering
+    energy.
+
+    Use this card during an incident to confirm whether a customer's
+    session is actually live before you start digging through logs.
+  </TutorialStep>
+
+  <TutorialStep title="Check the sync card">
+    The blue card switches between two modes:
+
+    - **Active sync run** — if a sync run is in flight, the card
+      shows live segment progress and animates a BorderBeam.
+    - **Sync schedule** — otherwise, it shows the current Adaptive
+      Cadence tier and the next scheduled run time.
+
+    This is the fastest way to tell whether a stale-looking data point
+    elsewhere on the page is because sync hasn't run yet or because
+    something is genuinely wrong.
+  </TutorialStep>
+
+  <TutorialStep title="Triage with the Health card">
+    The Health card aggregates operational warnings — chargers
+    offline beyond threshold, sync failures, billing reconciliation
+    gaps, and so on. It auto-revalidates every 30 seconds so the page
+    stays honest if you leave it open on a wall display.
+
+    Each row carries a semantic tone (warn / error / info) and links
+    into the appropriate detail page. Work the list top-down: rows
+    are ordered by severity.
+  </TutorialStep>
+
+  <TutorialStep title="Review 'This week'">
+    The bottom-right card summarizes the last seven days with four
+    metric tiles:
+
+    - **kWh delivered** (green) — links to Sessions. Shows percent
+      delta vs. the prior week, or "new this week" if last week was
+      zero.
+    - **Sync runs** (blue) — total runs with success percentage as
+      sublabel.
+    - **EV Cards activated** (cyan) — newly activated [EV cards](/glossary#ev-card).
+    - **Reservations completed** (indigo) — reservations that ran to
+      completion.
+
+    Tile accent colors mirror the sidebar navigation, so the card
+    reads as a navigational preview rather than decoration.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+You've understood the dashboard if you can answer these without
+clicking away from `/admin`:
+
+- Is a sync run in flight right now? (Header strip and Sync card.)
+- How many sessions are charging? (KPI strip and Live now card.)
+- Are there unresolved health warnings? (Header strip count and
+  Health card detail.)
+- Did this week beat last week on energy delivered? (This week →
+  kWh delivered sublabel.)
+
+If any panel shows stale numbers, refresh the page. The header strip
+and stat strip come from a single SSR load; the Live, Sync, and
+Health islands maintain themselves after that.
+
+## If something goes wrong
+
+<Aside type="caution">
+  **The dashboard renders but every panel is empty.** Confirm that
+  `loadDashboardOverview` returned successfully — a partial failure
+  here will surface zeros rather than an error. Check server logs for
+  the `/admin` GET handler. If `pulse.chargersTotal` is `0` and
+  `weekly.syncRunsWeek` is `0`, the page intentionally shows the
+  first-run welcome banner above the dashboard.
+</Aside>
+
+<Aside type="caution">
+  **The Live now card stays empty during a session you know is
+  active.** The card depends on SSE. If your network or a proxy
+  strips long-lived connections, the list will not populate. Confirm
+  the session exists by navigating to Sessions directly; if it is
+  present there but not on the dashboard, the SSE channel is the
+  problem, not the data.
+</Aside>
+
+<Aside type="caution">
+  **The Sync card shows "Active sync run" but no progress.** The
+  in-flight run ID is set from `overview.pulse.inFlightSyncRunId` at
+  page load. If the run completed between SSR and the island
+  attaching, the card will briefly show stale state. Refresh once;
+  if it persists, open the run detail to confirm its real status.
+</Aside>
+
+## Audit and reversibility
+
+This page is read-only. No action you take on `/admin` itself
+modifies state — every interactive cell is a navigation link into a
+detail page where the actual operations live and are audited
+individually. You can leave the dashboard open on a shared display
+without risk.
+
+## Related
+
+- [Sync runs](/admin/sync/runs)
+- [Sessions](/admin/sessions)
+- [EV cards](/admin/tags)
+- [Reservations](/admin/reservations)
+- [Glossary](/glossary)

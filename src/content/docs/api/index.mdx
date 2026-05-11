@@ -6,12 +6,14 @@ sidebar:
   order: 0
 ---
 
+import Glossary from "@components/Glossary.astro";
+
 import { LinkCard, CardGrid } from "@astrojs/starlight/components";
 
 The Polaris Express API is split into ten namespaces. Customer and
-admin endpoints live behind authenticated sessions (BetterAuth); the
-OCPP namespace receives HMAC-signed webhooks from SteVe; the webhook
-namespace receives signed callbacks from Lago.
+admin endpoints live behind authenticated sessions (<Glossary term="BetterAuth">BetterAuth</Glossary>); the
+<Glossary term="OCPP">OCPP</Glossary> namespace receives HMAC-signed webhooks from <Glossary term="SteVe">SteVe</Glossary>; the webhook
+namespace receives signed callbacks from <Glossary term="Lago">Lago</Glossary>.
 
 <CardGrid>
   <LinkCard title="Overview — auth, base URL, errors" href="/api/overview/" />
@@ -20,7 +22,7 @@ namespace receives signed callbacks from Lago.
   <LinkCard title="Admin" href="/api/admin/" />
   <LinkCard title="Devices" href="/api/devices/" />
   <LinkCard title="OCPP webhooks" href="/api/ocpp/" />
-  <LinkCard title="SSE streams" href="/api/stream/" />
+  <LinkCard title="<Glossary term="SSE">SSE</Glossary> streams" href="/api/stream/" />
   <LinkCard title="Inbound webhooks (Lago)" href="/api/webhook/" />
   <LinkCard title="Errors and rate limits" href="/api/errors-and-rate-limits/" />
 </CardGrid>

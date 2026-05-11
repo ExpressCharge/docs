@@ -1,0 +1,237 @@
+---
+title: Environment variables reference
+description: Complete reference for every environment variable the Polaris Express stack reads, with defaults and required/optional status.
+sidebar:
+  order: 90
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - web/.env.example
+last_authored: 2025-01-21
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside } from '@astrojs/starlight/components';
+import EnvVar from '~/components/EnvVar.astro';
+
+This page lists every environment variable read by the Polaris Express
+stack. Values come from `web/.env.example`; if you see a drift between
+this page and that file, the file wins — open an issue and we'll
+re-sync.
+
+Variables are grouped by subsystem. Within each group, "Required"
+means the service will refuse to boot or will misbehave without it.
+"Optional" means the default is sane and you can ignore the variable
+until you need to tune it.
+
+## How env vars are loaded
+
+The web service (`web/`) reads `.env` at boot via Deno's standard env
+loader. Docker Compose injects the same file into the `steve` and
+`postgres` containers where needed. The Cloudflare Email Worker and
+APNs paths have their own secrets stored separately (see the relevant
+phases).
+
+<Aside type="caution">
+Secrets in `.env` are read by every container that mounts it. Treat
+the file as sensitive: `chmod 600 .env`, never commit it, and rotate
+on any suspected exposure.
+</Aside>
+
+## Database
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | `postgresql://user:password@localhost:5432/ocpp_billing` | Yes | Full connection string used by the web service. |
+| `POSTGRES_DB` | `ocpp_billing` | Yes | Database name created by the Postgres container. |
+| `POSTGRES_USER` | `ocpp_user` | Yes | Superuser for the database. |
+| `POSTGRES_PASSWORD` | `ocpp_password` | Yes | Change before any non-local deploy. |
+
+<Aside type="danger">
+The defaults are development credentials. Replace them in any
+internet-reachable deployment. The `DATABASE_URL` user/password must
+match `POSTGRES_USER` / `POSTGRES_PASSWORD`.
+</Aside>
+
+## <Glossary term="SteVe">SteVe</Glossary> (<Glossary term="OCPP">OCPP</Glossary>)
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `STEVE_BASE_URL` | `http://localhost:8080/steve` | Yes | Base URL for dashboard links. API calls append `/api`. |
+| `STEVE_API_USERNAME` | `admin` | Yes | Must match SteVe's `auth.user`. |
+| `STEVE_API_KEY` | _(empty)_ | Yes | Must match SteVe's `webapi.value`. HTTP Basic auth since SteVe 3.8. |
+| `DOCKER_SOCKET_PATH` | `/var/run/docker.sock` | Yes | Used to stream SteVe container logs for tag detection. |
+| `STEVE_CONTAINER_NAME` | `steve` | Yes | Container name to stream from. |
+
+See the [SteVe phase](/selfhost/install/steve/) for how these values
+are generated on the SteVe side.
+
+### SteVe → ExpresSync webhooks
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `STEVE_PREAUTH_HMAC_KEY` | _(empty)_ | Yes (Wave 1+) | HMAC shared secret for pre-authorize webhook. Generate with `openssl rand -hex 32`. |
+| `STEVE_METERVALUE_HMAC_KEY` | _(empty)_ | Yes (Wave 1+) | HMAC shared secret for `MeterValues` webhook. |
+
+## <Glossary term="Lago">Lago</Glossary> (billing)
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `LAGO_API_URL` | `https://api.getlago.com` | Yes | API base. The client appends `/api/v1`. |
+| `LAGO_API_KEY` | _(empty)_ | Yes | Lago API key with org scope. |
+| `LAGO_DASHBOARD_URL` | `https://app.getlago.com` | Yes | Used for "Open in Lago" links from the admin console. |
+| `LAGO_METRIC_CODE` | `ev_charging_kwh` | Yes | Code of the Lago <Glossary term="Lago metric">billable metric</Glossary> for kWh consumption. Must exist in Lago before first sync. |
+
+## Application
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `PORT` | `8000` | No | Port the web service binds. Change in tandem with your reverse proxy. |
+| `DENO_ENV` | `development` | No | Set to `production` for production deploys. Enables stricter error handling and disables verbose tracebacks. |
+| `DEBUG_LEVEL` | `ERROR` | No | One of `ERROR`, `WARN`, `INFO`, `DEBUG`. Use `INFO` when debugging a live incident. |
+
+## Sync worker (<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>)
+
+The sync worker runs on adaptive cadence by default: Active charge
+boxes poll every 15 minutes, Idle every hour, Dormant once a week.
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `SYNC_CRON_SCHEDULE` | _(unset)_ | No | **Escape hatch.** If set to a cron pattern, all tiers use that pattern and adaptive behavior is disabled. Leave unset in normal operation. |
+| `SYNC_ON_STARTUP` | `false` | No | If `true`, runs a sync tick immediately on worker boot. Useful for testing; leave `false` in production to avoid thundering-herd on restart. |
+| `SYNC_LOOKBACK_MINUTES` | `10080` | No | How far back to scan SteVe transactions each tick. Default is 7 days. Reduce to `1440` (24h) only if you're certain the worker cannot lag. |
+| `SYNC_DORMANT_THRESHOLD_DAYS` | `30` | No | Days of no activity before a <Glossary term="ChargeBox">charge box</Glossary> is demoted from Idle to Dormant. |
+| `SYNC_IDLE_HYSTERESIS_TICKS` | `2` | No | Consecutive idle evaluations required to demote a tier. Higher = more conservative. |
+
+<Aside type="tip">
+If you find yourself reaching for `SYNC_CRON_SCHEDULE`, first check
+that the [adaptive scheduler](/glossary/#adaptive-cadence) is
+actually doing the wrong thing. The override exists for emergencies
+and forensic testing, not as a tuning knob.
+</Aside>
+
+## <Glossary term="BetterAuth">BetterAuth</Glossary> (sessions)
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `AUTH_SECRET` | _(empty)_ | Yes | Minimum 32 characters. Generate with `openssl rand -hex 32`. Rotating this invalidates every active session. |
+| `AUTH_URL` | `http://localhost:8000` | Yes | Canonical customer-portal URL. Used as session issuer and for <Glossary term="Magic link">magic-link</Glossary> composition. |
+
+## Customer portal & email
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `CF_EMAIL_WORKER_URL` | _(empty)_ | No | URL of the Cloudflare Email Worker. Leave empty in dev to log emails to console. |
+| `CF_EMAIL_WORKER_SECRET` | _(empty)_ | Yes (with Worker) | 32-byte shared secret. Required only when `CF_EMAIL_WORKER_URL` is set. |
+| `EMAIL_FROM` | _(empty)_ | Yes | `From:` header for customer-facing email, e.g. `Polaris Express <noreply@example.com>`. |
+| `EMAIL_FROM_ADMIN` | _(empty)_ | Yes | `From:` header for admin-facing email. Use a distinct mailbox so admins can filter. |
+| `OPERATOR_CONTACT_EMAIL` | _(empty)_ | Yes | `mailto:` target shown to inactive customers and on hard-error pages. |
+
+### Session and link TTLs
+
+All values in seconds.
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `MAGIC_LINK_TTL_SECONDS` | `900` | No | Standard 15-minute customer magic link. |
+| `MAGIC_LINK_INVITE_TTL_SECONDS` | `86400` | No | 24-hour first-time invite link. |
+| `ADMIN_PASSWORD_RESET_TTL_SECONDS` | `86400` | No | 24-hour admin password-reset link. |
+| `CUSTOMER_SESSION_TTL_SECONDS` | `28800` | No | 8-hour ceiling for customer sessions. |
+
+### Hostnames & cookie scope
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `ADMIN_BASE_URL` | _(empty)_ | Yes | Canonical admin host, e.g. `https://manage.example.com`. Used for admin redirects and password-reset emails. |
+| `CUSTOMER_BASE_URL` | _(empty)_ | Yes | Canonical customer host, e.g. `https://example.com`. |
+| `COOKIE_DOMAIN` | _(empty)_ | Yes | Cookie scope, e.g. `.example.com` (note leading dot). Must cover both admin and customer subdomains so sessions work on either surface. |
+
+<Aside type="caution">
+The leading dot in `COOKIE_DOMAIN` is significant. Without it,
+sessions on `manage.example.com` will not be valid on `example.com`,
+and impersonation will require re-login.
+</Aside>
+
+## Pocket ID OIDC (admin auth)
+
+When set, the admin login presents an OIDC button. When unset, login
+falls back to email/password. See the [admin OIDC phase](/selfhost/install/admin-oidc/).
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `ADMIN_OIDC_ISSUER` | _(unset)_ | No | OIDC issuer URL, e.g. `https://pocket-id.example.com`. Setting this enables the OIDC plugin. |
+| `ADMIN_OIDC_CLIENT_ID` | _(unset)_ | Yes (with OIDC) | Client ID registered at the IdP. |
+| `ADMIN_OIDC_CLIENT_SECRET` | _(unset)_ | Yes (with OIDC) | Client secret from the IdP. |
+| `ADMIN_AUTH_SHOW_FALLBACK` | `false` | No | If `true`, shows the email/password form alongside the OIDC button as a break-glass. |
+
+<Aside type="note">
+JIT provisioning: any user the IdP authenticates against this client
+is treated as an admin. Restrict who can authenticate at the IdP
+itself (Pocket ID's per-client allow-list), **not** in Polaris.
+</Aside>
+
+## APNs (push notifications, Wave 2)
+
+Token-based JWT (ES256) auth. Missing values do **not** block boot —
+push sends return `{ok:false,reason:"JwtSignFailed"}` and the app
+falls back to <Glossary term="SSE">SSE</Glossary>.
+
+| Name | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `APNS_KEY_ID` | _(unset)_ | No | Key ID from App Store Connect → Users & Access → Keys. |
+| `APNS_TEAM_ID` | _(unset)_ | No | 10-character Apple Team ID. |
+| `APNS_KEY_BASE64` | _(unset)_ | No | Base64-encoded `.p8` key contents (including BEGIN/END lines). See below. |
+| `APNS_TOPIC` | _(unset)_ | No | iOS bundle identifier, e.g. `com.example.expresscharge.ios`. |
+
+Encode the key file as:
+
+```sh
+APNS_KEY_BASE64=$(base64 -i AuthKey_ABC123XYZ9.p8 | tr -d '\n')
+```
+
+## Verify your env file
+
+After editing `.env`, dry-run the loader:
+
+```sh
+docker compose config | grep -E '^(\s+)(AUTH_SECRET|LAGO_API_KEY|STEVE_API_KEY)'
+```
+
+You should see your secrets resolved (do not paste this output
+anywhere). If any value is empty, the corresponding service will fail
+its boot health check.
+
+For a runtime check, hit the admin health endpoint after starting the
+stack:
+
+```sh
+curl -s http://localhost:8000/api/admin/health | jq
+```
+
+The response enumerates which subsystems found their config and which
+fell back to defaults.
+
+## If something goes wrong
+
+- **Service crashes on boot with "missing AUTH_SECRET":** the value
+  must be at least 32 characters. Regenerate with `openssl rand -hex 32`.
+- **Customer can't log in across subdomains:** check `COOKIE_DOMAIN`
+  has a leading dot and matches both `ADMIN_BASE_URL` and
+  `CUSTOMER_BASE_URL`.
+- **Lago sync silently does nothing:** confirm `LAGO_METRIC_CODE`
+  matches a billable metric that already exists in Lago. The sync
+  worker logs at `INFO` level when the metric is missing.
+- **SteVe API calls return 401:** `STEVE_API_USERNAME` and
+  `STEVE_API_KEY` must exactly match SteVe's `auth.user` and
+  `webapi.value`. Restart the SteVe container after changing them.
+
+## Related
+
+- [Database phase](/selfhost/install/database/)
+- [SteVe phase](/selfhost/install/steve/)
+- [Lago phase](/selfhost/install/lago/)
+- [Email Worker phase](/selfhost/install/email-worker/)
+- [Admin OIDC phase](/selfhost/install/admin-oidc/)

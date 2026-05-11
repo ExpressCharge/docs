@@ -1,0 +1,107 @@
+---
+title: Sign in by scanning a charger QR
+description: Scan the QR code on a Polaris charger or your printed EV card to sign in to your account without typing an email or password.
+sidebar:
+  order: 20
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/auth/scan.tsx
+  - web/routes/api/auth/scan-login.ts
+  - web/routes/api/auth/qr-sign-in.ts
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This guide is for drivers who want to sign in to their Polaris account by scanning a QR code — either the one printed on a charger or the one on their <Glossary term="EV card">EV card</Glossary>. You'll end up signed in on the device that did the scanning, with no email or password to type.
+
+You need an account that's already been provisioned by your fleet operator, and an EV card linked to that account.
+
+## Before you start
+
+- You have a Polaris customer account.
+- Your EV card is linked to your account. If you've never tapped your card at a charger before, your operator may need to map it first.
+- You're on the device you want to sign in on (a phone, tablet, or laptop with a camera or QR scanner).
+
+<Tutorial goal="Sign in to your Polaris account by scanning a QR code" estimatedMinutes={2}>
+
+<TutorialStep title="Scan the QR code on the charger">
+
+Point your device's camera at the QR sticker on the charger. The code opens a link that ends in `/auth/scan` on the Polaris site.
+
+<Screenshot alt="A driver holds their phone up to the QR sticker on a Polaris charger" caption="The QR sticker is usually on the front of the charger, near the connector." />
+
+</TutorialStep>
+
+<TutorialStep title="Open the sign-in screen">
+
+Your browser lands on a page titled **Tap your card to sign in**. If JavaScript is on, the page forwards you to the sign-in screen on its own after about a second.
+
+If it doesn't, tap **Continue to sign-in**.
+
+<Screenshot alt="The scan landing page with a Continue to sign-in button" caption="The page tells you which charger you scanned, then sends you to the sign-in screen." />
+
+</TutorialStep>
+
+<TutorialStep title="Tap your EV card on the charger">
+
+The sign-in screen waits for your EV card. Hold the card flat against the card reader on the charger you scanned.
+
+The charger reports the tap back to Polaris, which matches it to your account.
+
+<Persona for="Driver">
+You don't need to start a charging session yet — this tap is only to prove the card is yours. You'll choose a connector and start charging after you're signed in.
+</Persona>
+
+</TutorialStep>
+
+<TutorialStep title="Wait for the redirect">
+
+Once your card is recognised, the page redirects you to your dashboard at `/`. You're now signed in.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You'll know it worked when:
+
+- The browser lands on your customer dashboard.
+- Your name appears in the top-right corner.
+- You can see your recent charging sessions.
+
+<Aside type="tip">
+The sign-in cookie stays valid on this device until you sign out or it expires, so you won't need to scan again next time you come back in the same browser.
+</Aside>
+
+## Troubleshooting
+
+**"Continue to sign-in" doesn't go anywhere.**
+Check that your browser allows cookies for the Polaris site. The sign-in page needs to set a session cookie to remember you.
+
+**Nothing happens after I tap my card.**
+The QR scan has a 60-second window. If you waited too long between scanning the QR and tapping your card, scan the QR code again to start over.
+
+**I get a "rate limited" message.**
+You can scan up to ten times per minute from one network. Wait a minute and try once more. If it keeps happening, your card may already have been used to sign in on another device in the last few seconds — each scan can only sign you in once.
+
+**I get an "unauthorized" message.**
+Your EV card isn't linked to a customer account yet, or it's linked to an account that isn't a customer account (for example, an operator account). Contact your fleet operator and ask them to confirm your card is mapped to your account.
+
+:::caution
+If you lose your EV card, ask your operator to deactivate it. Anyone who finds the card and scans a charger QR can sign in as you until the card is deactivated.
+:::
+
+:::danger
+Don't share photos of your printed EV card online. The QR on the card is enough on its own to sign in as you from an iOS device.
+:::
+
+## Related
+
+- [Start a charging session](/user/web/charging/start-session/)
+- [Link a new EV card to your account](/user/web/account/link-card/)
+- [Sign in with a magic link](/user/web/account/sign-in-magic-link/)

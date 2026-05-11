@@ -1,0 +1,151 @@
+---
+title: Manage a customer's subscription
+description: Edit a customer's charging profile — schedule windows and power caps — from the subscription detail page.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/subscriptions/[externalId]/profile.tsx
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside } from "@astrojs/starlight/components";
+
+Use this runbook when a customer asks you to change how their subscription
+charges — for example, restricting charging to off-peak hours, capping
+power to protect a shared circuit, or switching to solar-following mode.
+The <a href="/glossary/#charging-profile"><Glossary term="Charging profile">Charging profile</Glossary></a> editor is
+where every schedule and power-cap decision lives for a single
+subscription.
+
+## Prerequisites
+
+- Operator role with access to the admin console.
+- The customer's subscription `externalId` (or a path in from the Tag
+  detail or Link detail page).
+- Confirmation from the customer about what they want changed —
+  schedule, cap, or both.
+
+## Procedure
+
+The editor is not reachable from the top nav. You enter it from a
+sibling chip on either the Tag detail page or the Link detail page.
+
+<Tutorial>
+  <TutorialStep title="Open the customer's tag or link">
+    Navigate to **Tags** in the sidebar and find the customer's
+    <a href="/glossary/#ev-card"><Glossary term="EV card">EV card</Glossary></a>. Open the tag detail page.
+    <Screenshot alt="Tag detail page with the Charging Profile chip visible" />
+  </TutorialStep>
+
+  <TutorialStep title="Click the Charging Profile chip">
+    On the tag detail page, click the **Charging Profile** chip. You
+    land on `/subscriptions/<externalId>/profile`.
+    <Screenshot alt="Charging Profile editor for a single subscription" />
+  </TutorialStep>
+
+  <TutorialStep title="Pick a preset, or choose Custom">
+    The editor offers six presets:
+
+    - **Unlimited** — no schedule or cap.
+    - **Off-peak** — restricted to off-peak windows.
+    - **Cap 7 kW** — global power cap at 7 kW.
+    - **Cap 11 kW** — global power cap at 11 kW.
+    - **Solar** — follows solar production windows.
+    - **Custom** — define your own windows and caps.
+
+    Choose the preset that matches the customer's request. If none
+    fits, choose **Custom** and continue.
+  </TutorialStep>
+
+  <TutorialStep title="Edit schedule windows (Custom only)">
+    For each window, set:
+
+    - **Day of week** (0 = Sunday through 6 = Saturday).
+    - **Start minute** and **end minute** (minutes from midnight,
+      0–1440).
+    - **Max watts** for that window (optional).
+
+    Add a window for every distinct schedule slice. Windows that don't
+    overlap are treated independently; outside any window, charging is
+    not permitted unless a global cap is the only restriction.
+  </TutorialStep>
+
+  <TutorialStep title="Set a global power cap (optional)">
+    Enter a value in the **Global max watts** field to cap power
+    across all windows. Leave it empty for no global cap.
+  </TutorialStep>
+
+  <TutorialStep title="Save">
+    Click **Save**. The profile is written and pushed downstream to
+    <a href="/glossary/#steve"><Glossary term="SteVe">SteVe</Glossary></a> as a
+    <a href="/glossary/#charging-profile">Charging profile</a> and to
+    <a href="/glossary/#lago"><Glossary term="Lago">Lago</Glossary></a> for billing alignment.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+- Reload the profile page. The preset, windows, and global cap should
+  match what you saved.
+- Check that the **lagoSyncError** banner is not present. If it is,
+  see the recovery section below.
+- For an active session, confirm the new cap is honored by watching
+  the next <a href="/glossary/#meter-value"><Glossary term="Meter value">Meter value</Glossary></a> tick on
+  the session detail page.
+{/* TODO: confirm exact admin surface for live session power readout */}
+
+## If something goes wrong
+
+<Aside type="caution">
+  Saving a Custom profile with **no windows** and **no global cap**
+  effectively allows unlimited charging. If that's not what the
+  customer asked for, choose the **Unlimited** preset instead so the
+  intent is explicit in the audit log.
+</Aside>
+
+**The page redirects me to `/tags`.** The route requires an
+`externalId` in the URL. If it's missing, you're sent back to the tag
+list. Re-enter from the Tag detail or Link detail chip.
+
+**A Lago sync error banner appears after save.** The profile saved
+locally but did not propagate to Lago. The `lagoSyncError` field on
+the profile records the failure. Retry the save; if it fails again,
+escalate — billing will drift from charging behavior until it's
+resolved.
+{/* TODO: confirm the retry-from-banner UX vs. requiring a re-save */}
+
+**SteVe didn't pick up the new cap.** SteVe applies charging profiles
+on the next transaction or via a `SetChargingProfile` command. An
+in-progress session may continue under the previous profile until it
+ends. Ask the customer to stop and restart the session if the change
+must take effect immediately.
+
+## Audit and reversibility
+
+Every profile save is recorded in the
+<a href="/glossary/#audit-log"><Glossary term="Audit log">Audit log</Glossary></a> with the operator
+identity, the `externalId`, and the new profile contents.
+{/* TODO: confirm audit log entry shape for profile saves */}
+
+To revert a change, open the editor again and either:
+
+- Select the previous preset, or
+- Re-enter the previous windows and global cap from the audit log
+  entry.
+
+There is no one-click undo. The profile is overwritten on save, so
+record the prior values before changing if a revert is likely.
+
+## Related
+
+- [Manage EV cards](/admin/tags/)
+{/* TODO: confirm slug */}
+- [Reconcile a <Glossary term="Lago subscription">Lago subscription</Glossary>](/admin/billing/reconcile-lago-subscription/)
+{/* TODO: confirm slug */}
+- [Glossary: Charging profile](/glossary/#charging-profile)

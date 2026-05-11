@@ -1,0 +1,191 @@
+---
+title: Register a new charger
+description: Bring a new OCPP charger online in Polaris Express, or add an unmanaged charger record for a unit that won't speak OCPP.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/devices/index.tsx
+  - web/routes/api/admin/charger/index.ts
+last_authored: 2025-01-21
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+You're standing up a new charger and need it to appear in the Devices
+listing so customers can start sessions on it. There are two paths:
+the charger speaks [<Glossary term="OCPP">OCPP</Glossary>](/glossary#ocpp) and announces itself through
+[<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve), or the unit can't speak OCPP and you need a
+placeholder record so the rest of Polaris Express (billing, tariffs,
+location metadata) has something to attach to.
+
+## Prerequisites
+
+- Admin role on the Polaris Express console. Without it,
+  `/admin/devices` returns `403 Forbidden`.
+- Physical or remote access to the charger's network configuration
+  (OCPP endpoint URL, `chargeBoxId`).
+- SteVe reachable from the console host. The Devices page fetches
+  charger rows from a cache populated by SteVe; if SteVe is down
+  you'll see a "Couldn't reach one of the device sources" banner.
+- A [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) ID agreed with whoever provisions
+  the hardware. This is the identifier the charger sends in its
+  OCPP `BootNotification`.
+
+## Procedure
+
+### Path A — OCPP charger (managed)
+
+<Tutorial>
+  <TutorialStep title="Confirm the charger's OCPP endpoint">
+    Point the charger at the SteVe OCPP endpoint your environment uses.
+    The exact URL is environment-specific; check with your platform
+    owner. The charger must use the `chargeBoxId` you agreed on — SteVe
+    rejects boot notifications from unknown IDs unless auto-registration
+    is enabled in SteVe's config.
+
+    <Screenshot
+      caption="Charger configuration screen showing OCPP endpoint and chargeBoxId fields."
+    />
+  </TutorialStep>
+
+  <TutorialStep title="Power on the charger and wait for boot">
+    Once the charger boots and successfully sends `BootNotification` to
+    SteVe, SteVe records it as a charge box. Polaris Express pulls charge
+    boxes from SteVe via `GET /api/charger`, which proxies to the SteVe
+    client.
+
+    <Endpoint method="GET" path="/api/charger" />
+  </TutorialStep>
+
+  <TutorialStep title="Open the Devices page">
+    Go to **Admin → Devices** (`/admin/devices`). The page lists OCPP
+    chargers and NFC scanners together in one grid, sorted by last-seen
+    descending, so a freshly-booted charger appears near the top.
+
+    <Screenshot
+      caption="Admin Devices page with the new charger card visible at the top of the grid."
+    />
+  </TutorialStep>
+
+  <TutorialStep title="Filter to chargers if the grid is busy">
+    Use the **Type** filter in the filter bar and select **Charger**.
+    The URL updates to `?type=charger`. You can further narrow by
+    management mode using **Mode → OCPP**.
+  </TutorialStep>
+</Tutorial>
+
+### Path B — Unmanaged charger
+
+Use this when the unit doesn't speak OCPP but you still need it
+represented in Polaris Express (for example, a legacy AC unit you bill
+through a flat tariff).
+
+<Tutorial>
+  <TutorialStep title="Open the Devices page">
+    Go to **Admin → Devices**.
+  </TutorialStep>
+
+  <TutorialStep title="Click Add unmanaged charger">
+    In the page header, click **Add unmanaged charger**. This is only
+    visible to admins and takes you to `/admin/devices/new-unmanaged`.
+
+    <Screenshot
+      caption="Devices page header showing the Add unmanaged charger button."
+    />
+  </TutorialStep>
+
+  <TutorialStep title="Fill in the unmanaged charger form">
+    Complete the form on `/admin/devices/new-unmanaged`.
+    {/* TODO: confirm field list once new-unmanaged route source is provided. */}
+  </TutorialStep>
+
+  <TutorialStep title="Verify it appears with the Unmanaged badge">
+    Back on `/admin/devices`, set **Mode → Unmanaged** to filter the
+    grid. The new record should appear with `managementMode: "unmanaged"`.
+    The stat strip's **Unmanaged** total increments by one.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+- **Devices grid** — The charger appears at `/admin/devices`. For OCPP
+  chargers, the card shows the [ChargeBox](/glossary#chargebox) ID,
+  last status, and last-seen timestamp.
+- **Stat strip** — The **Chargers** total at the top of the page
+  increments by one. If the unit is online, the **Online** total
+  also increments. A charger is considered online when its normalised
+  status is anything other than `Offline`.
+- **API check** — `GET /api/charger` returns the new charge box in the
+  `rows` array. Use `?limit=10&skip=0` if you want pagination; without
+  pagination params the response returns the full list under both
+  `rows` and the legacy `chargeBoxes` key.
+
+  <Endpoint method="GET" path="/api/charger?limit=10" />
+
+## If something goes wrong
+
+### The charger doesn't appear in the grid
+
+- Confirm the charger has actually booted and reached SteVe. If SteVe
+  never received a `BootNotification`, Polaris Express has nothing to
+  cache.
+- Check the page for the amber banner reading *"Couldn't reach one of
+  the device sources — showing partial results."* This means the
+  charger query failed; the grid renders scanners only. Retry after
+  confirming SteVe is healthy.
+- The Devices listing is capped at 200 rows per source. If you have
+  more than 200 chargers, use the filter bar to narrow the result set.
+  {/* TODO: confirm whether the cap should be surfaced in the UI as a
+  warning. */}
+
+<Aside type="caution">
+  The Devices loader queries the `chargers` and `devices` tables
+  independently. If only the charger query fails, scanners still render
+  and vice versa — read the banner carefully before assuming the whole
+  page is broken.
+</Aside>
+
+### The charger boots but SteVe rejects it
+
+Boot rejections happen at the SteVe layer, not Polaris Express. Check
+SteVe's logs for the `chargeBoxId`. The most common cause is the ID not
+being pre-registered in SteVe with auto-registration disabled.
+
+### The Add unmanaged charger button is missing
+
+You're not signed in as an admin. The header action only renders when
+`state.user?.role === "admin"`.
+
+## Audit and reversibility
+
+- **Unmanaged charger creation** writes a new row to `chargers` with
+  `managementMode = "unmanaged"`. To reverse, delete or soft-delete the
+  row through whichever admin surface handles unmanaged charger
+  lifecycle.
+  {/* TODO: confirm delete/soft-delete path for unmanaged chargers. */}
+- **OCPP charger registration** is owned by SteVe, not Polaris Express.
+  Removing the charger from the listing means removing it from SteVe;
+  the Polaris Express cache will follow.
+- The DB `CHECK` constraint on `chargers.capabilities` (migration 0039)
+  guarantees every charger row includes the `charger` capability, so a
+  misconfigured insert won't quietly produce a record that fails to
+  render its capability pill.
+
+<Aside type="danger">
+  Deleting a charger record while it has open transactions or active
+  [<Glossary term="Reservation">reservations</Glossary>](/glossary#reservation) will orphan those records.
+  Confirm there are no in-flight sessions before removing a charger,
+  managed or unmanaged.
+</Aside>
+
+## Related
+
+- [Devices page overview](/admin/devices/overview)
+- [Register an NFC scanner](/admin/devices/register-scanner)
+- [SteVe troubleshooting](/admin/steve/troubleshooting)
+- [Glossary: ChargeBox](/glossary#chargebox)
+- [Glossary: OCPP](/glossary#ocpp)

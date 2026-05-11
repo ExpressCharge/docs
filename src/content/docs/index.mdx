@@ -6,6 +6,8 @@ hero:
   tagline: Charge anywhere. Bill anything. Own the stack.
 ---
 
+import Glossary from "@components/Glossary.astro";
+
 import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Find what you need
@@ -19,9 +21,9 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
     [Start with the user guide →](/user/)
   </Card>
   <Card title="Admin Guide" icon="setting">
-    Operator runbooks. Register chargers, manage EV cards, replay
-    webhooks, finalize invoices, impersonate customers, configure
-    feature flags. Web console and iOS scanner.
+    Operator runbooks. Register chargers, manage <Glossary term="EV card">EV cards</Glossary>, replay
+    webhooks, finalize invoices, <Glossary term="Impersonation">impersonate</Glossary> customers, configure
+    <Glossary term="Feature flag">feature flags</Glossary>. Web console and iOS scanner.
 
     [Open the admin guide →](/admin/)
   </Card>
@@ -33,7 +35,7 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
     [Install Polaris Express →](/selfhost/)
   </Card>
   <Card title="Reference" icon="open-book">
-    Concepts (OCPP, SteVe, Lago billing, sync cadence), full API
+    Concepts (<Glossary term="OCPP">OCPP</Glossary>, <Glossary term="SteVe">SteVe</Glossary>, <Glossary term="Lago">Lago</Glossary> billing, sync cadence), full API
     reference for every endpoint, glossary of platform terms, release
     notes.
 
@@ -52,5 +54,5 @@ If you build against the Polaris API, head straight to the
 [API reference](/api/overview/).
 
 For background on how the platform works — what OCPP and SteVe are,
-how billing flows from charger to invoice, why sync runs cycle the way
+how billing flows from charger to invoice, why <Glossary term="Sync run">sync runs</Glossary> cycle the way
 they do — start with [Concepts](/concepts/).

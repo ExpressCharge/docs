@@ -1,0 +1,100 @@
+---
+title: Read a sync-run detail page
+description: Inspect a single sync run's status, counters, segment logs, and errors from the admin console.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/sync/[id].tsx
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside } from "@astrojs/starlight/components";
+
+When a sync run finishes — or fails — you open its detail page to understand what changed and what broke. This runbook walks through every panel on the sync-run detail page so you can read it fluently when a customer complaint or a <Glossary term="Lago">Lago</Glossary> discrepancy lands on your desk.
+
+## Prerequisites
+
+- You are signed in to the admin console.
+- You have the sync run's numeric ID, or you can reach it from the <Glossary term="Sync run">sync runs</Glossary> list at `/sync`.
+- For retrying failed runs, you need the `admin` role. Other roles can read the page but cannot trigger retries.
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open the sync run">
+    Navigate to `/sync/<id>`, or click a row in the sync runs list. If the ID is invalid or the run does not exist, the console redirects you back to `/sync`.
+
+    <Screenshot alt="Sync run detail page header showing run ID, status, and start time." />
+  </TutorialStep>
+
+  <TutorialStep title="Read the Summary tile">
+    The **Summary** section shows four fields:
+
+    - **ID** — the numeric run ID, matching the URL.
+    - **Status** — `Completed`, `Failed`, or `Running`. The icon mirrors the badge: a green check, a red alert, or a spinning loader.
+    - **Time started** — when the run began.
+    - **Duration** — elapsed time. For a still-running run, this reflects time-so-far.
+  </TutorialStep>
+
+  <TutorialStep title="Read the Statistics tile">
+    The **Statistics** section rolls up counters across the run. It has two groups:
+
+    - **EV Card linking** — counts of <Glossary term="EV card">EV cards</Glossary> activated, deactivated, and unchanged during the run.
+    - **Charging sessions** — count of charging sessions processed and the number of events created downstream.
+
+    A value of `0` means the segment ran but had nothing to do — not that the segment was skipped. To confirm a segment actually executed, switch to its tab in **Segment details**.
+  </TutorialStep>
+
+  <TutorialStep title="Inspect segment logs">
+    The **Segment details** section is a tab strip. Each tab corresponds to one segment of the sync pipeline:
+
+    - **Tag linking** — reconciling EV cards between Polaris and <Glossary term="SteVe">SteVe</Glossary>.
+    - **Transaction sync** — pulling charging sessions from SteVe.
+    - **Scheduling** — adaptive cadence decisions.
+    - **Lago customers**, **Lago subscriptions**, **Lago plans**, **Lago invoices**, **Lago wallets**, **Lago billable metrics** — Lago-side reconciliation, one tab per resource.
+    - **Local reconcile** — Polaris-side cleanup and consistency checks.
+
+    Click a tab to see the log lines for that segment. If the run is still in progress, the tab content updates live.
+  </TutorialStep>
+
+  <TutorialStep title="Read the Errors panel, if present">
+    If the run produced errors, an **Errors** section appears below the segment tabs with a red accent. The raw error text is shown as preformatted output — copy it verbatim when escalating.
+
+    If there is no **Errors** section, the run completed without recording a top-level error. Per-segment failures may still appear inside the segment tabs.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+- The **Status** badge matches the run's actual outcome. A `Running` badge with a stale start time means the run is hung; cross-check against the sync runs list at `/sync`.
+- The counters in **Statistics** are consistent with what you expect from the time window. For example, a tag-linking run during quiet hours typically shows small activation/deactivation counts and a large unchanged count.
+- Segment tabs contain log lines for the segments you expect to have executed.
+
+## If something goes wrong
+
+<Aside type="caution">
+  A run stuck in `Running` for longer than the configured run timeout usually means the worker crashed mid-run. The detail page will keep showing `Running` until something marks the row otherwise. Check the worker logs before assuming the run is still active.
+</Aside>
+
+- **Page redirects to `/sync`.** The ID in the URL is non-numeric or the run was deleted. Re-open from the sync runs list.
+- **Retry button is missing on a failed run.** You are not signed in as an `admin`. Ask an admin to retry, or sign in with the correct account.
+- **Counters are all zero but the run is `Completed`.** The run executed but had no work to do. Confirm by opening one or two segment tabs — if they contain log lines, the run is healthy.
+- **`Errors` section contains a stack trace.** Copy the full text. Match the first error line to a segment by opening each tab; the segment whose logs end abruptly is usually the culprit.
+
+## Audit and reversibility
+
+Reading a sync-run detail page is a read-only operation and is not destructive. No audit entry is written for viewing the page.
+
+Retrying a failed run from this page (via the **Retry** button) does create a new sync run with its own ID — it does not modify the original run record. Use the new run's detail page to track the retry's outcome.
+
+## Related
+
+- [Retry a failed sync run](/admin/sync/retry-failed-run/)
+- [Sync runs list](/admin/sync/list/)
+- [Glossary: Sync run](/glossary/#sync-run)

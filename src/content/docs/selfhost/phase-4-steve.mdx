@@ -1,0 +1,262 @@
+---
+title: Phase 4 — Deploy SteVe (OCPP backend)
+description: Build and start the SteVe OCPP server, the WebSocket endpoint that charge points connect to and that ExpresSync drives for pre-authorization.
+sidebar:
+  order: 40
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - steve/CLAUDE.md
+  - steve/docker-compose.yml
+  - steve/README.md
+last_authored: 2025-01-15
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import { Aside, FileTree } from "@astrojs/starlight/components";
+import EnvVar from "~/components/EnvVar.astro";
+
+<Glossary term="SteVe">SteVe</Glossary> is the <Glossary term="OCPP">OCPP</Glossary> central system: it terminates the WebSocket from each
+physical charge point, persists transactions and meter readings to
+MariaDB, and exposes a REST API plus an admin web UI. ExpresSync uses
+SteVe's REST API for remote-start and pre-authorization, and receives
+push notifications from SteVe via the `HttpMeterValueHook` outbound
+webhook.
+
+This phase builds the ExpressCharge fork of SteVe (`expressync-preauth`
+branch), brings up MariaDB and the SteVe app via Docker Compose, and
+verifies that the admin UI and REST API are reachable.
+
+## Prerequisites
+
+- Phase 1 (host prep) complete — Docker + Compose installed, the host
+  has a `pangolin` external network created.
+- Phase 2 (Pangolin tunnel) complete — you have a public hostname (for
+  example `ocpp.example.com`) that will route to the SteVe container
+  on the `pangolin` network.
+- The `expresscharge/steve` repository checked out on the host. The
+  default branch `expressync-preauth` is what you want.
+- Three secrets generated and recorded somewhere safe:
+  - MariaDB password for the `steve` user
+  - Admin web UI basic-auth password
+  - REST API token value (used as the `webapi.value` header)
+
+<Aside type="note">
+SteVe is a friendly fork of [steve-community/steve](https://github.com/steve-community/steve)
+with three ExpressCharge-specific changes: an outbound <Glossary term="Meter value">MeterValues</Glossary>
+webhook, a clean 404 on the task-resolver endpoint, and JVM-property
+overrides so secrets live in env files instead of the committed
+`application-docker.properties`. Nothing real is committed to the repo.
+</Aside>
+
+## Steps
+
+<Tutorial>
+
+<TutorialStep title="Create the pangolin network if it doesn't exist">
+
+SteVe's Compose file attaches the `app` container to an external
+network named `pangolin`. If you haven't already created it during
+Phase 2, do so now:
+
+```bash
+docker network ls | grep pangolin || docker network create pangolin
+```
+
+</TutorialStep>
+
+<TutorialStep title="Copy the env-file examples">
+
+Both env files are gitignored. Copy the committed examples:
+
+```bash
+cd steve
+cp docker-compose.app.env.example docker-compose.app.env
+cp docker-compose.mariadb.env.example docker-compose.mariadb.env
+```
+
+</TutorialStep>
+
+<TutorialStep title="Fill in secrets">
+
+Edit `docker-compose.app.env` and set:
+
+- <EnvVar name="DB_PASSWORD" required /> — the MariaDB password for the
+  `steve` user.
+- <EnvVar name="AUTH_PASSWORD" required /> — admin web UI basic-auth
+  password.
+- <EnvVar name="WEBAPI_VALUE" required /> — REST API token. ExpresSync
+  will send this as a header on every call.
+
+Edit `docker-compose.mariadb.env` and set `MYSQL_PASSWORD` to the
+**same** value as `DB_PASSWORD`. These are the same credential consumed
+by two different processes; if they drift the app will fail to connect
+on first boot.
+
+<Aside type="caution">
+`DB_PASSWORD` (in `docker-compose.app.env`) and `MYSQL_PASSWORD` (in
+`docker-compose.mariadb.env`) MUST match. The build-time Flyway run
+inside the image also uses `BUILD_DB_PASSWORD` — if you change the
+password later you may need to `docker compose build --no-cache`.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Confirm the data directory">
+
+The Compose file bind-mounts `/data/ocpp/mariadb` on the host into the
+MariaDB container. Create it and make sure the directory exists with
+appropriate permissions:
+
+```bash
+sudo mkdir -p /data/ocpp/mariadb
+```
+
+The `:Z` SELinux relabel flag is already set in the Compose file; on
+non-SELinux hosts it's a no-op.
+
+</TutorialStep>
+
+<TutorialStep title="Build the image">
+
+The SteVe image bakes the Maven build artifacts. There is no
+live-reload — source changes require a rebuild.
+
+```bash
+docker compose build
+```
+
+The build pulls JDK 21, runs `./mvnw package`, and produces a runnable
+`war`. Expect this to take several minutes on first build.
+
+</TutorialStep>
+
+<TutorialStep title="Start the stack">
+
+```bash
+docker compose up -d
+docker compose logs app -f
+```
+
+Boot takes about 30 seconds. Flyway migrations run before Jetty binds
+its listener; you'll see the schema migrations scroll past, then a
+`Started SteveAppContext` line. `Ctrl-C` to detach from logs (the
+containers keep running).
+
+</TutorialStep>
+
+<TutorialStep title="Wire the public hostname">
+
+In your Pangolin admin UI, create a resource that proxies the public
+hostname (for example `ocpp.example.com`) to the `app` container on
+the `pangolin` network, port `8180`. Both HTTP (for the admin UI and
+REST API) and WebSocket (for OCPP/J) traffic must be allowed; OCPP/J
+upgrades the same HTTP connection to a WebSocket.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Configure environment variables
+
+The three runtime secrets are injected at JVM startup via `-D`
+properties, overriding the placeholder values committed in
+`application-docker.properties`.
+
+| Variable | Default | Required | Source file |
+|---|---|---|---|
+| `DB_PASSWORD` | _(none)_ | yes | `docker-compose.app.env` |
+| `AUTH_PASSWORD` | _(none)_ | yes | `docker-compose.app.env` |
+| `WEBAPI_VALUE` | _(none)_ | yes | `docker-compose.app.env` |
+| `MYSQL_PASSWORD` | _(none)_ | yes — must equal `DB_PASSWORD` | `docker-compose.mariadb.env` |
+| `MYSQL_ROOT_PASSWORD` | _(none)_ | yes | `docker-compose.mariadb.env` |
+| `MYSQL_USER` | `steve` | no | `docker-compose.mariadb.env` |
+| `MYSQL_DATABASE` | `stevedb` | no | `docker-compose.mariadb.env` |
+
+<Aside type="note">
+SteVe defaults its time zone to UTC, which is what OCPP recommends.
+The MariaDB image inherits the host's clock; if you've configured your
+host as UTC (Phase 1) you don't need to override anything.
+</Aside>
+
+## Verify
+
+**Admin UI reachable.** Open `https://ocpp.example.com/steve/manager`
+in a browser. You should be prompted for basic auth; the username is
+`admin` and the password is your `AUTH_PASSWORD`. After signing in,
+the Dashboard should render with zero charge points connected.
+
+**REST API reachable.** From any machine that can reach the public
+hostname:
+
+```bash
+curl -i https://ocpp.example.com/steve/api/v1/chargeboxes \
+  -H "Authorization: Bearer $WEBAPI_VALUE"
+```
+
+You should get `200 OK` and an empty JSON array. If you get `401`, the
+`WEBAPI_VALUE` you sent doesn't match what's in the env file.
+
+**OCPP endpoint reachable.** A real charge point will connect to:
+
+```
+wss://ocpp.example.com/steve/websocket/CentralSystemService/<chargeBoxId>
+```
+
+You won't be able to test this end-to-end until you've registered a
+<Glossary term="ChargeBox">ChargeBox</Glossary> in the admin UI (Phase 6 covers that). For now, confirm the
+WebSocket upgrade path is reachable:
+
+```bash
+curl -i -N \
+  -H "Connection: Upgrade" \
+  -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Version: 13" \
+  -H "Sec-WebSocket-Key: $(openssl rand -base64 16)" \
+  -H "Sec-WebSocket-Protocol: ocpp1.6" \
+  https://ocpp.example.com/steve/websocket/CentralSystemService/unknown
+```
+
+A `404` here is expected (the chargeBoxId isn't registered) but a
+`404` from SteVe itself, not from Pangolin or nginx, confirms the
+upgrade path works. A `502` or HTML error page means traffic isn't
+reaching SteVe.
+
+## If something goes wrong
+
+**`Access denied for user 'steve'@'…'` in the app logs.** Your
+`DB_PASSWORD` and `MYSQL_PASSWORD` don't match, or MariaDB's data
+volume was initialized with a different password on a prior run.
+Either fix the env files, or — if this is a fresh install with no
+real data — stop the stack, remove `/data/ocpp/mariadb/*`, and
+`docker compose up -d` again so MariaDB re-initializes with the new
+password.
+
+**Admin UI returns `401` no matter what password you enter.**
+The container is using the committed placeholder, not your
+`AUTH_PASSWORD`. Confirm `docker-compose.app.env` is in the same
+directory as `docker-compose.yml`, has no `export ` prefixes, and
+that `docker compose config` shows your env var in the resolved
+configuration. Restart the `app` container after fixing.
+
+**`docker compose build` fails on Flyway migrations.** The build
+runs Flyway against MariaDB using `BUILD_DB_PASSWORD`. If you've
+rotated the password without rebuilding, the bake step can't connect.
+Run `docker compose build --no-cache` and confirm the env file is
+present.
+
+**WebSocket connections from charge points immediately disconnect.**
+Almost always a Pangolin / reverse-proxy config issue — confirm that
+the resource forwards `Upgrade` and `Connection` headers and doesn't
+buffer the response. SteVe itself logs every connection attempt in
+`logs/`; tail those to confirm the upgrade is reaching the app.
+
+## Next phase
+
+Continue to [Phase 5 — Deploy ExpresSync (web app)](/selfhost/phase-5-expresync/),
+which deploys the Polaris Express web application and points it at the
+SteVe REST API you just stood up.

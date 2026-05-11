@@ -1,0 +1,126 @@
+---
+title: Share a diagnostics bundle with support
+description: Capture connection, device, account, and recent-log details from the iOS app and send them to Polaris Express support.
+sidebar:
+  order: 10
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Scan/DiagnosticsSheet.swift
+last_authored: 2026-05-20
+prompt_template: admin-runbook
+---
+
+When support asks "what does the app see right now?", the iOS Diagnostics sheet is the fastest way to answer. It shows the live connection status, device identifiers, the account the device is signed in as, and a tail of recent on-device logs. This runbook walks you through opening the sheet, copying the values support typically needs, and forcing a sync if the connection looks stuck.
+
+## Prerequisites
+
+- The iPad or iPhone is signed in to an operator (admin) account. The Diagnostics entry point is hidden in customer mode.
+- You can reach the Settings screen — that is, the device is not currently locked into a customer-facing scan flow.
+- A way to paste the captured values to support (email, ticket, chat).
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open Diagnostics from Settings">
+    From the app's main screen, open **Settings** and tap the **Diagnostics** card. The card is only rendered for admin accounts, so if you don't see it, confirm which account the device is signed in as before continuing.
+
+    <Screenshot alt="Settings screen showing the Diagnostics card" />
+  </TutorialStep>
+
+  <TutorialStep title="Check the Connection card">
+    The first card, **Connection**, shows the live status pill (Online, Connecting, Reconnecting, or Offline), the reconnect count for this session, the relative time of the last sync, and the number of pending uploads.
+
+    Note whatever support needs — most often the status pill and "Last sync" value.
+
+    <Screenshot alt="Diagnostics Connection card" />
+  </TutorialStep>
+
+  <TutorialStep title="Copy the Device ID and Server URL">
+    On the **Device** card, tap the copy button next to **Server** and **Device ID**. Each copy fires a toast ("Server URL copied", "Device ID copied") confirming the value is on the clipboard.
+
+    The Device ID row is intentionally middle-truncated in the UI — use the copy button to get the full value rather than reading it off the screen.
+
+    Also capture, by hand if needed:
+    - **Push permission** (Authorized, Denied, Not asked, Provisional, or Ephemeral)
+    - **APNs environment** (the build's configured environment)
+    - **Build** (app version)
+
+    <Screenshot alt="Diagnostics Device card with copyable rows" />
+  </TutorialStep>
+
+  <TutorialStep title="Confirm the signed-in account">
+    The **Account** card calls <Endpoint method="GET" path="/api/devices/me" /> and shows who the device is bound to: a display name (falling back to name, email, then user ID), the email if it differs, and the user ID.
+
+    If the card shows "Couldn't load account.", tap **Retry**. A persistent failure here usually means the device's bearer token is no longer accepted — note that for support.
+
+    <Screenshot alt="Diagnostics Account card" />
+  </TutorialStep>
+
+  <TutorialStep title="Grab recent logs">
+    If a **Recent logs** card is present, it shows the last 20 entries drained from the on-device log buffer, each with timestamp, severity, category, and message body. Severity is colored: warnings amber, errors and critical rose.
+
+    Tap the **copy** icon (top-right of the card) to copy all visible log lines as tab-separated text suitable for pasting into a ticket. A "Logs copied" toast confirms the action.
+
+    <Aside type="note">
+      The Recent logs card only appears when the device log drain is wired. If you don't see it, that's expected on builds without the drain — skip this step.
+    </Aside>
+
+    <Screenshot alt="Diagnostics Recent logs card" />
+  </TutorialStep>
+
+  <TutorialStep title="Force a sync if needed">
+    If "Last sync" is stale or the status pill is stuck on Reconnecting, scroll to the **Test** card and tap **Run test sync**. This triggers an immediate device-state sync; the button shows a loading state until it finishes, then a toast reports **Sync OK** or **Sync failed**.
+
+    You can also force a flush from the Recent logs card using the **up-arrow** icon — useful when you want the latest entries to appear before copying.
+  </TutorialStep>
+
+  <TutorialStep title="Send the bundle to support">
+    Paste the copied values into your support channel. A useful bundle looks like:
+
+    - Connection status, reconnects, last sync, pending uploads
+    - Server URL, Device ID, push permission, APNs environment, build
+    - Signed-in user (display name + user ID)
+    - Test sync result (OK / failed)
+    - Recent logs (tab-separated)
+
+    Tap **Done** to dismiss the sheet.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+- The **Sync OK** toast after **Run test sync** confirms the device can reach the server and its bearer token is accepted.
+- The **Account** card populating without error confirms <Endpoint method="GET" path="/api/devices/me" /> succeeded against the configured server.
+- In the admin web console, the device's most recent sync run should match the "Last sync" you observed on the sheet. If the console shows an older run than the device claims, flag that to support — it usually points at a webhook or admin-side ingest issue rather than the device.
+
+## If something goes wrong
+
+<Aside type="caution">
+  **The Diagnostics card doesn't appear in Settings.** The device is signed in as a customer, not an operator. Sign out and back in as an admin account. The sheet is admin-gated at its call site, so there is no in-app workaround.
+</Aside>
+
+<Aside type="caution">
+  **Account card shows "Couldn't load account."** The device reached the server but `/api/devices/me` failed. Tap **Retry**. If it keeps failing while the Connection card shows Online, the device's bearer token is likely invalid — re-register the device and try again.
+</Aside>
+
+<Aside type="caution">
+  **Run test sync reports "Sync failed".** Check the Connection card: if it's Offline or Reconnecting, the device can't reach the server (network or server-side outage). If it's Online and sync still fails, copy the Recent logs and escalate — that combination usually indicates a server-side rejection worth investigating.
+</Aside>
+
+<Aside type="caution">
+  **"No active session" toast on Run test sync.** The scan coordinator hasn't initialized a device session yet. Close the sheet, return to the main scan surface long enough for the session to come up, then reopen Diagnostics.
+</Aside>
+
+## Audit and reversibility
+
+This runbook is read-only from the server's perspective. The only network call it makes is <Endpoint method="GET" path="/api/devices/me" /> (on open and on Retry) plus the device-state sync triggered by **Run test sync** or the Recent logs **force flush** button. None of these mutate fleet state, so there is nothing to reverse.
+
+The test sync will appear as a normal sync run in the admin console's sync run history, attributed to this device. That is the expected audit trail.
+
+## Related
+
+- Reading the sync run history in the admin console <!-- TODO: confirm -->
+- Re-registering an iOS device <!-- TODO: confirm -->
+- Push notification troubleshooting <!-- TODO: confirm -->

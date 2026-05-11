@@ -1,0 +1,148 @@
+---
+title: Finalize a draft invoice
+description: Promote a draft Lago invoice to finalized status so it can be paid, exported, and counted against revenue.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/admin/invoice/[id]/finalize.ts
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+import Tutorial from "../../../../components/Tutorial.astro";
+import TutorialStep from "../../../../components/TutorialStep.astro";
+import Screenshot from "../../../../components/Screenshot.astro";
+import Endpoint from "../../../../components/Endpoint.astro";
+
+Finalize a draft invoice when you need to lock its line items and make
+it payable. Use this runbook at month-end close, before sending an
+invoice to a customer, or when a draft has been reviewed and is ready
+to count against revenue. Finalization is performed against [<Glossary term="Lago">Lago</Glossary>](/glossary#lago)
+and is effectively one-way — once finalized, you cannot edit the line
+items.
+
+## Prerequisites
+
+- You are signed in as an operator with admin access to the billing
+  console.
+- You are on the **Billing → Invoices** screen and have located the
+  draft invoice.
+- You have reviewed the draft's line items, fees, and taxes with the
+  customer record open in a second tab if needed.
+- The corresponding [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer) and
+  [<Glossary term="Lago subscription">Lago subscription</Glossary>](/glossary#lago-subscription) have already
+  synced — confirm via the most recent [sync run](/glossary#sync-run).
+
+<Aside type="danger">
+  Finalization is **not reversible** from the admin UI. A finalized
+  invoice cannot be returned to draft. If you finalize the wrong
+  invoice you will need to issue a credit note or void it in Lago
+  directly. Confirm the invoice ID and customer before you click.
+</Aside>
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open the draft invoice">
+    From **Billing → Invoices**, filter by status **Draft** and click
+    the row for the invoice you want to finalize. The detail panel
+    opens with the invoice's line items, fees, and taxes.
+
+    <Screenshot alt="Invoice list filtered to draft status with one row selected" />
+  </TutorialStep>
+
+  <TutorialStep title="Verify the customer and totals">
+    Confirm:
+
+    - The customer name and Lago customer ID match the account you
+      intend to bill.
+    - The line items reflect the billing period you expect.
+    - The fees and taxes totals match your expectation. The UI reads
+      `fees_amount_cents` and `taxes_amount_cents` straight from Lago.
+
+    If anything looks wrong, **stop**. Resolve the underlying data in
+    Lago (or wait for the next sync) before finalizing.
+  </TutorialStep>
+
+  <TutorialStep title="Click Finalize">
+    In the invoice detail panel, click **Finalize invoice**. The
+    admin app issues:
+
+    <Endpoint method="POST" path="/api/admin/invoice/{id}/finalize" />
+
+    which calls Lago's `PUT /invoices/:id/finalize` and returns the
+    refreshed invoice. The UI status updates from `draft` to whatever
+    `deriveInvoiceUiStatus` resolves to based on the new Lago
+    `status`, `payment_status`, and `payment_overdue` fields —
+    typically `finalized` or `pending`.
+
+    <Screenshot alt="Invoice detail panel showing the Finalize invoice button" />
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+The finalize call is synchronous. When it returns:
+
+- The invoice's **UI status** should no longer be `draft`. Expect
+  `finalized`, `pending`, or `overdue` depending on payment state.
+- The **Fees** and **Taxes** rows in the detail panel reflect the
+  values Lago returned.
+- Refreshing the invoice list and filtering by **Draft** should no
+  longer show this invoice. Filtering by **Finalized** should.
+- The action appears in the [audit log](/glossary#audit-log) attributed
+  to your operator account. <!-- TODO: confirm finalize emits an audit log entry -->
+
+If the request failed, the panel shows an error toast with the upstream
+Lago message and the API returns `502` with `{ error: "Failed to
+finalize invoice: <message>" }`.
+
+## If something goes wrong
+
+<Aside type="caution">
+  A `502` response means Lago rejected the finalize call. The draft
+  is unchanged — it is safe to retry once the underlying issue is
+  resolved.
+</Aside>
+
+Common failure modes:
+
+- **Lago returns an error** — the draft remains a draft. Read the
+  error message in the toast. Typical causes: the invoice was already
+  finalized in Lago by another operator, the customer is missing
+  required tax info, or the subscription state has changed. Fix the
+  underlying data in Lago and retry.
+- **401 Unauthorized** — your session expired. Sign back in and retry.
+- **400 Missing invoice id** — refresh the page; the route param
+  didn't propagate. Reopen the invoice from the list.
+- **You finalized the wrong invoice** — you cannot undo this from the
+  admin UI. See *Audit and reversibility* below.
+
+## Audit and reversibility
+
+Finalization is a one-way transition in Lago. To unwind a mistaken
+finalization:
+
+1. Open the invoice in the Lago admin console directly.
+2. Issue a **credit note** for the full amount, or **void** the
+   invoice if your Lago plan and the invoice's payment state allow
+   it.
+3. If a replacement is needed, generate a new draft from the
+   subscription and finalize that one instead.
+
+The original finalize action is recorded in the [audit log](/glossary#audit-log)
+with the operator who performed it, the invoice ID, and the
+timestamp. <!-- TODO: confirm audit log shape for finalize -->
+
+## Related
+
+- [Issue a credit note](/admin/billing/credit-note/)
+- [Reconcile a Lago sync run](/admin/billing/reconcile-sync-run/)
+- [Resolve a failed payment](/admin/billing/failed-payment/)
+- [Glossary: Lago](/glossary#lago)

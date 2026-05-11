@@ -1,0 +1,96 @@
+---
+title: Report a lost or stolen EV card
+description: Deactivate an EV card from your account so it can't start any more charging sessions.
+sidebar:
+  order: 30
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/cards/[id].tsx
+  - web/routes/api/customer/cards/[id]/report-lost.ts
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+If your <Glossary term="EV card">EV card</Glossary> is missing — left at a charger, dropped in a parking lot, or taken from your bag — you want it shut off before someone else plugs in on your tab. This tutorial walks you through reporting the card from your account so it stops authorizing new sessions. You need a few minutes and access to the email or login you use for Polaris Express.
+
+## Before you start
+
+- Sign in to your account at the customer dashboard.
+- Know which card is missing. If you have more than one, check the display name or card ID on your Cards page.
+- If a session is running right now on the missing card, reporting it lost will also stop that session.
+
+<Tutorial goal="Report a lost or stolen EV card" estimatedMinutes={2}>
+
+<TutorialStep title="Open the Cards page">
+
+From the sidebar, go to **Cards**. You'll see every EV card linked to your account, with its status next to the name.
+
+<Screenshot alt="Cards list showing each EV card with its active status" caption="Your Cards page lists every card on your account." />
+
+</TutorialStep>
+
+<TutorialStep title="Open the card you want to report">
+
+Click the card you're reporting. The detail page shows the card's display name, card ID, when it was issued, and when you last used it.
+
+If the card is already marked inactive, you won't see the report button — someone (or a previous report) has already deactivated it.
+
+</TutorialStep>
+
+<TutorialStep title="Click Report lost">
+
+In the header of the card page, next to the status badge, click **Report lost**. A dialog opens asking you to confirm.
+
+<Screenshot alt="Card detail page with the Report lost button in the header" caption="The Report lost button sits next to the card's status badge." />
+
+</TutorialStep>
+
+<TutorialStep title="Add a reason (optional) and confirm">
+
+You can add a short note — for example, "left at the office charger" or "stolen from car." The note is sent to the operator along with the report, so they have context when they follow up about a replacement. You can leave it blank.
+
+Confirm the report to submit it.
+
+<Aside type="caution">
+Reporting a card lost deactivates it right away. If you find it later, you'll need to contact the operator to reactivate it or get a replacement — you can't undo the report from your account.
+</Aside>
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+After you confirm, the card's status badge changes from active to inactive, and the **Report lost** button disappears from the header. From this point:
+
+- The charger will refuse the card the next time someone taps it.
+- If a session was running on the card when you reported it, it stops on its own.
+- The operator gets a notification so they can issue a replacement and review any disputed charges.
+
+## Troubleshooting
+
+**The Report lost button isn't showing up.**
+The button only appears on cards that are currently active. If the badge says the card is already inactive, it's already been deactivated — either by an earlier report or by an operator. Contact the operator if you need a replacement.
+
+**I got an error saying the card can't be reported.**
+If you're viewing your account through an operator's read-only impersonation session, you can't submit the report yourself. Sign in directly with your own account and try again.
+
+**I reported the wrong card.**
+You can't reverse a lost-card report from your account. Email the operator and ask them to reactivate the card. The contact email is on your card detail page.
+
+**A charge appeared after I reported the card.**
+Reporting the card stops new sessions and any session in progress, but a charge that finished a moment before the report can still post. If you see a session you didn't authorize, contact the operator with the session ID from your Sessions page.
+
+:::danger
+If you believe your card was stolen and used for charges you didn't make, report it lost first to stop further use, then contact the operator to dispute the charges. Don't wait — every minute the card stays active is another session a thief could start.
+:::
+
+## Related
+
+- [View your charging sessions](/user/web/sessions/)
+- [Manage your EV cards](/user/web/cards/)
+- [Contact your charging operator](/user/web/account/contact-operator/)

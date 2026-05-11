@@ -1,0 +1,270 @@
+---
+title: Backups — Postgres and MariaDB
+description: Take, verify, and restore backups of the Polaris Express Postgres database and the SteVe MariaDB database.
+sidebar:
+  order: 30
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - docker-compose.yml
+  - steve/docker-compose.yml
+last_authored: 2025-01-21
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, FileTree, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Polaris Express keeps state in two databases: a Postgres instance (the web app, billing sync, audit log, <Glossary term="Sync run">sync runs</Glossary>) and a MariaDB instance (<Glossary term="SteVe">SteVe</Glossary> — <Glossary term="OCPP">OCPP</Glossary> <Glossary term="ChargeBox">charge box</Glossary> registry, transactions, idTags). Both must be backed up. Losing either one breaks the platform; losing them together is unrecoverable.
+
+This runbook covers daily logical dumps that you can ship off-box, plus how to verify them and how to restore.
+
+## When to run this
+
+- **Nightly**, automated, off-box. The procedure below is designed to run from cron on the host or from a sidecar container.
+- **Before any upgrade** of `web/`, SteVe, Postgres, or MariaDB. Take a manual dump and confirm it restores into a throwaway container before you touch production.
+- **Before destructive ops** — migrations that drop columns, manual data fixes, large <Glossary term="idTag">idTag</Glossary> re-imports.
+
+## What gets backed up
+
+| Database | Container | Volume | Contents |
+|---|---|---|---|
+| Postgres 17 | `postgres` (from `docker-compose.yml`) | `postgres_data` | Users, [ChargeBoxes](/glossary#chargebox), [tariffs](/glossary#tariff), [sync runs](/glossary#sync-run), [audit log](/glossary#audit-log), [<Glossary term="Lago">Lago</Glossary>](/glossary#lago) mappings, [<Glossary term="EV card">EV cards</Glossary>](/glossary#ev-card), [<Glossary term="Reservation">reservations</Glossary>](/glossary#reservation) |
+| MariaDB 10.4 | `mariadb` (from `steve/docker-compose.yml`) | `/data/ocpp/mariadb` (host bind mount) | [SteVe](/glossary#steve) charge boxes, OCPP transactions, [idTags](/glossary#idtag), [<Glossary term="Meter value">meter values</Glossary>](/glossary#meter-value), connector status |
+
+<Aside type="caution">
+Volume snapshots alone are not enough. Both databases need to be quiesced or dumped with the appropriate tool — `pg_dump` for Postgres, `mysqldump` for MariaDB — to guarantee a consistent backup. Copying `/var/lib/postgresql/data` while the database is running will produce a corrupt archive.
+</Aside>
+
+## Prerequisites
+
+- The integrated stack (`docker-compose.yml`) and the SteVe stack (`steve/docker-compose.yml`) are running.
+- You know the database credentials. For Postgres these come from `web/.env` (used by the `postgres` service via `env_file`); for MariaDB they come from `steve/docker-compose.mariadb.env`.
+- You have a backup destination — object storage (S3, R2, B2), a remote host, or at minimum a separate disk. Do not write backups to the same volume as the database.
+- The host has `gzip` and either `aws`, `rclone`, `restic`, or your tool of choice installed.
+
+## Procedure — Postgres
+
+Run `pg_dump` inside the running `postgres` container and stream the output to a compressed file on the host.
+
+```sh title="backup-postgres.sh"
+#!/usr/bin/env bash
+set -euo pipefail
+
+STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+DEST=/var/backups/polaris/postgres
+mkdir -p "$DEST"
+
+docker compose exec -T postgres \
+  pg_dump -U ocpp_user -d ocpp_billing --format=custom --compress=9 \
+  > "$DEST/ocpp_billing-$STAMP.dump"
+
+# Optional: rotate — keep last 14 days locally
+find "$DEST" -name 'ocpp_billing-*.dump' -mtime +14 -delete
+```
+
+Notes:
+
+- `--format=custom` produces a `pg_restore`-compatible archive, which restores faster and lets you restore individual tables.
+- The user `ocpp_user` and database `ocpp_billing` match the defaults set in `web/.env.example`. If you've overridden `POSTGRES_USER` or `POSTGRES_DB`, adjust accordingly.
+- `docker compose exec -T` (note the `-T`) disables TTY allocation, which is required when redirecting stdout.
+
+### Ship it off-box
+
+Pick one. Run this immediately after the dump completes.
+
+```sh
+# S3 / R2
+aws s3 cp "$DEST/ocpp_billing-$STAMP.dump" \
+  "s3://my-backup-bucket/polaris/postgres/" \
+  --storage-class STANDARD_IA
+
+# rclone (any backend)
+rclone copy "$DEST/ocpp_billing-$STAMP.dump" remote:polaris/postgres/
+
+# restic (deduplicating)
+restic -r s3:s3.amazonaws.com/my-backup-bucket/restic backup "$DEST"
+```
+
+## Procedure — MariaDB (SteVe)
+
+The MariaDB credentials live in `steve/docker-compose.mariadb.env`. You'll need the root password (or a dedicated backup user) and the database name (default: `stevedb`).
+
+```sh title="backup-mariadb.sh"
+#!/usr/bin/env bash
+set -euo pipefail
+
+STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+DEST=/var/backups/polaris/mariadb
+mkdir -p "$DEST"
+
+# MARIADB_ROOT_PASSWORD comes from steve/docker-compose.mariadb.env
+source /opt/polaris/steve/docker-compose.mariadb.env
+
+docker compose -f /opt/polaris/steve/docker-compose.yml exec -T mariadb \
+  mysqldump \
+    --user=root \
+    --password="$MARIADB_ROOT_PASSWORD" \
+    --single-transaction \
+    --routines \
+    --triggers \
+    --databases stevedb \
+  | gzip -9 > "$DEST/stevedb-$STAMP.sql.gz"
+
+find "$DEST" -name 'stevedb-*.sql.gz' -mtime +14 -delete
+```
+
+Notes:
+
+- `--single-transaction` makes the dump consistent without locking tables, which matters because SteVe is actively writing transaction and meter-value rows while OCPP traffic is live.
+- `--routines` and `--triggers` are required — SteVe defines stored procedures and triggers that won't survive a plain `mysqldump`.
+- Adjust the database name if your `MARIADB_DATABASE` differs from `stevedb`.
+
+<Aside type="tip">
+Don't pass `--password=` on the command line in production scripts — it shows up in `ps`. Use a `~/.my.cnf` with `[mysqldump]` credentials and just call `mysqldump --defaults-file=...`, or use Docker secrets.
+</Aside>
+
+## Schedule it
+
+A minimal cron entry on the host:
+
+```cron title="/etc/cron.d/polaris-backups"
+# Postgres at 02:15 UTC, MariaDB at 02:30 UTC
+15 2 * * * root /opt/polaris/backup-postgres.sh >> /var/log/polaris-backup.log 2>&1
+30 2 * * * root /opt/polaris/backup-mariadb.sh  >> /var/log/polaris-backup.log 2>&1
+```
+
+Stagger the two jobs by 10–15 minutes so they don't fight for I/O on a single-disk host.
+
+## Verify
+
+A backup you haven't restored is a hope, not a backup. Verify weekly.
+
+### Postgres — restore into a throwaway container
+
+```sh
+docker run --rm -d --name pg-verify \
+  -e POSTGRES_PASSWORD=verify \
+  -e POSTGRES_USER=ocpp_user \
+  -e POSTGRES_DB=ocpp_billing \
+  postgres:17-alpine
+
+# Wait for it to come up
+until docker exec pg-verify pg_isready -U ocpp_user; do sleep 1; done
+
+# Restore the latest dump
+docker exec -i pg-verify pg_restore -U ocpp_user -d ocpp_billing --clean --if-exists \
+  < /var/backups/polaris/postgres/ocpp_billing-LATEST.dump
+
+# Sanity-check row counts
+docker exec pg-verify psql -U ocpp_user -d ocpp_billing -c \
+  "SELECT 'charge_boxes' AS t, count(*) FROM charge_boxes
+   UNION ALL SELECT 'users', count(*) FROM users
+   UNION ALL SELECT 'sync_runs', count(*) FROM sync_runs;"
+
+docker rm -f pg-verify
+```
+
+If row counts roughly match production, the dump is good.
+
+### MariaDB — restore into a throwaway container
+
+```sh
+docker run --rm -d --name mdb-verify \
+  -e MARIADB_ROOT_PASSWORD=verify \
+  mariadb:10.4.30
+
+until docker exec mdb-verify mariadb -uroot -pverify -e "SELECT 1" >/dev/null 2>&1; do sleep 1; done
+
+gunzip -c /var/backups/polaris/mariadb/stevedb-LATEST.sql.gz \
+  | docker exec -i mdb-verify mariadb -uroot -pverify
+
+docker exec mdb-verify mariadb -uroot -pverify -e \
+  "USE stevedb; SELECT
+     (SELECT count(*) FROM charge_box) AS charge_boxes,
+     (SELECT count(*) FROM ocpp_tag) AS idtags,
+     (SELECT count(*) FROM transaction) AS transactions;"
+
+docker rm -f mdb-verify
+```
+
+## Audit and rollback — restoring to production
+
+<Aside type="danger">
+Restoring overwrites the production database. There is no undo. Before doing this in anger: stop the writing services first, take a fresh dump of the current (broken) state in case you need to forensically inspect it later, and announce downtime.
+</Aside>
+
+### Postgres restore
+
+```sh
+# 1. Stop everything that writes to Postgres
+docker compose stop app sync migrate
+
+# 2. Take a forensic dump of the current state
+docker compose exec -T postgres \
+  pg_dump -U ocpp_user -d ocpp_billing --format=custom \
+  > /var/backups/polaris/postgres/PRE-RESTORE-$(date -u +%Y%m%dT%H%M%SZ).dump
+
+# 3. Drop and recreate the database
+docker compose exec -T postgres psql -U ocpp_user -d postgres -c \
+  "DROP DATABASE ocpp_billing;"
+docker compose exec -T postgres psql -U ocpp_user -d postgres -c \
+  "CREATE DATABASE ocpp_billing OWNER ocpp_user;"
+
+# 4. Restore from the chosen backup
+docker compose exec -T postgres \
+  pg_restore -U ocpp_user -d ocpp_billing --no-owner \
+  < /var/backups/polaris/postgres/ocpp_billing-CHOSEN.dump
+
+# 5. Bring the stack back up
+docker compose up -d app sync
+```
+
+The `migrate` service runs once on startup against `app`'s dependency chain; if your restored dump is from an older schema version, `migrate` will catch it up. If your dump is from a *newer* schema than your current `web/` image, **stop** — downgrade `web/` first, or you'll corrupt state.
+
+### MariaDB restore
+
+```sh
+# 1. Stop SteVe so it isn't talking to OCPP during the restore
+docker compose -f /opt/polaris/steve/docker-compose.yml stop app
+
+# 2. Forensic dump of current state
+source /opt/polaris/steve/docker-compose.mariadb.env
+docker compose -f /opt/polaris/steve/docker-compose.yml exec -T mariadb \
+  mysqldump -uroot -p"$MARIADB_ROOT_PASSWORD" --single-transaction --routines --triggers --databases stevedb \
+  | gzip > /var/backups/polaris/mariadb/PRE-RESTORE-$(date -u +%Y%m%dT%H%M%SZ).sql.gz
+
+# 3. Drop and recreate
+docker compose -f /opt/polaris/steve/docker-compose.yml exec -T mariadb \
+  mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" -e \
+  "DROP DATABASE stevedb; CREATE DATABASE stevedb CHARACTER SET utf8mb4;"
+
+# 4. Restore
+gunzip -c /var/backups/polaris/mariadb/stevedb-CHOSEN.sql.gz \
+  | docker compose -f /opt/polaris/steve/docker-compose.yml exec -T mariadb \
+    mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"
+
+# 5. Restart SteVe
+docker compose -f /opt/polaris/steve/docker-compose.yml up -d app
+```
+
+After SteVe restarts, charge boxes will reconnect over OCPP within 30–90 seconds. Watch `steve/logs/` for reconnect activity, and confirm the SteVe admin UI shows the expected ChargeBox count.
+
+## If something goes wrong
+
+**`pg_dump` fails with "role does not exist"** — your `web/.env` `POSTGRES_USER` doesn't match what's actually in the running container. Either fix the env or pass `-U postgres` (the superuser) instead.
+
+**`mysqldump` fails with "Access denied"** — `MARIADB_ROOT_PASSWORD` in your shell doesn't match what the container was initialized with. The container's password is set on first startup from the env file and persists in the volume; changing the env file later does not change it. Use the original password, or reset it via `docker exec`.
+
+**Dump file is suspiciously small (a few KB)** — almost always an auth failure that wrote an error message to the file instead of a dump. Check the file with `head`; if it starts with `pg_dump: error:` or `mysqldump: Got error:`, treat the dump as failed.
+
+**Restore fails on foreign keys (MariaDB)** — make sure you dumped with `--databases` (which includes `CREATE DATABASE` and proper ordering) rather than dumping a single database without it. Re-dump if necessary.
+
+**Restore appears to succeed but [SteVe](/glossary#steve) won't start** — SteVe runs Liquibase on startup. If you restored a dump from a different SteVe version, schema migrations may conflict. Match the SteVe image version to the version that produced the dump.
+
+## Next
+
+- [Upgrading the stack](/selfhost/ops/upgrades/) — always take a verified backup first.
+- [Secret rotation](/selfhost/ops/secrets/) — covers rotating the database passwords referenced here.

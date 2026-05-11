@@ -1,0 +1,100 @@
+---
+title: Start a charging session
+description: Start a charge from your Polaris Express dashboard by picking a charger — no card tap required.
+sidebar:
+  order: 10
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/index.tsx
+  - web/routes/api/customer/remote-start.ts
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This tutorial is for drivers who want to start a charge from the Polaris Express web dashboard. You'll pick a charger from your dashboard and the system will start the session using the active <Glossary term="EV card">EV card</Glossary> on your account. You need a Polaris Express account with at least one active EV card and a charger that is online and Available.
+
+## Before you start
+
+- Sign in to your Polaris Express dashboard.
+- Plug your vehicle into the charger before you start the session.
+- Confirm your account is active. If it isn't, the start request will be refused.
+
+<Tutorial goal="Start a charge from the dashboard" estimatedMinutes={2}>
+
+<TutorialStep title="Open your dashboard">
+
+Go to the root of your Polaris Express site and sign in. You land on the customer dashboard.
+
+<Screenshot alt="Customer dashboard after sign-in, showing chargers and recent sessions" caption="The dashboard lists your chargers, your recent sessions, and your current usage." />
+
+</TutorialStep>
+
+<TutorialStep title="Find an available charger">
+
+Look at the chargers section. Each charger card shows its name and one of four states: **online**, **in use**, **reserved**, or **offline**. You can start a session on a charger that is **online**.
+
+<Aside type="note">
+A charger is treated as offline if Polaris Express hasn't heard from it in the last hour. If the charger you want shows offline, check its power and network connection before continuing.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Pick the charger">
+
+Open the **Pick charger** modal and select the charger you want to use. The dashboard sends your choice to the server, which picks your primary active EV card automatically.
+
+<Persona for="Driver">
+If you have more than one EV card on your account, this flow uses the first active card it finds. To choose a specific card, use the full start-charging sheet instead.
+</Persona>
+
+</TutorialStep>
+
+<TutorialStep title="Wait for the charger to accept the request">
+
+The server sends a RemoteStart command to the charger. This usually takes a few seconds. You don't need to do anything — leave the page open.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+When the session starts, an active-session banner appears at the top of the dashboard. It shows:
+
+- The charger you're using (when available).
+- The energy delivered so far, in kWh.
+- The time the session started.
+
+The session also appears under your recent sessions once the first meter reading syncs.
+
+## Troubleshooting
+
+**"No active card on file"** — Your account has no active EV card. Contact your operator to have a card issued or activated.
+
+**"Account inactive"** — Your account doesn't have permission to start a charge. This is usually a billing or activation issue. Contact your operator.
+
+**"Charger could not start the session. Please try again."** — The charger received the request but refused it or didn't respond. Common causes:
+
+- The cable isn't fully seated. Unplug, replug, and try again.
+- The charger is already in use by someone else.
+- The charger lost its network connection between the dashboard refresh and your tap.
+
+:::caution
+If the same charger fails twice in a row, try a different charger or contact your operator. Repeated failures often mean the charger needs attention on site.
+:::
+
+:::danger
+Don't unplug the cable while a session is starting. Wait until the active-session banner appears or the request fails before you touch the cable.
+:::
+
+**You're signed in as an admin acting as a customer** — <Glossary term="Impersonation">Impersonation</Glossary> is read-only. You'll get a 403 if you try to start a charge while acting as another user. Stop impersonating first.
+
+## Related
+
+- [Reserve a charger](/user/web/<Glossary term="Reservation">reservations</Glossary>/create-a-reservation/)
+- [View your charging history](/user/web/sessions/view-history/)
+- [Manage your EV cards](/user/web/cards/manage-cards/)

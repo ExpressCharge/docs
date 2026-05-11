@@ -1,0 +1,217 @@
+---
+title: Phase 6 — Run database migrations
+description: Apply the Drizzle schema to your PostgreSQL database before first boot.
+sidebar:
+  order: 60
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - web/drizzle/
+last_authored: 2025-01-20
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import { Aside, FileTree } from "@astrojs/starlight/components";
+import EnvVar from "../../../components/EnvVar.astro";
+
+Phase 6 applies the Drizzle migrations bundled with the `web` image
+to your PostgreSQL database. Once this completes, the schema is in
+place and the web service can boot cleanly. This is the last step
+before you start the application stack in Phase 7.
+
+## Prerequisites
+
+- Phases 1–5 complete: Docker host provisioned, PostgreSQL reachable,
+  `web/.env` populated, secrets generated, DNS pointed.
+- The Postgres role named in <EnvVar name="DATABASE_URL" /> exists
+  and can create tables, indexes, and extensions in its target
+  database.
+- You can run `docker compose` from the project directory.
+- A point-in-time backup of the target database, if it is not empty.
+
+<Aside type="caution">
+Migrations run **forward only**. There is no built-in `down`
+command. Always snapshot the database before running migrations on
+an environment that holds real data.
+</Aside>
+
+## Steps
+
+<Tutorial>
+
+<TutorialStep title="Confirm the database connection">
+
+From the host, verify the `web` container can reach Postgres using
+the credentials in your env file:
+
+```sh
+docker compose run --rm web node -e "import('pg').then(async ({default: pg}) => { const c = new pg.Client(process.env.DATABASE_URL); await c.connect(); const r = await c.query('select current_database(), current_user, version()'); console.log(r.rows[0]); await c.end(); })"
+```
+
+You should see the database name, role, and Postgres version. If
+this fails, stop and fix connectivity before continuing — running
+migrations against the wrong database is the most common
+self-host incident.
+
+</TutorialStep>
+
+<TutorialStep title="Inspect the pending migrations">
+
+Migrations live inside the image under `web/drizzle/`. List them
+to confirm the image you pulled matches the version you expect:
+
+```sh
+docker compose run --rm web ls -1 drizzle
+```
+
+Each `.sql` file in that directory corresponds to one migration.
+The `meta/` subdirectory contains the Drizzle journal that tracks
+which migrations have already been applied.
+
+</TutorialStep>
+
+<TutorialStep title="Run the migrations">
+
+Execute the migration runner:
+
+```sh
+docker compose run --rm web pnpm db:migrate
+```
+
+The runner connects using <EnvVar name="DATABASE_URL" />, reads
+`drizzle/meta/_journal.json`, and applies every `.sql` file that
+has not yet been recorded in the `__drizzle_migrations` table.
+
+Expect output similar to:
+
+```
+[migrate] Reading config file '/app/drizzle.config.ts'
+[migrate] Using "postgres" driver
+[migrate] applying migration 0000_initial...
+[migrate] applying migration 0001_add_chargebox...
+[migrate] done
+```
+
+<!-- TODO: confirm the exact log format emitted by drizzle-kit at the version pinned in web/package.json -->
+
+</TutorialStep>
+
+<TutorialStep title="Record what you applied">
+
+Capture the final migration name and the timestamp. You will need
+this if you ever roll back the image tag or restore the database
+from a snapshot.
+
+```sh
+docker compose run --rm web psql "$DATABASE_URL" -c \
+  "select hash, created_at from drizzle.__drizzle_migrations order by created_at desc limit 5"
+```
+
+</TutorialStep>
+
+</Tutorial>
+
+## Configure environment variables
+
+Migrations only consume one variable, but it must be the same value
+the running `web` service will use at boot — mismatches are the
+second-most-common self-host incident.
+
+| Name | Default | Required | Source file |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | _(none)_ | yes | `web/.env` |
+
+The connection string must include the database name, not just the
+host. The role must have privileges to create tables and the
+`pgcrypto` and `uuid-ossp` extensions.
+
+<!-- TODO: confirm the exact extension set requested by the initial migration -->
+
+<Aside type="tip">
+If your Postgres is managed (RDS, Neon, Supabase) and the
+application role cannot create extensions, pre-create them as the
+superuser:
+
+```sql
+create extension if not exists pgcrypto;
+create extension if not exists "uuid-ossp";
+```
+</Aside>
+
+## Verify
+
+Confirm the schema is in place before moving to Phase 7.
+
+1. **Check the migrations table exists and has rows:**
+
+   ```sh
+   docker compose run --rm web psql "$DATABASE_URL" -c \
+     "select count(*) from drizzle.__drizzle_migrations"
+   ```
+
+   The count should equal the number of `.sql` files in
+   `web/drizzle/`.
+
+2. **Check a core table exists:**
+
+   ```sh
+   docker compose run --rm web psql "$DATABASE_URL" -c "\dt"
+   ```
+
+   You should see tables for users, ChargeBoxes, sessions, and the
+   <Glossary term="BetterAuth">BetterAuth</Glossary> tables.
+
+3. **Check enum types loaded:**
+
+   ```sh
+   docker compose run --rm web psql "$DATABASE_URL" -c "\dT"
+   ```
+
+## If something goes wrong
+
+**`relation "__drizzle_migrations" already exists`**
+A previous run partially applied. Inspect the table; if the last
+hash matches the last file in `drizzle/meta/_journal.json`, you are
+already migrated and can proceed to Phase 7. If hashes diverge, you
+are pointed at a database from a different deployment — stop and
+verify <EnvVar name="DATABASE_URL" />.
+
+**`permission denied to create extension`**
+Your application role cannot create extensions. Pre-create them as
+superuser (see the tip above), then re-run the migration.
+
+**`column ... contains null values`**
+A migration that adds a `NOT NULL` column failed because existing
+rows do not satisfy the constraint. This only happens on databases
+that already hold data from a much older schema. Restore the
+snapshot, upgrade through intermediate versions, or contact support
+with the migration filename.
+
+**Migration runner hangs**
+Another connection holds a lock on a table being altered. Find it:
+
+```sql
+select pid, query, state from pg_stat_activity where state <> 'idle';
+```
+
+Terminate the offender with `select pg_terminate_backend(<pid>)`
+and re-run the migration.
+
+<Aside type="danger">
+Do not edit `drizzle/meta/_journal.json` or delete rows from
+`drizzle.__drizzle_migrations` to "skip" a failing migration. The
+schema will drift from what the application code expects, and
+later upgrades will fail in harder-to-diagnose ways. If you must
+recover from a broken migration, restore the database snapshot
+taken before this phase.
+</Aside>
+
+## Next phase
+
+With the schema in place, continue to [Phase 7 — Start the
+application stack](/selfhost/phase-7-start-stack/) to bring up
+`web`, <Glossary term="SteVe">SteVe</Glossary>, and the email worker.

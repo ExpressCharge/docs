@@ -1,0 +1,208 @@
+---
+title: Operator settings tour
+description: Walk through every card on the iOS Settings screen in operator mode and learn what each control does.
+sidebar:
+  order: 10
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Settings/SettingsView.swift
+last_authored: 2026-05-20
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+The ExpressCharge iOS Settings screen behaves differently depending on
+whether you're signed in as an operator or a customer. This runbook is
+the guided tour for operator-mode Settings: what each card shows, which
+controls actually do something, and where to go when a row is telling
+you a device is unhealthy. Read it once when onboarding a new iPhone
+to your fleet, then refer back when triaging a device that's misbehaving
+in the field.
+
+## Prerequisites
+
+- You're signed in to ExpressCharge on the iPhone with an operator
+  account (the app reads `state.ownerUser.role` and sets the
+  `isCustomerAccount` flag to `false`).
+- The iPhone has been through first-run setup and paired to your org.
+- You're on the **Settings** tab.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open Settings and confirm operator mode">
+
+Tap the **Settings** tab. The screen title reads "Settings" and you
+should see — top to bottom — an **Account** card, a **Connectivity**
+card, **Permissions**, **Device**, **About**, **Diagnostics**, and
+**Sign Out**.
+
+If the **Diagnostics** row is missing, you're in customer mode. Sign
+out and sign back in with an operator account; the Diagnostics link
+is gated on `!isCustomerAccount`.
+
+<Screenshot alt="ExpressCharge iOS Settings screen in operator mode showing all cards" />
+
+</TutorialStep>
+
+<TutorialStep title="Read the Account card">
+
+The **Account** card shows the signed-in operator's display name, a
+plan badge, and the owner's [<Glossary term="Public ID">Public ID</Glossary>](/glossary/#public-id) on the
+right. Tap-and-hold the Public ID to copy it — useful when filing a
+support ticket or correlating against the admin web console.
+
+</TutorialStep>
+
+<TutorialStep title="Check Connectivity">
+
+The **Connectivity** card is your at-a-glance device-health readout.
+The pill in the header is one of **Online**, **Connecting**,
+**Reconnecting**, or **Offline**, sourced from
+`coordinator.deviceState?.connectionStatus`.
+
+In operator mode this card shows two extra rows that customers don't see:
+
+- **Last sync** — relative timestamp of the last heartbeat. A dash
+  means the device has never synced this session.
+- **Reconnects** — count of WebSocket reconnects since launch. A
+  steadily climbing number means flaky connectivity worth chasing.
+
+Below the divider is the inline **Connectivity check** — tap **Run
+check** to fire a fresh round-trip self-test without leaving Settings.
+
+</TutorialStep>
+
+<TutorialStep title="Audit Permissions">
+
+The **Permissions** card has two status rows and, on devices with the
+[scanner capability](/glossary/#capability), a third toggle row:
+
+- **Notifications** — iOS-level authorization. Reads **Allowed**,
+  **Denied**, **Ask**, **Provisional**, or **Ephemeral**.
+- **Push registration** — separate from the iOS permission. This is
+  whether APNs has handed back a token *and* the server has accepted
+  it. Possible states are **Registered**, **Waiting**, **Not
+  authorised**, or **Failed**.
+- **Scan request notifications** — per-device toggle that mirrors the
+  admin web console's `notifications.scanRequest` setting. Forced
+  off and disabled when Push registration isn't **Registered**.
+
+If Notifications is **Denied** or **Ask**, an **Open iOS Settings**
+button appears at the bottom — it deep-links into the system Settings
+app for ExpressCharge so the user can flip the switch.
+
+If Push registration is **Failed**, a **Retry Registration** button
+appears instead. Tapping it calls
+`UIApplication.registerForRemoteNotifications()` and the app waits for
+the APNs callback to update the row.
+
+</TutorialStep>
+
+<TutorialStep title="Review and rename Device">
+
+The **Device** card in operator mode exposes everything customer mode
+hides:
+
+- **Name** — editable. Tap the field, type a new label, and hit Return
+  to commit. The rename is local-first and pushes to the server on
+  submit.
+- **Model** / **iOS** — read-only system info.
+- **App** — full build version (operator mode shows `BuildConfig.appVersion`;
+  customer mode only shows `shortVersion`).
+- **Device ID** — copyable. Tap the row to copy; a toast confirms.
+  This is the value to quote when filing escalations.
+
+</TutorialStep>
+
+<TutorialStep title="Open Diagnostics when you need more">
+
+The **Diagnostics** row navigates into the full Diagnostics sheet —
+log buffers, sync-run inspector, raw connection state, manual test
+sync. Anything not surfaced on the main Settings screen lives there.
+See the Diagnostics runbook for the contents.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've toured Settings correctly when:
+
+- The **Connectivity** pill matches the device's actual state on the
+  web admin console (cross-check on the chargers page where this
+  device's last heartbeat is shown).
+- The **Push registration** row reads **Registered** — meaning the
+  iPhone has a token uploaded to your server. If it's stuck on
+  **Waiting** for more than a minute, the APNs handshake hasn't
+  completed.
+- The **Device ID** you copied appears in the web admin console under
+  the device record. <!-- TODO: confirm exact admin path -->
+
+## If something goes wrong
+
+<Aside type="caution">
+**Push registration stuck on "Waiting"** — iOS has the permission but
+APNs hasn't returned a token yet. Background the app for 10 seconds,
+foreground it, and re-check. If it still says **Waiting**, force-quit
+and relaunch. If it then becomes **Failed**, use **Retry
+Registration**.
+</Aside>
+
+<Aside type="caution">
+**Push registration "Not authorised"** despite the user saying they
+approved notifications — the iOS-level Notifications row will also
+read **Denied** or **Ask**. The two rows always agree on the
+authorization half. Tap **Open iOS Settings** and check ExpressCharge's
+notification permission directly.
+</Aside>
+
+<Aside type="caution">
+**Scan request notifications toggle is greyed out** — this is by
+design when Push registration is anything other than **Registered**.
+Fix push registration first; the toggle re-enables automatically.
+</Aside>
+
+<Aside type="caution">
+**Connectivity card says Online but Last sync is "—"** — the WebSocket
+is connected but no heartbeat has been observed yet. Wait one
+heartbeat interval. If it stays blank, open **Diagnostics** and
+inspect [<Glossary term="Sync run">sync runs</Glossary>](/glossary/#sync-run) directly.
+</Aside>
+
+## Audit and reversibility
+
+<Aside type="danger">
+**Sign Out is destructive on this device.** Tapping **Sign Out** and
+confirming clears the local session: the device loses its auth token,
+stops receiving push, and drops its WebSocket. The next user will have
+to sign in from scratch with a [magic link](/glossary/#<Glossary term="Magic link">magic-link</Glossary>).
+Cached scan-arm state and any unsynced device-local changes are
+discarded.
+
+To recover: sign back in with the same operator account. The device
+will re-register with APNs, the push token row will move through
+**Waiting** → **Registered**, and prior per-device settings (label,
+scan-request-notifications preference) will rehydrate from the
+server. Local-only state (in-flight toasts, foreground scan buffers)
+is gone for good.
+
+Sign-out events are recorded in the [audit log](/glossary/#audit-log)
+against the operator's account. <!-- TODO: confirm audit log entry shape -->
+</Aside>
+
+The **Retry Registration** button is safe to tap repeatedly — it only
+re-runs the APNs handshake. Device renames write a new label
+server-side; the previous label is recoverable from the device's
+audit history. <!-- TODO: confirm device rename audit trail -->
+
+## Related
+
+- Diagnostics sheet runbook <!-- TODO: link when published -->
+- [Operator iOS sign-in](/admin/ios/sign-in/) <!-- TODO: confirm slug -->
+- [<Glossary term="Scan-arm">Scan-arm</Glossary>](/glossary/#scan-arm) and per-device notification behaviour

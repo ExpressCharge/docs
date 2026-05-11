@@ -1,0 +1,103 @@
+---
+title: Add an EV card to your account
+description: How to get an EV card linked to your Polaris Express account so you can start charging sessions.
+sidebar:
+  order: 10
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/cards/index.tsx
+  - web/routes/api/customer/cards/index.ts
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This tutorial is for drivers who want to use an <Glossary term="EV card">EV card</Glossary> to start charging sessions on Polaris Express. EV cards are linked to your account by your operator — you don't add them yourself from the web app. By the end of this page you'll know how to request a card, confirm it landed on your account, and what to do if it doesn't appear.
+
+## Before you start
+
+- An active Polaris Express account you can sign in to.
+- Your operator's contact email. If you don't have it, the **Your EV Cards** page shows a **Contact operator** button that opens a pre-filled email.
+- The physical EV card itself, if your operator gave you one. The card's printed ID helps the operator find it in their system.
+
+<Persona for="Driver">
+Operators control the EV card roster. Your account can only use cards that your operator has linked to you — there's no self-serve "Add card" button on the web app.
+</Persona>
+
+## Steps
+
+<Tutorial goal="Get an EV card linked to your account" estimatedMinutes={5}>
+
+<TutorialStep title="Open Your EV Cards">
+
+Sign in to Polaris Express on the web, then go to **Cards** in the sidebar. The page header reads **Your EV Cards**.
+
+If no cards are linked yet, you'll see an empty state titled **No EV Cards linked yet** with a **Contact operator** button.
+
+<Screenshot alt="Your EV Cards page showing the empty state before any card is linked" caption="The Cards page before your operator links a card." />
+
+</TutorialStep>
+
+<TutorialStep title="Contact your operator">
+
+Click **Contact operator**. Your email client opens a new message addressed to your operator's support address.
+
+Tell them:
+
+- The email address on your Polaris Express account.
+- The printed ID on your physical EV card, if you have one.
+- A short label you'd like the card to show under (for example, "Home car" or "Work van"). The operator can set this as the card's display name.
+
+Send the email and wait for the operator to confirm.
+
+</TutorialStep>
+
+<TutorialStep title="Reload Your EV Cards">
+
+Once the operator confirms they've linked the card, return to the **Cards** page and reload it.
+
+Your new card appears in the grid with its display name and the last four characters of its tag ID. Newly linked cards are active by default and show a green **Active** badge.
+
+<Screenshot alt="Your EV Cards page showing one active card linked to the account" caption="A linked card appears in the grid with its display name and status." />
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You'll know the card is ready to use when:
+
+- The card appears in the grid on **Your EV Cards**.
+- The **Active** stat at the top of the page shows at least `1`.
+- The card has an **Active** badge, not **Inactive**.
+
+The **Total sessions** and **Last used** stats stay at `0` and **Never** until you actually start a charging session with the card.
+
+## Troubleshooting
+
+**The card hasn't appeared after the operator confirmed.**
+Reload the page. The card list is pulled fresh from the charging backend on every load, so a hard refresh is enough — you don't need to sign out and back in.
+
+**The card shows as Inactive.**
+An inactive card can't start sessions. Reply to your operator and ask them to activate it. You don't need to add the card again.
+
+**A card I used to have is gone.**
+If your operator deleted the card from the charging backend, it drops off your list automatically. Contact your operator to confirm whether the removal was intentional.
+
+:::caution
+Don't share your EV card with another driver. Sessions started with the card are billed to your account, not to whoever tapped it.
+:::
+
+:::danger
+If you've lost your physical card, contact your operator right away so they can deactivate it. An inactive card cannot start new sessions.
+:::
+
+## Related
+
+- [Start a charging session with your EV card](/user/web/sessions/start-with-card)
+- [Rename an EV card](/user/web/cards/rename)
+- [What the card status badges mean](/user/web/cards/status-reference)

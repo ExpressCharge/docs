@@ -1,0 +1,190 @@
+---
+title: Inspect a transaction's meter values
+description: Open a transaction in the admin console to review billing events, meter deltas, and the sync runs that produced them.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/transactions/[id].tsx
+  - web/routes/api/admin/transaction/event.ts
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+When a customer disputes a charging session — or you're reconciling a
+<Glossary term="Lago">Lago</Glossary> invoice against what actually happened on the charger — you need
+to see exactly which meter readings produced which billable events.
+This runbook walks you through opening a transaction's detail page,
+reading its billing events table, and tracing each event back to the
+sync run that emitted it.
+
+## Prerequisites
+
+- You have an operator account that can reach `/transactions` in the
+  admin console.
+- You know either the transaction ID (the <Glossary term="SteVe">SteVe</Glossary> `transactionPk`) or
+  enough context — charger, time window, <Glossary term="EV card">EV card</Glossary> — to find it from
+  the transactions list.
+- The session has either started or finished. Live sessions render a
+  live card; finalized sessions show a complete billing events table.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the transactions list">
+
+Navigate to `/transactions` in the admin console. Find the
+transaction you want to inspect and click into it. The detail URL is
+`/transactions/{steveTransactionId}`, where the ID is the SteVe
+transaction primary key.
+
+<Screenshot alt="Transactions list with a row selected" />
+
+</TutorialStep>
+
+<TutorialStep title="Read the session overview">
+
+The **Charging Session Overview** card at the top shows four tiles:
+
+- **Session ID** — the SteVe `transactionPk`.
+- **<Glossary term="OCPP">OCPP</Glossary> EV Card** — the <Glossary term="idTag">idTag</Glossary> used to start the session. If a
+  user mapping exists, this links to `/tags/{ocppTagPk}`.
+- **Total kWh Billed** — the running total from
+  `transactionSyncState.totalKwhBilled`. This is what Lago has been
+  told about so far, not necessarily what the charger has metered.
+- **Status** — `In Progress` (warning) or `Complete` (success),
+  driven by `transactionSyncState.isFinalized`.
+
+If the session is live, a **LiveSessionCard** renders above the
+overview with the charger's friendly name, connector ID, and start
+timestamp pulled directly from SteVe.
+
+<Screenshot alt="Session overview card with four metric tiles" />
+
+</TutorialStep>
+
+<TutorialStep title="Review the billing events table">
+
+Scroll to the **Billing events** section. The description shows the
+total count of events sent to Lago for this transaction. Each row
+represents one event from `syncedTransactionEvents`:
+
+- **Lago Event ID** — the `lagoEventTransactionId` you can search
+  for in Lago.
+- **kWh Delta** — `(meterValueTo - meterValueFrom) / 1000`,
+  formatted to three decimals. This is the billable quantity that
+  event reported.
+- **Meter From / Meter To** — the raw meter readings in kWh that
+  bound this event.
+- **Final** — `Yes` if the event was the closing event for the
+  transaction (`isFinal = true`).
+- **Synced At** — when the event was written.
+- **Sync Run** — links to `/sync/{syncRunId}` so you can see the
+  run that produced it.
+
+Events are ordered newest first.
+
+<Screenshot alt="Billing events table with kWh deltas and sync run links" />
+
+</TutorialStep>
+
+<TutorialStep title="Cross-check meter continuity">
+
+Walk down the table from oldest to newest event. Each row's **Meter
+From** should equal the previous row's **Meter To**. A gap indicates
+either:
+
+- A sync run that failed to write an intermediate event (check the
+  sync run log).
+- A meter reset on the charger between events.
+
+The final event's **Meter To** should match the closing meter value
+SteVe recorded for the transaction.
+
+</TutorialStep>
+
+<TutorialStep title="Trace an event to its sync run">
+
+Click any **Sync Run** link in the rightmost column to jump to
+`/sync/{syncRunId}`. From there you can see every event that run
+emitted, the run's start and end times, and any errors it logged.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You have a complete picture of a transaction when:
+
+- The sum of all **kWh Delta** values in the billing events table
+  equals **Total kWh Billed** in the overview card.
+- Every row has a non-empty **Synced At** and a **Sync Run** link.
+- Exactly one row shows **Final = Yes** for a finalized transaction;
+  zero rows show it for an in-progress one.
+
+To pull the same event data programmatically over a date range, use:
+
+<Endpoint method="GET" path="/api/admin/transaction/event?start=YYYY-MM-DD&end=YYYY-MM-DD" />
+
+This returns up to 1000 events newest-first across all transactions
+in the window. <!-- TODO: confirm there is no per-transaction filter on this endpoint -->
+
+## If something goes wrong
+
+<Aside type="caution">
+
+**"No billing events yet" with a finalized session.** The
+transaction was marked finalized but no events were synced to Lago.
+Open the most recent sync run that covers the session's time window
+and check for errors. The session may need to be replayed.
+
+</Aside>
+
+<Aside type="caution">
+
+**OCPP EV Card shows "Unknown".** No user mapping resolved for this
+session. For live sessions the page falls back to the idTag SteVe
+reports; for finalized sessions with no events, there is no source
+to fall back to. Confirm a `userMappings` row exists for the idTag
+before billing reconciliation.
+
+</Aside>
+
+<Aside type="caution">
+
+**Live card missing the charger name.** The page tried to fetch the
+SteVe transaction and failed, or the <Glossary term="ChargeBox">chargeBoxId</Glossary> is not in the
+`chargers` cache. The session ID, kWh, and status will still render
+correctly — this is a display-only degradation.
+
+</Aside>
+
+<Aside type="caution">
+
+**Meter From doesn't match the previous Meter To.** A sync run
+either skipped an event or the meter was reset mid-session. Pull the
+raw <Glossary term="Meter value">MeterValues</Glossary> from SteVe for the transaction window and compare
+against the events table to identify the gap.
+
+</Aside>
+
+## Audit and reversibility
+
+This runbook is read-only. Opening a transaction detail page does
+not mutate any state, emit any Lago events, or contact the charger.
+The only outbound call is a best-effort `steveClient.getTransactions`
+lookup for live sessions, and its failure is logged but does not
+block the page.
+
+## Related
+
+- Sync runs — see `/sync` for the list of all <Glossary term="Sync run">sync runs</Glossary>.
+- EV cards — `/tags/{ocppTagPk}` for the idTag this session used.
+- Chargers — `/chargers/{chargeBoxId}` for the device that ran the
+  session.

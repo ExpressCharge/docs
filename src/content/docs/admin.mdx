@@ -6,13 +6,15 @@ sidebar:
   order: 0
 ---
 
+import Glossary from "@components/Glossary.astro";
+
 import { LinkCard, CardGrid } from "@astrojs/starlight/components";
 import Persona from "@components/Persona.astro";
 
 <Persona for="Operator">
   This guide is for operators running Polaris Express. It covers the
   admin web console (manage.example.com) and the iOS scanner /
-  kiosk app.
+  <Glossary term="Kiosk mode">kiosk</Glossary> app.
 </Persona>
 
 The admin guide is organized by domain. Common pairs (Devices &
@@ -23,9 +25,9 @@ in the sidebar.
 
 <CardGrid>
   <LinkCard title="Register a charger" href="/admin/devices/register-charger/" />
-  <LinkCard title="Link an EV card to a customer" href="/admin/cards/link-card-to-customer/" />
+  <LinkCard title="Link an <Glossary term="EV card">EV card</Glossary> to a customer" href="/admin/cards/link-card-to-customer/" />
   <LinkCard title="Finalize an invoice" href="/admin/billing/finalize-invoice/" />
-  <LinkCard title="Replay a failed Lago webhook" href="/admin/webhooks/replay-webhook/" />
+  <LinkCard title="Replay a failed <Glossary term="Lago">Lago</Glossary> webhook" href="/admin/webhooks/replay-webhook/" />
   <LinkCard title="Trigger a manual sync" href="/admin/sync/trigger-manual-sync/" />
   <LinkCard title="Impersonate a customer" href="/admin/users/impersonate-customer/" />
   <LinkCard title="Activate iOS kiosk mode" href="/admin/ios/kiosk/activate-kiosk-mode/" />
@@ -38,13 +40,13 @@ in the sidebar.
   health, charging profiles.
 - **EV cards** — linking, unlinking, bulk imports, diagnosing
   "card not charging".
-- **Transactions** — browsing, inspecting meter values, force-closing
+- **Transactions** — browsing, inspecting <Glossary term="Meter value">meter values</Glossary>, force-closing
   stuck sessions, exports.
 - **Reservations** — managing, overriding.
 - **Billing (Lago)** — finalize, void, credit notes, subscription
   management, reconciliation.
 - **Users** — admin accounts, impersonation, session revocation,
-  user mappings.
+  <Glossary term="User mapping">user mappings</Glossary>.
 - **Sync runs** — manual triggers, run inspection, adaptive cadence.
 - **Webhooks** — event log, replay, circuit breaker.
 - **iOS app** — scanner install, NFC scanning, diagnostics, kiosk

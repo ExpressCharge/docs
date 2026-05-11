@@ -1,0 +1,131 @@
+---
+title: I'm stuck in a sign-in loop
+description: Fix the iOS app when sign-in keeps bouncing you back to the welcome screen instead of opening your account.
+sidebar:
+  order: 90
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/RootView.swift
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+If the ExpresScan app keeps sending you back to the welcome screen
+after you scan your card or tap a sign-in email, this page walks you
+through getting unstuck. You'll check a few things on your phone, then
+try sign-in again.
+
+## Before you start
+
+- The iPhone you're trying to sign in on, unlocked.
+- The most recent version of the ExpresScan app installed from the
+  App Store.
+- Either your physical <Glossary term="EV card">EV card</Glossary> (for the QR scan flow) or the sign-in
+  email from Polaris Express (for the magic link flow).
+
+## Steps
+
+<Tutorial goal="Recover from a sign-in loop on iOS" estimatedMinutes={5}>
+
+<TutorialStep title="Confirm you're online">
+
+Open Safari and load any website. If pages don't load, the app can't
+reach the sign-in server either, and the welcome screen is the only
+place it can land.
+
+Switch to a working Wi-Fi network or move somewhere with a stronger
+cellular signal, then reopen ExpresScan.
+
+<Screenshot alt="ExpresScan welcome screen on iPhone" caption="The welcome screen is where you land whenever the app can't complete sign-in." />
+
+</TutorialStep>
+
+<TutorialStep title="Force-close and reopen the app">
+
+Swipe up from the bottom of the screen and pause in the middle to open
+the app switcher. Find ExpresScan and swipe its card up to close it.
+
+Tap the ExpresScan icon on your home screen to reopen it. The app
+checks for a stored sign-in each time it launches, so a clean restart
+clears any half-finished attempt from the previous run.
+
+</TutorialStep>
+
+<TutorialStep title="Try the sign-in link from the same device">
+
+The magic-email link and the QR-code link on your EV card both need
+to open *inside* the ExpresScan app on your iPhone — not in a desktop
+browser, and not on a different phone.
+
+- For email sign-in: open the email on the iPhone with ExpresScan
+  installed, then tap the link.
+- For QR sign-in: open the iPhone Camera app, point it at the code on
+  your EV card, and tap the banner that appears.
+
+If the link opens in Safari and shows a web page instead of bouncing
+into the app, iOS has lost the association between the link and the
+app. Reinstalling the app (next step) fixes this.
+
+</TutorialStep>
+
+<TutorialStep title="Reinstall the app as a last resort">
+
+Press and hold the ExpresScan icon, choose **Remove App**, then
+**Delete App**. Reinstall it from the App Store and try your sign-in
+link again.
+
+:::caution
+Deleting the app signs you out of any active session on that iPhone.
+Stop any charging session you have running before you delete.
+:::
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You're past the loop when the app shows your home screen with the
+scan button instead of the welcome screen. If you signed in with your
+EV card, you'll also see a brief "Signing you in…" screen first.
+
+<Screenshot alt="Home screen visible after a successful customer sign-in" caption="Once sign-in completes, the app lands on your home screen instead of bouncing back to welcome." />
+
+## Troubleshooting
+
+**The progress screen says "Couldn't sign in. Try scanning again."**
+The sign-in attempt reached the server but didn't complete. Tap
+**Try again**, which returns you to the welcome screen, then scan
+your <Glossary term="EV card">EV card</Glossary> once more. If it
+fails twice in a row, switch to the magic-email link instead.
+
+**The magic-email link opens Safari instead of the app.**
+iOS occasionally drops the link-to-app association after an OS update.
+Delete and reinstall ExpresScan, then tap the link again from the
+Mail app on the same iPhone.
+
+**I see an offline overlay I can't dismiss.**
+The app has detected that it can't reach Polaris Express. It will
+retry on its own — the overlay closes itself once the connection is
+back. Check your Wi-Fi or cellular signal in the meantime.
+
+:::danger
+Don't try to sign in by tapping a link from another person's email or
+EV card. Each link is bound to a single account, and using someone
+else's link will sign you into their account instead of yours.
+:::
+
+**None of this worked.**
+Contact Polaris Express support with the email address on your
+account and the approximate time you last tried to sign in. Support
+can check the server-side log for your sign-in attempts.
+
+## Related
+
+- [Sign in with your EV card](/user/ios/sign-in-with-ev-card/)
+- [Sign in with a magic email link](/user/ios/sign-in-with-magic-email/)
+- [Reinstall ExpresScan without losing charging history](/user/ios/reinstall-app/)

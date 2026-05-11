@@ -1,0 +1,111 @@
+---
+title: Customer 60-second tour
+description: A quick walk through your Polaris Express dashboard so you can find your sessions, reservations, and nearby chargers.
+sidebar:
+  order: 1
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/index.tsx
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This tour is for drivers who have signed in to Polaris Express for the first time. In about a minute, you'll learn where your charging sessions, your next reservation, and the chargers you can use all live on the dashboard. You need a Polaris Express account and a web browser.
+
+## Before you start
+
+- An account on your operator's Polaris Express site.
+- You've signed in at least once. If signing in sends you to `/admin`, you have an admin account — switch to your customer account from the account picker.
+
+<Tutorial goal="Get oriented on your dashboard" estimatedMinutes={1}>
+
+<TutorialStep title="Open the dashboard">
+
+Go to the site root (`/`). After you sign in as a customer, this is your home. If you sign in as an admin, the site redirects you to the admin portal instead — use the account picker at `/switch` to come back as a customer.
+
+<Screenshot alt="Customer dashboard immediately after sign-in" caption="The dashboard loads with your sessions, reservation, and chargers in one view." />
+
+</TutorialStep>
+
+<TutorialStep title="Check for an active session">
+
+If you're charging right now, an **Active session** banner sits at the top of every page. It shows the kWh delivered so far and when the session started.
+
+If there's no banner, you don't have a session in progress.
+
+</TutorialStep>
+
+<TutorialStep title="Review your recent activity">
+
+The dashboard lists your last 5 charging sessions. Each row shows the energy delivered (kWh), the start and end times, and how long the session ran. Sessions that have finished are marked as finalized.
+
+<Aside type="note">
+Sessions in the recent list don't show the charger name — they appear as "Session #N". Charger details show up elsewhere on the dashboard.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="See your next reservation">
+
+If you have a reservation that hasn't ended yet, the **Next reservation** card shows the charger's friendly name, the start time, and the end time. The soonest upcoming reservation is the one you'll see.
+
+If you have no upcoming reservation, this card is empty.
+
+</TutorialStep>
+
+<TutorialStep title="Check your usage for the period">
+
+The usage section totals the kWh you've consumed in the current period and charts your daily usage. Switch the period by adding `?period=current`, `?period=previous`, or `?period=year` to the dashboard URL.
+
+If your operator has set you up with a plan, you'll also see the plan name, your usage against it, and the currency.
+
+</TutorialStep>
+
+<TutorialStep title="Browse available chargers">
+
+The chargers section lists up to 50 chargers you can see, with a counts pill showing how many are available right now. Each card shows the charger's friendly name, its connector type (CCS, J1772, NACS, CHAdeMO, or Type 2), its maximum power in kW, and one of four statuses:
+
+- **Online** — ready to use.
+- **In use** — someone is charging.
+- **Reserved** — held by an active or confirmed reservation covering right now.
+- **Offline** — hasn't been seen in the last hour.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You're oriented when you can answer these three questions from the dashboard:
+
+1. Am I charging right now?
+2. When is my next reservation, and which charger is it on?
+3. How many chargers are available to me right now?
+
+## Troubleshooting
+
+**The dashboard sent me to `/admin`.**
+Your account has the admin role. To use the customer dashboard, switch accounts from `/switch`.
+
+**My recent sessions list is empty.**
+If you've never charged with this account, the dashboard treats you as a first-run user. Start a session and it'll appear here once the system records it.
+
+**A charger I expected to see is missing.**
+The dashboard shows up to 50 chargers. If your operator has more, ask them which chargers your account is meant to see.
+
+:::caution
+Charger status updates depend on the charger checking in. A charger that hasn't been seen for more than an hour shows as **offline** even if it's physically working.
+:::
+
+**My plan or currency looks wrong.**
+Plan information comes from your operator's billing system. If it's missing or stale, contact your operator — the email is on the dashboard if they've set one.
+
+## Related
+
+- [Start a charging session](/user/sessions/start/)
+- [Make a reservation](/user/<Glossary term="Reservation">reservations</Glossary>/create/)
+- [Read your usage and bill](/user/billing/usage/)

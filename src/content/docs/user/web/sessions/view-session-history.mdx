@@ -1,0 +1,101 @@
+---
+title: View your charging session history
+description: See every charging session on your account, filter by date or status, and check kWh and estimated cost.
+sidebar:
+  order: 20
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/sessions/index.tsx
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This guide is for drivers who want to review past charging sessions on the Polaris Express web app. You'll open the Charging Sessions page, read the summary stats at the top, and filter the list down to the sessions you care about. You need an account with at least one charging session synced to it.
+
+## Before you start
+
+- You're signed in to the web app at `polaris.express`.
+- Your account has a user mapping. Without one, the page loads but shows no rows.
+
+<Tutorial goal="Review your charging history" estimatedMinutes={3}>
+
+<TutorialStep title="Open Charging Sessions">
+
+From the sidebar, go to **Charging Sessions** (`/sessions`).
+
+The page header reads **Charging Sessions** and shows a one-line summary, for example *"42 sessions"* or *"Your charging sessions will appear here."* if nothing has synced yet.
+
+<Screenshot alt="Charging Sessions page after sign-in, showing the stat strip and session table" caption="The Charging Sessions page, scoped to your account." />
+
+</TutorialStep>
+
+<TutorialStep title="Read the stat strip">
+
+Four tiles sit at the top of the page:
+
+- **Sessions (24h)** — how many distinct sessions synced since midnight.
+- **kWh (7d)** — total energy delivered across the last seven days.
+- **Active now** — sessions currently in progress. Tap this tile to filter the list down to only active sessions.
+- **Avg kWh (7d)** — average energy per session over the last seven days.
+
+The **Active now** tile is clickable only when the value is greater than zero.
+
+</TutorialStep>
+
+<TutorialStep title="Filter the list">
+
+Below the stat strip, use the filter bar to narrow the table:
+
+- **Status** — choose `all`, `active`, or `completed`.
+- **From** and **To** — pick a date range. The "to" date includes the full day.
+
+The filters write to the URL, so you can bookmark or share a filtered view.
+
+</TutorialStep>
+
+<TutorialStep title="Read a row">
+
+Each row in the table represents one charging session. You'll see:
+
+- The session's <Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary> (the <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary> or token used to start it).
+- kWh delivered for that session.
+- Whether the session is still active or has finished.
+- The sync timestamp.
+- An estimated cost in your tariff currency, when one can be calculated.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've reviewed your history when:
+
+- The stat strip shows non-zero values that match what you expect.
+- The table lists your most recent sessions, newest first.
+- Applying a filter updates the row count in the page description (for example, *"3 sessions match current filters"*).
+
+## Troubleshooting
+
+**The page is empty and says "No sessions yet."**
+Your account hasn't received any session events yet. Start a charging session, then come back. The list updates after the next <Glossary term="<Glossary term="Sync run">Sync run</Glossary>">sync run</Glossary>.
+
+**The page is empty and says "No matching sessions."**
+Your filters are hiding everything. Use **Clear filters** in the empty state, or widen the date range.
+
+**Cost column shows a dash instead of a number.**
+Cost estimates need a tariff on your account. For sessions outside the current billing period, only flat (non-tiered) tariffs produce an estimate — older tiered sessions can't be priced retroactively.
+
+<Aside type="caution">
+The numbers on this page are estimates based on synced meter readings and your current tariff. Your invoice from <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> is the source of truth for what you owe.
+</Aside>
+
+## Related
+
+- [Start a charging session](/user/web/sessions/start-a-session)
+- [Reserve a charger](/user/web/<Glossary term="Reservation">reservations</Glossary>/create-a-reservation)
+- [Understand your invoice](/user/web/billing/read-your-invoice)

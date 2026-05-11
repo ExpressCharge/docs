@@ -1,0 +1,195 @@
+---
+title: Phase 8 — Seed the first admin
+description: Promote your first user to admin so you can access the admin console and finish configuration.
+sidebar:
+  order: 80
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs: []
+last_authored: 2025-01-21
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tutorial, TutorialStep } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+By default Polaris Express has no admins. The first person to sign up
+is just a regular user — they can't reach `/admin`, can't promote
+others, and can't see the operations surface. This phase walks you
+through promoting that first user to an admin so you can finish
+configuring the deployment from inside the UI.
+
+After this phase you'll have a working operator account that can
+manage [ChargeBoxes](/glossary/#chargebox), [tariffs](/glossary/#tariff),
+[<Glossary term="User mapping">user mappings</Glossary>](/glossary/#user-mapping), and <Glossary term="Feature flag">feature flags</Glossary>.
+
+## Prerequisites
+
+- [Phase 6 — Bring up the web app](/selfhost/phases/phase-6-web-app/)
+  completed; the app is reachable.
+- [Phase 7 — Configure email delivery](/selfhost/phases/phase-7-email/)
+  completed; [magic link](/glossary/#<Glossary term="Magic link">magic-link</Glossary>) sign-in works
+  end-to-end.
+- You have shell access to the host running the `db` container (or
+  direct `psql` access to the Postgres instance).
+- You know which email address you want to be the first admin.
+
+## Steps
+
+<Tutorial>
+
+<TutorialStep title="Sign up as the first user">
+
+Open the web app in a browser and sign in with the email you want to
+promote. [<Glossary term="BetterAuth">BetterAuth</Glossary>](/glossary/#betterauth) will send a
+[magic link](/glossary/#magic-link); click it to complete sign-in.
+
+This creates a row in the `user` table with `role = 'user'`. The user
+is fully functional — they just can't reach the admin surface.
+
+<Aside type="note">
+If sign-in fails, return to
+[Phase 7](/selfhost/phases/phase-7-email/) and verify the email
+worker is delivering. Don't try to seed an admin row directly; you
+want BetterAuth to create the user record cleanly so its session and
+account tables stay consistent.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Open a psql session">
+
+From the host running Docker Compose:
+
+```sh title="promote-admin.sh"
+docker compose exec db psql -U polaris -d polaris
+```
+
+Substitute the user and database name from your `.env` if you
+overrode them. You should land at a `polaris=#` prompt.
+
+</TutorialStep>
+
+<TutorialStep title="Confirm the user exists">
+
+```sql
+SELECT id, email, role, "emailVerified"
+FROM "user"
+WHERE email = 'you@example.com';
+```
+
+You should see exactly one row with `role = 'user'` and
+`emailVerified = true`. If `emailVerified` is `false`, click the
+magic link again before continuing — an unverified user shouldn't be
+promoted.
+
+</TutorialStep>
+
+<TutorialStep title="Promote to admin">
+
+```sql
+UPDATE "user"
+SET role = 'admin'
+WHERE email = 'you@example.com';
+```
+
+The expected output is `UPDATE 1`. If you see `UPDATE 0`, you typed
+the email wrong or the user hasn't completed sign-in yet.
+
+<Aside type="caution">
+Polaris Express uses a single `admin` role for the operator surface.
+There is no superadmin / staff tier; anyone with `role = 'admin'`
+can promote or demote other users from the admin console. Treat the
+seed admin account accordingly.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Exit psql">
+
+```sql
+\q
+```
+
+</TutorialStep>
+
+<TutorialStep title="Re-authenticate">
+
+Sign out of the web app and sign back in with the same magic link
+flow. The role is read into the session at sign-in time, so an
+already-signed-in tab will not pick up the promotion until the
+session refreshes.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Configure environment variables
+
+This phase doesn't introduce new env vars; it only mutates the
+database. The values you set in earlier phases — notably the database
+credentials — are what `docker compose exec db psql` uses.
+
+| Variable | Default | Required | Source |
+| --- | --- | --- | --- |
+| `POSTGRES_USER` | `polaris` | yes | `.env` (root) |
+| `POSTGRES_DB` | `polaris` | yes | `.env` (root) |
+| `POSTGRES_PASSWORD` | — | yes | `.env` (root) |
+
+<!-- TODO: confirm exact env var names against docker-compose.yml -->
+
+## Verify
+
+1. Navigate to `/admin` in the web app. You should see the admin
+   dashboard instead of a 404 or redirect.
+2. Open `/admin/users`. Your account should appear with the `admin`
+   badge.
+3. Open `/admin/feature-flags`. You should be able to toggle a
+   [feature flag](/glossary/#feature-flag) and see the change persist
+   on reload.
+
+If all three checks pass, the seed is complete.
+
+## If something goes wrong
+
+**`/admin` redirects to `/` or shows "Forbidden".**
+The session predates the promotion. Sign out fully (clear the session
+cookie if necessary) and sign in again.
+
+**`docker compose exec db psql` errors with "database does not exist".**
+Your `POSTGRES_DB` value differs from `polaris`. Run
+`docker compose exec db psql -U polaris -l` to list databases and use
+the correct name.
+
+**`UPDATE 0` even though the user signed in.**
+Email comparison is case-sensitive in the `user` table. Try:
+
+```sql
+SELECT email FROM "user" WHERE lower(email) = lower('you@example.com');
+```
+
+and use the exact stored form in your `UPDATE`.
+
+**You promoted the wrong account.**
+Demote it with:
+
+```sql
+UPDATE "user" SET role = 'user' WHERE email = 'wrong@example.com';
+```
+
+<Aside type="danger">
+Never leave a deployment with zero admins. If you demote your only
+admin account, you'll have to re-promote it via `psql` exactly as in
+this phase. There is no "recover admin" flow in the UI.
+</Aside>
+
+## Next phase
+
+Continue to
+[Phase 9 — Register your first <Glossary term="ChargeBox">ChargeBox</Glossary>](/selfhost/phases/phase-9-first-chargebox/)
+to connect a [<Glossary term="SteVe">SteVe</Glossary>](/glossary/#steve)-managed
+[ChargeBox](/glossary/#chargebox) and run an end-to-end charging
+session.

@@ -1,0 +1,150 @@
+---
+title: Common issues — cookies, magic-link expiry, card not recognized
+description: Fix the three problems drivers hit most often on the Polaris Express web app — blocked cookies, expired sign-in links, and cards that won't start a charge.
+sidebar:
+  order: 90
+persona: Driver
+surface: web
+tier: P0
+code_refs: []
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This page is for drivers who can't sign in, can't open their session link, or tapped their card at a charger and nothing happened. Work through the section that matches your problem. You don't need any tools beyond the browser or card you're already using.
+
+## Before you start
+
+- Have the email address you use for Polaris Express to hand.
+- Have your <Glossary term="EV card">EV card</Glossary> with you if the problem is about charging.
+- Know which browser you're using (Chrome, Safari, Firefox, Edge).
+
+## Cookies are blocked or cleared
+
+Polaris Express keeps you signed in with a cookie. If your browser blocks cookies for our site, or you clear them between visits, you'll be bounced back to the sign-in screen every time.
+
+<Tutorial goal="Allow cookies for Polaris Express" estimatedMinutes={3}>
+
+<TutorialStep title="Check which browser you're using">
+
+The setting lives in a different menu in each browser. Open your browser's settings and search for "cookies" or "site data".
+
+</TutorialStep>
+
+<TutorialStep title="Allow cookies for polaris.express">
+
+<!-- TODO: confirm the exact cookie domain used by <Glossary term="BetterAuth">BetterAuth</Glossary> in code_refs -->
+
+Add `polaris.express` to the list of sites allowed to set cookies. If you use a strict privacy mode (Safari's "Prevent cross-site tracking", Firefox's "Strict" mode, or a content blocker), add an exception for our site.
+
+</TutorialStep>
+
+<TutorialStep title="Close all Polaris Express tabs and reopen the site">
+
+Close every open tab pointing at our site, then open a new one and sign in again.
+
+<Screenshot alt="Polaris Express sign-in screen after cookies are re-enabled" caption="You should land back on the sign-in screen with the email field ready." />
+
+</TutorialStep>
+
+</Tutorial>
+
+### Verify
+
+You stay signed in after closing the tab and coming back. If you still get kicked out, try a private/incognito window — if that works, an extension is blocking cookies in your normal window.
+
+<Aside type="tip">
+Sign-in also fails if your device clock is wrong. Check that the date and time on your computer are set correctly before you try again.
+</Aside>
+
+## Your magic link expired or doesn't work
+
+When you sign in, we email you a [magic link](/glossary#<Glossary term="Magic link">magic-link</Glossary>). The link is good for a short window and for one click only.
+
+<Tutorial goal="Get a fresh magic link" estimatedMinutes={2}>
+
+<TutorialStep title="Go back to the sign-in page">
+
+Open polaris.express in a new tab. Don't reuse the old email — that link is spent.
+
+</TutorialStep>
+
+<TutorialStep title="Request a new link">
+
+Type your email address and submit the form. A new email arrives within a minute.
+
+</TutorialStep>
+
+<TutorialStep title="Open the link in the same browser you requested it from">
+
+The link opens a session in the browser that asked for it. If you requested the link on your laptop and tap the email on your phone, sign-in will fail.
+
+</TutorialStep>
+
+</Tutorial>
+
+### Verify
+
+You land on your dashboard signed in. The URL no longer contains a long token.
+
+### Troubleshooting
+
+- **The email never arrived.** Check your spam folder. Add our sender address to your contacts and request the link again.
+- **"Link expired" message.** Request a fresh one. Don't click the old email a second time.
+- **"Link already used" message.** You (or your mail client's link preview) already opened it. Request a new link, and if your mail client previews links, open the next one within a few seconds of it arriving.
+
+<Aside type="caution">
+Some corporate mail filters click links to scan them, which burns the magic link before you see it. If this keeps happening, ask your IT team to allow links from our sender, or sign in from a personal device.
+</Aside>
+
+## Your card isn't recognized at a charger
+
+You tapped your [EV card](/glossary#ev-card) on the charger and the session didn't start. A few different things can cause this.
+
+<Tutorial goal="Get your card working" estimatedMinutes={5}>
+
+<TutorialStep title="Check the card is registered to your account">
+
+Sign in to polaris.express and open the cards section of your account. Your card should be listed and marked as active. If it isn't there, add it before you try the charger again.
+
+<Screenshot alt="Driver's cards section showing an active EV card" caption="An active card shows up in your account before it works at a charger." />
+
+</TutorialStep>
+
+<TutorialStep title="Hold the card flat against the reader">
+
+The reader needs a second or two of steady contact. A quick brush often doesn't register. Hold the card flat against the marked spot until the charger beeps or its screen reacts.
+
+</TutorialStep>
+
+<TutorialStep title="Try a different charger if you can">
+
+If the same card works at a different charger, the first charger is the problem — report it (see below). If it fails everywhere, the card itself or its registration is the problem.
+
+</TutorialStep>
+
+</Tutorial>
+
+### Verify
+
+The charger acknowledges the tap (a beep, a light, or a message on its screen), and your session appears in your account within a minute.
+
+### Troubleshooting
+
+- **Card shows as inactive in your account.** Contact your operator — they activate cards on their side.
+- **Card isn't listed at all.** Add it from your account before retrying. You'll need the ID printed on the card.
+- **Charger screen says "Unknown card" or "Not authorized".** The charger didn't recognize your card's ID. Double-check the ID on the card matches what's saved in your account.
+- **Charger doesn't react at all.** The reader may be offline. Try another charger and report the broken one.
+
+<Aside type="danger">
+Don't force the card into any slot or peel off its sticker. EV cards are contactless — they only need to be held near the reader, not inserted.
+</Aside>
+
+## Related
+
+- [Sign in to Polaris Express](/user/web/getting-started/sign-in)
+- [Add an EV card to your account](/user/web/account/add-card)
+- [Start a charging session](/user/web/charging/start-session)
+- [Glossary](/glossary)

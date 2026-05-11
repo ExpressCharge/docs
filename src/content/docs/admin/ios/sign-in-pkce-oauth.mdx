@@ -1,0 +1,144 @@
+---
+title: Sign in to the iOS app with PKCE
+description: Register an iPhone or iPad with Polaris Express using the PKCE handshake in expreScan.
+sidebar:
+  order: 10
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Auth/LoginViewModel.swift
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Tutorial from '~/components/Tutorial.astro';
+import TutorialStep from '~/components/TutorialStep.astro';
+import Screenshot from '~/components/Screenshot.astro';
+
+Use this runbook the first time you set up [<Glossary term="expreScan">expreScan</Glossary>](/glossary/#expre-scan) on a new device, or when an operator's existing registration has been revoked and they need to pair the app again. The handshake uses PKCE: the device generates a verifier locally, the web admin issues a one-time code over a custom-scheme callback, and the app exchanges the code plus verifier for a long-lived device credential.
+
+## Prerequisites
+
+- An operator account on the web admin with permission to register devices.
+- A signed-in web admin browser session on the same device, or on a device you can reach during the handshake.
+- expreScan installed and launched at least once. The custom URL scheme `expchg://` is registered at install time via `Info.plist`.
+- The device is online. The PKCE handshake will not complete offline.
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open expreScan and tap Sign in">
+    Launch the app. On the Welcome screen, tap **Sign in**. The app
+    generates a 32-byte verifier and the matching SHA-256 challenge
+    locally before opening the auth session — nothing is sent to the
+    server yet.
+
+    <Screenshot caption="expreScan welcome screen with the Sign in button." />
+  </TutorialStep>
+
+  <TutorialStep title="Complete the web sign-in inside the in-app browser">
+    A system-presented web sheet opens against the registration start
+    URL, carrying `codeChallenge`, `codeChallengeMethod=S256`, and a
+    `label` hint defaulting to the device name (for example,
+    "Alex's iPhone"). Sign in with your operator credentials if
+    prompted, then confirm the device label.
+
+    <Aside type="note">
+      The web sheet shares cookies with Safari, so if you are already
+      signed in to the web admin in Safari you will not be prompted
+      again. The auth-session cookie jar is sandboxed regardless.
+    </Aside>
+  </TutorialStep>
+
+  <TutorialStep title="Approve the device registration">
+    On the confirmation page, review the device label and tap
+    **Register this device**. The web admin's POST handler issues a
+    302 to `expchg://register/callback?code=…`. iOS matches the
+    scheme, dismisses the web sheet automatically, and hands the
+    one-time code back to the app.
+  </TutorialStep>
+
+  <TutorialStep title="Wait for the registration to complete">
+    The app pairs the returned `code` with the verifier it generated
+    in step 1 and exchanges them for a device credential. You should
+    land on the home screen of expreScan within a second or two.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+- The expreScan home screen shows your operator name and the assigned
+  device label.
+- In the web admin, open **Settings → Registered devices**. The new
+  device appears with the label you confirmed and a "last seen"
+  timestamp within the last minute. {/* TODO: confirm exact admin path */}
+- The [audit log](/glossary/#audit-log) records a device-registration
+  event tied to your operator account. {/* TODO: confirm audit event name */}
+
+## If something goes wrong
+
+**The web sheet appears and immediately closes with no error.** The
+auth session was cancelled — usually because the operator tapped
+**Cancel** or swiped the sheet away. The app surfaces a `canceled`
+state and returns you to the Welcome screen. Tap **Sign in** again.
+
+**The web sheet never appears after tapping Sign in.** The app logs
+`session.start() returned false` and surfaces a `sessionStartFailed`
+error. Force-quit expreScan and relaunch. If it recurs, capture a
+sysdiagnose and file an issue — this indicates AuthServices refused
+to present, which is usually a presentation-context problem on
+unusual multi-window setups.
+
+**Sign-in succeeds in the web sheet but the app does not advance.**
+The 302 to `expchg://register/callback` may have been intercepted by
+something other than expreScan (for example, a corporate MDM
+configuration that rewrites custom schemes), or a stale Universal
+Link was tapped outside the auth session. The app has a
+belt-and-braces handler for the HTTPS Universal Link form
+(`https://<universal-link-host>/<registration-callback-path>?code=…`)
+that fires via `onOpenURL`. If neither path delivers the code within
+~30 seconds, cancel and start again.
+
+<Aside type="caution">
+  Do not share the registration URL or the one-time code with anyone
+  else. The `code` is single-use and tied to the verifier on the
+  device that started the handshake — sharing it cannot grant access
+  to another device, but it does mean the legitimate device will fail
+  to register and you will have to start over.
+</Aside>
+
+**Registration succeeds but the device is missing from the web admin
+list.** Pull-to-refresh the registered-devices view. If the device
+still does not appear, the credential exchange may have partially
+failed. Sign out from expreScan (**Settings → Sign out**) and run the
+procedure again. {/* TODO: confirm sign-out path in app */}
+
+## Audit and reversibility
+
+Every successful registration writes an entry to the
+[audit log](/glossary/#audit-log) with the operator account, the
+device label, and the registration timestamp. {/* TODO: confirm fields */}
+
+To revoke a device, open **Settings → Registered devices** in the web
+admin, find the device, and choose **Revoke**. {/* TODO: confirm label */}
+The next time expreScan attempts an authenticated request, it will
+receive a 401 and return to the Welcome screen, requiring a fresh
+PKCE handshake to pair again.
+
+<Aside type="danger">
+  Revoking a device is immediate and cannot be undone — the operator
+  on that device will be signed out and any in-progress scan-arm
+  flows will fail. To restore access, the operator must run this
+  runbook again on the same device. The revocation event is recorded
+  in the audit log.
+</Aside>
+
+## Related
+
+- [Glossary: expreScan](/glossary/#expre-scan)
+- [Glossary: <Glossary term="Audit log">Audit log</Glossary>](/glossary/#audit-log)
+- [Glossary: <Glossary term="Deep link">Deep link</Glossary>](/glossary/#deep-link)

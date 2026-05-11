@@ -1,0 +1,361 @@
+---
+title: Before you begin — prerequisites and cost
+description: What you need on hand, what it will cost, and what to decide before you start installing Polaris Express.
+sidebar:
+  order: 1
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - README.md
+  - web/.env.example
+last_authored: 2025-01-21
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, FileTree, Tabs, TabItem } from '@astrojs/starlight/components';
+import { PackageManagers } from 'starlight-package-managers';
+
+Polaris Express is a multi-service stack: a Deno/Fresh web app, a
+Postgres database, a sync worker, the <Glossary term="SteVe">SteVe</Glossary> <Glossary term="OCPP">OCPP</Glossary> backend, and a
+Cloudflare Worker for transactional email. Before you provision
+anything, read this page end-to-end. It tells you what to install
+locally, what accounts to open, what DNS to plan for, and what the
+ongoing cost looks like.
+
+If any prerequisite is missing when you start a phase, you will get
+stuck halfway. Get them sorted first.
+
+## What you are installing
+
+You will end up with three deployed surfaces and one shared database:
+
+- **Customer site** — the portal customers log into. One hostname,
+  e.g. `polaris.example.com`.
+- **Admin site** — operator console. Separate hostname on the same
+  apex, e.g. `manage.example.com`. Both share a cookie via
+  <EnvVar name="COOKIE_DOMAIN" />.
+- **SteVe** — OCPP 1.6 backend that talks to your chargers. Usually
+  on a dedicated host or behind a TLS terminator, e.g.
+  `ocpp.example.com`.
+- **Postgres** — single instance, shared by the web app and SteVe
+  (separate schemas).
+
+A Cloudflare Worker (`email-worker`) handles outbound email. It runs
+on Cloudflare's edge, not on your host.
+
+## Skills you need
+
+You should be comfortable with:
+
+- Docker and `docker compose` (reading a compose file, reading logs,
+  exec'ing into a container).
+- Editing `.env` files and understanding that environment variables
+  are secrets.
+- DNS A/AAAA records and TLS certificate issuance (Caddy, Traefik,
+  nginx + certbot — your choice).
+- Reading shell output. Polaris Express logs to stdout; you will
+  read a lot of it.
+- Basic SQL (`psql`, `SELECT`, `\dt`). You should not need to write
+  migrations, but you will need to inspect tables when things go
+  wrong.
+
+You do **not** need to know Deno, Fresh, Java, or Swift. You are
+deploying built artifacts, not building from source.
+
+## Hardware and OS
+
+Minimum viable single-host deployment:
+
+- **2 vCPU, 4 GB RAM, 40 GB SSD.** Postgres and SteVe (JVM) are the
+  memory consumers. SteVe alone wants ~1 GB heap.
+- **Linux** with a recent kernel. Tested on Debian 12, Ubuntu 22.04,
+  and Alpine via Docker. Anything that runs `docker compose v2` will
+  work.
+- **Outbound HTTPS** to `api.getlago.com`, your Cloudflare Worker
+  URL, and Apple's APNs endpoints (`api.push.apple.com`) if you ship
+  the iOS app.
+- **Inbound 443** for the customer + admin sites. Inbound on
+  whatever port you expose for OCPP (default 8080 inside the
+  container; terminate TLS in front of it).
+
+For multi-host (Postgres on its own box, SteVe on its own box, web
+on a third) the math is the same — just split the RAM.
+
+## Required software on the host
+
+<PackageManagers
+  type="exec"
+  pkg="docker"
+  args="--version"
+/>
+
+You need:
+
+- **Docker Engine 24+** with the `compose` plugin (`docker compose
+  version` should print v2.x).
+- **git** (to clone the monorepo and pull updates).
+- **make** (the repo's top-level targets are make-driven —
+  see [the monorepo README](#) for the full list).
+- **openssl** or another source of random bytes for generating
+  secrets.
+- **curl** for the verification steps in each phase.
+
+That is it. No JDK, no Deno, no Node on the host — everything runs
+in containers.
+
+## Accounts you must create up front
+
+Open these now. Each takes anywhere from 5 minutes to a business day
+to provision, and you cannot finish installation without them.
+
+### <Glossary term="Lago">Lago</Glossary> (billing)
+
+Polaris Express does not do billing itself — it pushes metered
+kWh into [Lago](https://www.getlago.com/) and Lago does the rest
+(invoicing, payment, dunning). You can either:
+
+- **Use Lago Cloud** — fastest. Sign up at `app.getlago.com`, grab
+  an API key, you are done. Costs money per active customer.
+- **Self-host Lago** — free, but you are now self-hosting two
+  things. Lago has its own Postgres, Redis, and worker. Plan another
+  4 GB RAM.
+
+Either way you will need:
+
+- <EnvVar name="LAGO_API_URL" default="https://api.getlago.com" /> —
+  the API base URL (the app appends `/api/v1`).
+- <EnvVar name="LAGO_API_KEY" required /> — from Lago's developer
+  settings.
+- <EnvVar name="LAGO_DASHBOARD_URL" default="https://app.getlago.com" /> —
+  where admin "open in Lago" links point.
+- A <Glossary term="Lago metric">billable metric</Glossary> in Lago with code <EnvVar name="LAGO_METRIC_CODE"
+  default="ev_charging_kwh" />. Create this before the first sync
+  run.
+
+<Aside type="note">
+  You also need to model your tariffs in Lago (plans, charges,
+  taxes). Polaris Express only reports usage; it does not decide
+  what a kWh costs. That decision lives in Lago.
+</Aside>
+
+### Cloudflare (email)
+
+The transactional email worker runs on
+[Cloudflare Workers](https://workers.cloudflare.com/). You need:
+
+- A Cloudflare account.
+- A Workers Paid plan ($5/month) if you expect more than 100k
+  emails/day; the Free plan is fine for small deployments.
+- A verified sending domain. The worker uses Cloudflare's outbound
+  email integration — set up SPF, DKIM, and DMARC on the domain you
+  put in <EnvVar name="EMAIL_FROM" />.
+
+You will deploy the worker yourself (it is in the `email-worker/`
+submodule). The web app then talks to it via
+<EnvVar name="CF_EMAIL_WORKER_URL" /> with a shared
+<EnvVar name="CF_EMAIL_WORKER_SECRET" />.
+
+<Aside type="tip">
+  In development, leave `CF_EMAIL_WORKER_URL` empty. The web app
+  will log emails to the console instead of sending them. This is
+  exactly what you want while you are testing magic links locally.
+</Aside>
+
+### Pocket ID (optional, for admin OIDC)
+
+If you want admins to log in via SSO instead of password, you need
+an OIDC provider. The supported reference is
+[Pocket ID](https://github.com/pocket-id/pocket-id), but any
+generic OIDC issuer works. You will configure:
+
+- <EnvVar name="ADMIN_OIDC_ISSUER" />
+- <EnvVar name="ADMIN_OIDC_CLIENT_ID" />
+- <EnvVar name="ADMIN_OIDC_CLIENT_SECRET" />
+
+If you skip this, admins log in with email + password. That is
+fine for a small operator team.
+
+### Apple Developer (optional, for iOS push)
+
+Only if you are shipping the native iOS app. You need:
+
+- An Apple Developer account ($99/year).
+- An APNs key (`.p8` file) from App Store Connect → Users & Access
+  → Keys.
+- The key ID, your team ID, and the app's bundle identifier.
+
+These become <EnvVar name="APNS_KEY_ID" />,
+<EnvVar name="APNS_TEAM_ID" />, <EnvVar name="APNS_KEY_BASE64" />,
+and <EnvVar name="APNS_TOPIC" />. Missing values do not block boot
+— push sends just fail soft and the <Glossary term="SSE">SSE</Glossary> fallback handles
+real-time updates.
+
+## DNS and TLS — plan now
+
+Decide your hostnames before you start. Changing them later means
+re-issuing certificates, re-configuring OIDC redirect URIs, and
+re-sending invite emails. Pick once.
+
+You will need at minimum:
+
+| Hostname              | Purpose                          | Example                |
+| --------------------- | -------------------------------- | ---------------------- |
+| Customer site         | Portal for end users             | `polaris.example.com`  |
+| Admin site            | Operator console                 | `manage.example.com`   |
+| OCPP endpoint         | Where chargers connect (TLS WSS) | `ocpp.example.com`     |
+| Email Worker          | Outbound mail                    | `mail.example.com`     |
+
+The customer and admin hosts **must share an apex** because they
+share a session cookie. The cookie domain (with a leading dot)
+covers both:
+
+```bash
+COOKIE_DOMAIN=.example.com
+ADMIN_BASE_URL=https://manage.example.com
+CUSTOMER_BASE_URL=https://polaris.example.com
+```
+
+TLS is your responsibility. Caddy is the simplest path — point it
+at the web container and it will get Let's Encrypt certs
+automatically. Traefik works too.
+
+<Aside type="caution">
+  SteVe speaks OCPP-J 1.6 over WebSocket. Chargers in the field
+  generally require WSS (TLS). Terminate TLS in front of SteVe and
+  forward to its HTTP port. Do not expose plain WS to the public
+  internet.
+</Aside>
+
+## Secrets you must generate
+
+Generate these now and store them in a password manager. You will
+paste them into `.env` later.
+
+```bash title="Generate required secrets"
+# BetterAuth signing key — min 32 chars
+openssl rand -hex 32      # AUTH_SECRET
+
+# Email worker shared secret
+openssl rand -hex 32      # CF_EMAIL_WORKER_SECRET
+
+# SteVe webhook HMAC keys (one per webhook)
+openssl rand -hex 32      # STEVE_PREAUTH_HMAC_KEY
+openssl rand -hex 32      # STEVE_METERVALUE_HMAC_KEY
+
+# SteVe REST API key
+openssl rand -hex 24      # STEVE_API_KEY
+
+# Postgres password
+openssl rand -hex 24      # POSTGRES_PASSWORD
+```
+
+<Aside type="danger">
+  Do not reuse <EnvVar name="AUTH_SECRET" /> across environments.
+  Rotating it invalidates every active session — which is what you
+  want if it leaks. Treat it like a database password.
+</Aside>
+
+## Cost expectations
+
+Rough monthly cost for a small operator (under 100 chargers, under
+1,000 customers):
+
+| Item                       | Cost                    |
+| -------------------------- | ----------------------- |
+| VPS (4 GB RAM, 2 vCPU)     | $10–25 / month          |
+| Lago Cloud (starter tier)  | from $0; scales w/ MRR  |
+| Cloudflare Workers         | $0 (Free) or $5 (Paid)  |
+| Domain + DNS               | ~$15 / year             |
+| Apple Developer (optional) | $99 / year              |
+| TLS certificates           | $0 (Let's Encrypt)      |
+
+Self-hosting Lago instead of using their cloud trades ~$30/month of
+Lago Cloud for another VPS and your time. For most operators, Lago
+Cloud is the right call until you exceed their pricing tier.
+
+## What you should know is *not* included
+
+So you are not surprised later:
+
+- **No payment processing.** Lago integrates with Stripe,
+  GoCardless, Adyen, etc. You configure that in Lago, not here.
+- **No tax engine.** Lago handles tax via its own integrations
+  (Anrok, Avalara). Polaris Express reports kWh; Lago reports money.
+- **No CRM, no marketing email.** <EnvVar name="EMAIL_FROM" /> is
+  transactional only (magic links, receipts, alerts). Anything
+  customer-marketing belongs in a separate system.
+- **No charger hardware management.** SteVe configures connected
+  chargers via OCPP. Firmware updates, physical installation,
+  electrical inspection — your problem.
+- **No SLA.** This is software you self-host. You are on call for
+  yourself.
+
+## Decisions to make before you start
+
+Write these down. You will reference them in every subsequent phase.
+
+1. **Apex domain.** What hostname will customers see?
+2. **Customer + admin subdomains.** What are they?
+3. **OCPP hostname.** Where do chargers connect?
+4. **Single host or split?** One VPS with everything, or Postgres
+   on its own?
+5. **Lago Cloud or self-hosted Lago?**
+6. **Admin auth: password, OIDC, or both?**
+7. **Adaptive cadence or fixed cron?** The sync worker defaults to
+   [<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>](#) (Active 15m / Idle 1h / Dormant 1w). To
+   force a fixed schedule, set <EnvVar name="SYNC_CRON_SCHEDULE" />.
+   Default is fine for most operators.
+8. **iOS app: yes or no?** Determines whether you need an Apple
+   Developer account.
+
+## Verify you are ready
+
+Run through this checklist before moving to the next phase. If any
+answer is "no" or "I'll figure it out later," stop and fix it.
+
+```bash title="Pre-flight checks"
+# Docker present and v2 compose available
+docker --version
+docker compose version
+
+# Outbound HTTPS works
+curl -sS -o /dev/null -w "%{http_code}\n" https://api.getlago.com
+# Expect: 200, 401, or 404 — anything except a connection error
+
+# DNS resolves for your planned hostnames
+dig +short polaris.example.com
+dig +short manage.example.com
+
+# You can issue TLS certs (if using Caddy/Traefik later)
+# This just checks port 80 is reachable from the public internet:
+curl -sS -o /dev/null -w "%{http_code}\n" http://polaris.example.com
+```
+
+You also need, written down or in a password manager:
+
+- [ ] Lago API key and dashboard URL
+- [ ] Cloudflare account with a verified sending domain
+- [ ] Generated `AUTH_SECRET`, `CF_EMAIL_WORKER_SECRET`, both
+      `STEVE_*_HMAC_KEY` values, `STEVE_API_KEY`, `POSTGRES_PASSWORD`
+- [ ] DNS records for all four hostnames pointing at your host(s)
+- [ ] TLS strategy decided (Caddy / Traefik / nginx + certbot)
+- [ ] Admin auth strategy decided (password / OIDC)
+
+## If something is missing
+
+| Problem                                  | What to do                                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------- |
+| No Lago account yet                      | Open one now. You cannot complete the billing-sync phase without it.                        |
+| Cloudflare domain not verified           | Verify it before deploying the email worker. Without DKIM/SPF, mail will go to spam.        |
+| Hostnames not chosen                     | Stop. Picking them mid-install means redoing TLS, cookies, OIDC redirect URIs, and emails.  |
+| Only one subdomain (no shared apex)      | The customer + admin session cookie needs a shared parent domain. Use subdomains of one apex. |
+| Less than 4 GB RAM                       | Postgres + SteVe + web will OOM. Resize before continuing.                                  |
+
+## Next phase
+
+Once everything above is in place, continue to [Phase 1 — Provision
+the host](#) to install Docker, lay out the directory structure,
+and clone the monorepo.

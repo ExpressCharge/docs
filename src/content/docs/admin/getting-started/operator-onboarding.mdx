@@ -1,0 +1,178 @@
+---
+title: Operator onboarding
+description: Get oriented in the Polaris Express admin console and complete the first-run checklist to bring your fleet online.
+sidebar:
+  order: 1
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/index.tsx
+last_authored: 2025-01-22
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside } from "@astrojs/starlight/components";
+import Tutorial from "../../../components/Tutorial.astro";
+import TutorialStep from "../../../components/TutorialStep.astro";
+import Screenshot from "../../../components/Screenshot.astro";
+
+This runbook is for the first operator setting up Polaris Express. Use it once, on the day you log into a fresh deployment, to register your first charger, activate your first [<Glossary term="EV card">EV card</Glossary>](/glossary#ev-card), and confirm the dashboard is reporting live signal from your fleet. After this, the dashboard at `/admin` becomes your daily war-room.
+
+## Prerequisites
+
+- An admin account with permission to access `/admin` (created via [<Glossary term="BetterAuth">BetterAuth</Glossary>](/glossary#betterauth) — see your deployment setup).
+- A [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve) instance reachable from Polaris Express, with credentials configured.
+- At least one physical charge point ready to register (you'll need its [<Glossary term="ChargeBox">chargeBoxId</Glossary>](/glossary#chargebox)).
+- One blank RFID/NFC card to use as your first [EV card](/glossary#ev-card).
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Sign in to the admin console">
+    Navigate to `/admin` in your browser. BetterAuth will redirect you
+    to the sign-in flow if you're not authenticated. Once signed in,
+    you land on the ExpressCharge dashboard.
+
+    <Screenshot alt="Admin dashboard landing page" />
+  </TutorialStep>
+
+  <TutorialStep title="Confirm you see the first-run welcome">
+    On a brand-new deployment, the dashboard shows a **Welcome to
+    ExpressCharge** banner above the main card. This banner appears
+    only when no chargers have ever been seen and no [<Glossary term="Sync run">sync runs</Glossary>](/glossary#sync-run)
+    have completed yet. If you see it, you're in the right place.
+
+    If you don't see the welcome banner, the system already has fleet
+    history — skip ahead to [Verify](#verify) to confirm everything is
+    healthy.
+  </TutorialStep>
+
+  <TutorialStep title="Register your first charge point in SteVe">
+    Polaris Express does not register chargers directly. Open your
+    SteVe instance and add a new charge point with the
+    [chargeBoxId](/glossary#chargebox) printed on the unit. Configure
+    the charger to point its <Glossary term="OCPP">OCPP</Glossary> endpoint at SteVe.
+
+    Once the charger boots and sends its first BootNotification,
+    SteVe will record it. The next [sync run](/glossary#sync-run)
+    pulls that record into Polaris Express.
+
+    <Aside type="note">
+      You can wait for the scheduled sync or trigger one manually from
+      the **Sync** section of the admin nav.
+    </Aside>
+  </TutorialStep>
+
+  <TutorialStep title="Activate your first EV card">
+    From the welcome banner, click **Register an EV card**. This takes
+    you to `/tags/new`. Tap or scan the blank card when prompted and
+    give it a label you'll recognize.
+
+    The card is now an [<Glossary term="idTag">idTag</Glossary>](/glossary#idtag) in SteVe and an
+    [EV card](/glossary#ev-card) in Polaris Express.
+
+    <Screenshot alt="New EV card registration form" />
+  </TutorialStep>
+
+  <TutorialStep title="Link the EV card to a <Glossary term="Lago">Lago</Glossary> customer">
+    Billing only flows once an EV card is mapped to a
+    [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer). From the EV card detail
+    page, use the customer picker to attach the card to an existing
+    Lago customer, or create one inline.
+
+    <Aside type="caution">
+      A card with no Lago customer can still authorize charging but
+      will not produce billable [<Glossary term="Meter value">meter values</Glossary>](/glossary#meter-value).
+      Always link a customer before handing the card to a driver.
+    </Aside>
+  </TutorialStep>
+
+  <TutorialStep title="Pin the dashboard">
+    Bookmark `/admin`. The four section cards — **Live now**,
+    **Active sync run** / **Sync schedule**, **Health**, and **This
+    week** — are designed to fit the viewport without scrolling on
+    large screens. This is your daily check-in surface.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+Return to `/admin` and confirm each section reports real data:
+
+- **Header strip** shows your charger's online/total count, the next
+  scheduled sync run, and any unread alerts.
+- **Live now** lists active sessions. Empty is fine if no one is
+  charging yet — it just means the dashboard is connected and waiting.
+- **Active sync run** or **Sync schedule** shows the current
+  [<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>](/glossary#adaptive-cadence) tier. If a sync is
+  in flight, the card shows a [<Glossary term="BorderBeam">BorderBeam</Glossary>](/glossary#borderbeam) and
+  live segment progress.
+- **Health** rolls up operational warnings. A green/empty Health card
+  on a fresh deployment is expected. It auto-revalidates every 30
+  seconds, so leave the page open to watch it.
+- **This week** shows kWh delivered, sync runs, EV cards activated,
+  and completed <Glossary term="Reservation">reservations</Glossary> over the last 7 days. On day one,
+  expect zeros or near-zeros — these tiles will populate as your
+  fleet operates.
+
+Once your first charger appears in the online count and your EV card
+shows up in the **EV Cards** section of the admin nav, onboarding is
+complete.
+
+## If something goes wrong
+
+<Aside type="caution">
+  **Welcome banner won't disappear after registering a charger.** The
+  first-run check requires both a charger seen by SteVe *and* at
+  least one completed sync run. Wait for the next sync run to
+  complete, then reload `/admin`.
+</Aside>
+
+<Aside type="caution">
+  **Charger registered in SteVe but not visible in Polaris Express.**
+  Confirm a [sync run](/glossary#sync-run) has completed since you
+  added the charger. Check the **Sync** section for the latest run's
+  status. If the run failed, open the run detail to see the error.
+</Aside>
+
+<Aside type="caution">
+  **EV card scans but doesn't authorize charging.** Confirm the card
+  is enabled and not expired on the EV card detail page. Also confirm
+  the charger itself has synced its allowed [idTag](/glossary#idtag)
+  list from SteVe — a fresh charger may need one OCPP heartbeat
+  cycle before it accepts the card.
+</Aside>
+
+<Aside type="caution">
+  **Dashboard shows stale numbers.** The header strip and stat strip
+  hydrate from a single SSR fetch plus [<Glossary term="SSE">SSE</Glossary>](/glossary#sse) islands.
+  If SSE is blocked by a proxy, you'll see correct numbers on reload
+  but no live updates between polls. Confirm your reverse proxy
+  passes through `text/event-stream` without buffering.
+</Aside>
+
+## Audit and reversibility
+
+Operator onboarding itself is non-destructive — registering chargers
+and activating cards are additive operations.
+
+- **EV card activation** is recorded in the [audit log](/glossary#audit-log)
+  under the card's <Glossary term="Public ID">Public ID</Glossary>. To retire a card, disable it from the
+  EV card detail page; the card remains in history for billing
+  reconciliation.
+- **Charger registration** lives in SteVe. To remove a charger,
+  delete it in SteVe; the next sync run will mark it as gone in
+  Polaris Express.
+- **Lago customer mappings** can be re-pointed at any time from the
+  EV card detail page. The previous mapping is preserved in the
+  audit log.
+
+## Related
+
+- [EV cards](/admin/ev-cards/)
+- [Sync runs and Adaptive Cadence](/admin/sync/)
+- [Lago customer mappings](/admin/billing/)
+- [Glossary](/glossary/)

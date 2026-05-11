@@ -1,0 +1,134 @@
+---
+title: Toggle a global feature flag
+description: Set a feature flag's global value from the admin registry, overriding the code-defined default for all users and devices.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/feature-flags/index.tsx
+  - web/src/lib/devices/feature-flags.ts
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+When you need to flip a feature on or off across the entire fleet without
+shipping an app release — say, hiding the Connectivity Check card because
+a known backend issue is leaving it stuck red — set the flag's **global
+value** from the admin registry. Global values override the code-defined
+default for every user and every device that does not have a more
+specific override.
+
+This runbook covers the global tier only. Per-user and per-device
+overrides are edited from each entity's detail page.
+
+## Prerequisites
+
+- You are signed in to the admin console with the `admin` role. The
+  registry page redirects to `/admin/login` otherwise.
+- The flag you want to toggle is already declared in
+  `src/lib/devices/feature-flags.ts`. The registry is code-defined —
+  there is no admin UI for adding new flags.
+- You know which tier you actually need. Effective precedence is:
+  device override → user value → **global value** → registry default.
+  A device or user override will hide the change from affected
+  accounts.
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open the <Glossary term="Feature flag">feature flags</Glossary> registry">
+    Navigate to **Admin → Feature Flags**. The page lists every flag
+    declared in the registry with its key, type, default, description,
+    and the currently-set global value (blank if unset).
+
+    <Screenshot alt="Feature flags registry page showing the list of declared flags." />
+  </TutorialStep>
+
+  <TutorialStep title="Locate the flag">
+    Find the flag by its display name or dot-namespaced key — for
+    example, `customer.connectivityCheck` ("Connectivity Check"). The
+    description column tells you what the flag controls; hover the
+    type chip to confirm you are about to set the right kind of value
+    (boolean, string, int, double, or JSON).
+  </TutorialStep>
+
+  <TutorialStep title="Set the global value">
+    Edit the flag's value field inline. For a boolean flag, toggle the
+    switch; for a typed value, enter it in the field and the form will
+    validate it against the flag's Zod schema before submitting. An
+    invalid payload (wrong type, unknown JSON field) is rejected at
+    submit time.
+  </TutorialStep>
+
+  <TutorialStep title="Save">
+    Submit the form. The page reloads and the flag's **Global value**
+    column now reflects your new setting. Flags whose global value
+    matches the registry default are not written to the wire by the
+    resolver, so leaving a value at the default and clearing the
+    global value are functionally equivalent for downstream consumers.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+1. Reload `/admin/feature-flags` and confirm the **Global value**
+   column shows the new value for the flag you changed.
+2. Pick a test user with no per-user override for that flag, sign in
+   as them (or use <Glossary term="Impersonation">Impersonation</Glossary>), and confirm the feature behaves as
+   expected on the client. For `customer.connectivityCheck = false`,
+   the Connectivity Check card should disappear from Settings.
+3. If a user reports the change did not take effect, check whether
+   they have a per-user override on their **User detail → Feature
+   flags** panel, or whether their device has a per-device override
+   on the **Device detail** page. Either will win over the global
+   value.
+
+## If something goes wrong
+
+<Aside type="caution">
+  Global flag changes propagate to every user and device that does not
+  have a more specific override. There is no per-region or
+  per-cohort scoping. Treat a global flip as a fleet-wide change.
+</Aside>
+
+- **The flag you want isn't in the list.** It hasn't been declared in
+  the registry yet. Open an engineering ticket — adding a flag
+  requires a code change in `src/lib/devices/feature-flags.ts` and a
+  mirrored entry in the iOS `FeatureFlagReader` consumer.
+- **Save fails with a validation error.** The value you entered did
+  not parse against the flag's Zod schema. Boolean flags only accept
+  `true`/`false`; JSON flags use `.strict()` and reject unknown
+  fields. Re-enter the value matching the type shown in the registry.
+- **Clients aren't picking up the new value.** The iOS app reads
+  flags from the device-sync envelope, which only includes flags
+  whose effective value differs from the registry default. If you set
+  the global value back to the registry default, the flag will drop
+  out of the envelope entirely — that is correct behavior, not a bug.
+- **A specific user still sees the old behavior.** They likely have a
+  per-user or per-device override. Open their user detail page and
+  clear the override there.
+
+## Audit and reversibility
+
+<Aside type="danger">
+  Global flag changes take effect on the next device sync for every
+  affected client. Before flipping a P0 flag, confirm with the on-call
+  engineer that no compensating override is in place.
+</Aside>
+
+- **To revert**, return to `/admin/feature-flags`, edit the flag back
+  to its previous value, and submit. Setting the global value to
+  match the registry default removes it from the wire envelope.
+- **Audit trail.** Global flag writes are persisted to the
+  `globalFeatureFlagValues` table.
+  <!-- TODO: confirm whether changes are also written to the audit log table -->
+
+## Related
+
+- [Override a feature flag for a single user](/admin/feature-flags/user-override/) <!-- TODO: confirm slug -->
+- [Override a feature flag for a single device](/admin/feature-flags/device-override/) <!-- TODO: confirm slug -->
+- [Glossary: Feature flag](/glossary/#feature-flag)

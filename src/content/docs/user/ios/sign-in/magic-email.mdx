@@ -1,0 +1,117 @@
+---
+title: Sign in with a magic email link
+description: Open the sign-in link from your email on your iPhone to sign in to ExpressCharge without a password.
+sidebar:
+  order: 10
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Auth/MagicEmailDeepLinkHandler.swift
+  - ios/App/Features/Auth/CustomerSignInProgressView.swift
+last_authored: 2026-05-20
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+You asked ExpressCharge to email you a sign-in link, and now you want
+to finish signing in on your iPhone. This page walks you through
+opening that link and watching the app set up your device. The whole
+thing takes about a minute.
+
+## Before you start
+
+- The ExpressCharge app installed on the iPhone you want to sign in on.
+- The sign-in email open on that same iPhone.
+- A working internet connection (Wi-Fi or cellular).
+
+<Tutorial goal="Sign in to ExpressCharge using the link in your email" estimatedMinutes={2}>
+
+<TutorialStep title="Open the email on your iPhone">
+
+Find the sign-in email from ExpressCharge in your Mail app. The link
+needs to be opened on the iPhone you want to sign in on — forwarding
+it to a laptop won't work.
+
+</TutorialStep>
+
+<TutorialStep title="Tap the sign-in link">
+
+Tap the sign-in link in the email. iOS hands the link to the
+ExpressCharge app, which opens automatically.
+
+<Screenshot alt="ExpressCharge opening from a magic email link on iPhone" caption="iOS opens ExpressCharge as soon as you tap the link." />
+
+<Aside type="note">
+The link only works once, and it expires after a short time. If
+nothing happens when you tap it, request a fresh email and try again.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Wait while ExpressCharge checks your sign-in code">
+
+The app shows a progress screen titled **Checking your sign-in code**.
+A live indicator sits next to the **Sign-in code** row while this
+runs.
+
+<Screenshot alt="Progress screen with the Sign-in code step active" caption="Step 1 of 3: the app verifies the link." />
+
+</TutorialStep>
+
+<TutorialStep title="Wait while this iPhone is set up">
+
+The title changes to **Setting up this iPhone** and the **Device
+setup** row becomes active. ExpressCharge is registering this device
+to your account so it remembers you next time.
+
+</TutorialStep>
+
+<TutorialStep title="Wait for the final sign-in step">
+
+The title changes to **Almost there** with the subtitle **Signing you
+in**. The **Signing in** row is the last step.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+When sign-in succeeds, the hero turns green and shows **You're signed
+in** with the message **Welcome to ExpressCharge**. All three step
+rows show a green checkmark.
+
+<Screenshot alt="ExpressCharge success screen reading You're signed in" caption="All three steps complete." />
+
+From here the app moves you on to the main customer screen.
+
+## Troubleshooting
+
+**The hero turns red and says "Couldn't sign in."**
+The message under the title tells you what went wrong — for example,
+**Connect to Wi-Fi or cellular and try again.** Fix the underlying
+problem, then tap **Try again** at the bottom of the screen to return
+to the Welcome screen and restart.
+
+**Tapping the link opens a web page instead of the app.**
+Make sure the ExpressCharge app is installed on this iPhone, and that
+you're tapping the link on the same iPhone where the email arrived.
+Links forwarded from another device or opened in a desktop browser
+won't reach the app.
+
+**Nothing happens when you tap the link.**
+The link may have expired or already been used. Request a new sign-in
+email and tap the link in the newest message.
+
+:::caution
+Don't share your sign-in email with anyone. Anyone who taps the link
+before it expires can sign in as you on their iPhone.
+:::
+
+## Related
+
+- [Sign in by scanning your <Glossary term="EV card">EV card</Glossary>](/user/ios/sign-in/ev-card/)
+- [Start a charging session](/user/ios/charging/start-session/)
+- [What to do if sign-in keeps failing](/user/ios/troubleshooting/sign-in/)

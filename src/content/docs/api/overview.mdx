@@ -1,0 +1,147 @@
+---
+title: API overview
+description: Conventions, hosts, authentication, and shared health endpoint for the Polaris Express HTTP API.
+sidebar:
+  order: 1
+persona: Developer
+surface: n/a
+tier: P0
+code_refs:
+  - web/routes/api/health.ts
+last_authored: 2025-02-14
+prompt_template: api-reference
+---
+
+import Glossary from "@components/Glossary.astro";
+
+The Polaris Express HTTP API is split into namespaces under
+`/api/...`. Each namespace targets a distinct caller: the customer
+web app, the admin console, the <Glossary term="OCPP">OCPP</Glossary> webhook receiver, or
+unauthenticated infrastructure (health, auth).
+
+This page documents the conventions shared by all namespaces and the
+single public, unauthenticated endpoint: `GET /api/health`.
+
+## Base URLs
+
+Polaris Express runs two logical hosts:
+
+- **Admin** — `https://admin.polaris.express`
+- **Customer** — `https://app.polaris.express`
+
+Both hosts serve the same Deno Fresh process but route requests
+differently based on namespace. Endpoint pages call out which host
+they belong to.
+
+## Namespaces
+
+| Prefix | Audience | Auth |
+|---|---|---|
+| `/api/auth/...` | Anyone | <Glossary term="BetterAuth">BetterAuth</Glossary> session bootstrap |
+| `/api/customer/...` | Authenticated customer | Customer session cookie |
+| `/api/admin/...` | Authenticated operator | Admin session cookie |
+| `/api/ocpp/...` | <Glossary term="SteVe">SteVe</Glossary> / charge points | Shared-secret header |
+| `/api/health` | Anyone (infra) | None |
+
+## Authentication
+
+Most endpoints require a BetterAuth session cookie set by the
+sign-in flow. Customer and admin sessions are distinct and scoped to
+their respective hosts.
+
+- Customer endpoints: require a customer session cookie.
+- Admin endpoints: require an admin session cookie with the operator
+  role; some endpoints require additional permissions.
+- OCPP endpoints: require a shared-secret header configured between
+  SteVe and Polaris Express.
+
+Unauthenticated requests receive `401 Unauthorized`. Authenticated
+requests lacking the required role receive `403 Forbidden`.
+
+## Request and response format
+
+- All request and response bodies are JSON.
+- All endpoints accept and return `Content-Type: application/json`.
+- Timestamps are ISO-8601 strings in UTC.
+- Monetary amounts are integer minor units (cents).
+- IDs in URL paths are either internal numeric IDs or string
+  [public IDs](/glossary#public-id), depending on the resource.
+
+## Error shape
+
+Error responses use the appropriate HTTP status and a JSON body:
+
+```json
+{ "error": "human-readable message" }
+```
+
+Validation failures (`400`) may include a `details` field with
+field-level errors.
+
+## Endpoints
+
+### GET /api/health
+
+<Endpoint method="GET" path="/api/health" />
+
+Public health check used by Docker, load balancers, and uptime
+monitors. Reports per-dependency status for the database, SteVe API
+configuration, <Glossary term="Lago">Lago</Glossary> API configuration, and the [sync run](/glossary#sync-run)
+worker.
+
+**Authentication** — none.
+
+**Response** (200 OK or 503 Service Unavailable)
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-02-14T12:34:56.789Z",
+  "checks": {
+    "database": { "status": "ok", "latencyMs": 3 },
+    "steve": { "status": "ok" },
+    "lago": { "status": "ok" },
+    "sync": { "status": "ok", "lastRun": "2025-02-14T12:30:00.000Z" }
+  }
+}
+```
+
+Each entry in `checks` has a `status` of `ok`, `degraded`, or
+`unhealthy`, and may include:
+
+- `latencyMs` (number) — present on the database check.
+- `lastRun` (ISO-8601) — present on the sync check; timestamp of the
+  most recent sync run.
+- `error` (string) — present when status is `degraded` or
+  `unhealthy`.
+
+**Top-level `status`** is the worst per-dependency status:
+
+- `ok` — all checks passed.
+- `degraded` — at least one check is degraded, none are unhealthy.
+  Returned with HTTP 200.
+- `unhealthy` — at least one check is unhealthy. Returned with HTTP
+  503.
+
+**Check semantics**
+
+- `database` — runs `SELECT 1`. Unhealthy on failure.
+- `steve` — degraded if `STEVE_API_URL` or `STEVE_API_KEY` is unset.
+- `lago` — degraded if `LAGO_API_URL` or `LAGO_API_KEY` is unset.
+- `sync` — degraded if any sync run has `status = running` and
+  `startedAt` older than 30 minutes (stale lock). Unhealthy if the
+  query fails.
+
+**Errors** — none in the conventional sense. A failed dependency
+surfaces as a per-check entry, not an error response. The endpoint
+itself returns 503 only when the overall status is `unhealthy`.
+
+### Example
+
+```bash
+curl -s https://admin.polaris.express/api/health | jq .
+```
+
+For uptime monitoring, treat any non-200 response as down. To alert
+on degraded dependencies without paging on every transient blip,
+parse the body and inspect `checks.<name>.status`.

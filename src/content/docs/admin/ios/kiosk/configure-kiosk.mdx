@@ -1,0 +1,128 @@
+---
+title: Configure a kiosk device
+description: Lock an iPad or iPhone to a single capability so it presents only the screen you want, with a hidden on-device escape to Settings.
+sidebar:
+  order: 30
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Kiosk/KioskShell.swift
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Tutorial from '@components/Tutorial.astro';
+import TutorialStep from '@components/TutorialStep.astro';
+import Screenshot from '@components/Screenshot.astro';
+
+You want to dedicate an iPad or iPhone to a single task — a wall-mounted [<Glossary term="expreScan">expreScan</Glossary>](/glossary#expre-scan) terminal at a parking entrance, a check-in tablet at a service desk, a customer-facing display. This runbook covers placing a device into [<Glossary term="Kiosk mode">Kiosk mode</Glossary>](/glossary#kiosk-mode) so it shows only the capability you assign and hides all navigation chrome.
+
+[Kiosk mode](/glossary#kiosk-mode) is a UX simplification, not a security lockdown. The device still has an on-device escape gesture for recovery, and only web-admin can remove the kiosk binding remotely.
+
+## Prerequisites
+
+- You have **Operator** access to the web admin console.
+- The target device is already enrolled and visible in **Devices**.
+- You have decided which [capability](/glossary#capability) the device should present (for example, `expreScan`).
+- The device is on-screen, awake, and signed in.
+
+<Aside type="caution">
+  Once a device enters kiosk, the only way to sign it out is from web
+  admin. If the device loses connectivity to the backend before you
+  remove the kiosk binding, you'll need the on-device escape gesture
+  (covered below) to reach Settings.
+</Aside>
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open the device record in web admin">
+    In web admin, go to **Devices** and click the device you want to
+    kiosk. Confirm the **Last seen** timestamp is recent — kiosking an
+    offline device delays the configuration change until it reconnects.
+
+    <Screenshot alt="Device detail page in web admin." />
+  </TutorialStep>
+
+  <TutorialStep title="Add the kiosk capability">
+    In the **Capabilities** panel, add `kiosk` alongside the single
+    capability you want the device to present (for example, `expreScan`).
+    The presence of `kiosk` in the capability set is what activates the
+    chrome-stripped wrapper on-device.
+
+    <Aside type="danger">
+      Assign exactly one functional capability in addition to `kiosk`.
+      Kiosk mode is designed to present a lone capability's screen —
+      assigning multiple functional capabilities alongside `kiosk` will
+      leave the device in an undefined navigation state.
+    </Aside>
+
+    <Screenshot alt="Capabilities panel with kiosk and expreScan selected." />
+  </TutorialStep>
+
+  <TutorialStep title="Save and wait for the device to apply">
+    Click **Save**. The device will pick up the new capability set on its
+    next sync. The screen will redraw with the navigation toolbar, tab
+    bar, and status bar hidden — the chosen capability's screen now fills
+    the display.
+
+    {/* <!-- TODO: confirm propagation channel (push vs. poll) and typical latency --> */}
+  </TutorialStep>
+
+  <TutorialStep title="Physically position the device">
+    Mount or place the device. If it's customer-facing, brief floor staff
+    on the escape gesture (see **If something goes wrong** below) so they
+    can recover the device if web admin is unreachable.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+You've successfully kiosked the device when **all** of the following are true on-device:
+
+- The navigation toolbar is gone (no gear icon, no back button).
+- The tab bar at the bottom is gone.
+- The iOS status bar (clock, battery, signal) is hidden.
+- Only the assigned capability's main screen is visible.
+
+In web admin, the device's capability set includes `kiosk` and the **Last seen** timestamp has advanced since you saved.
+
+## If something goes wrong
+
+### The device still shows the toolbar after saving
+
+The device hasn't picked up the new capability set yet. Confirm it's online in web admin. If it's been more than a couple of minutes, force-quit and relaunch the app on-device — it will fetch a fresh capability set on launch.
+
+### You need to reach Settings on a kiosked device
+
+There is an on-device escape gesture for exactly this case. Tap **five times rapidly** in the **top-right corner** of the screen — the same corner where the Settings gear normally lives. Each tap fires a light haptic; the fifth tap fires a success haptic and opens the Settings sheet. From Settings, you can reach **Connectivity → Diagnostics** to troubleshoot a device that's lost its backend.
+
+<Aside type="caution">
+  The taps must land within roughly two seconds of each other. If you
+  pause, the counter resets and you'll need to start over. Aim for the
+  top-right corner but stay a thumb's-width below the very top edge —
+  the topmost strip is reserved for iOS Control Center / Notification
+  Center.
+</Aside>
+
+The escape gesture is a UX safety valve, not a security boundary. Anyone with physical access to the device can use it. Don't kiosk a device in an environment where that's a problem.
+
+### You need to remove kiosk from the device
+
+From web admin, open the device record, remove `kiosk` from its capability set, and save. The device returns to its normal multi-capability shell on its next sync. You do **not** sign out the device — its session and identity are preserved.
+
+## Audit and reversibility
+
+- <Glossary term="Capability">Capability</Glossary> set changes are recorded in the [audit log](/glossary#audit-log) against the device. {/* <!-- TODO: confirm audit log coverage of capability mutations --> */}
+- Removing `kiosk` from the capability set is fully reversible — the device returns to its normal shell with no data loss.
+- Kiosk mode does not alter the device's session, [user mapping](/glossary#user-mapping), or any local data; it is purely a rendering mode.
+
+## Related
+
+- [Device capabilities overview](/admin/devices/capabilities)
+- [Remote deregistering a device](/admin/devices/deregister)
+- [Diagnostics on iOS](/admin/ios/diagnostics)

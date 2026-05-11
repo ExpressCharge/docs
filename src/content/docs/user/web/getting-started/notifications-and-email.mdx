@@ -1,0 +1,88 @@
+---
+title: How notifications and email work
+description: What to expect from Polaris Express notifications and emails, when they arrive, and how to tell if your charging session is being tracked.
+sidebar:
+  order: 40
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/src/email/
+  - web/routes/api/stream/customer.ts
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+If you charge with Polaris Express, you'll see two kinds of updates: in-app notifications that appear while you have the site open, and emails that arrive in your inbox. This page explains what triggers each one and how to confirm the live feed is working on your account.
+
+## Before you start
+
+- A Polaris Express account you can sign in to.
+- A browser tab open to your customer dashboard.
+
+<Tutorial goal="Confirm notifications are reaching your account" estimatedMinutes={3}>
+
+<TutorialStep title="Sign in to your dashboard">
+
+Open the customer dashboard in your browser and sign in. The live feed only runs while you're signed in — the server rejects the connection otherwise.
+
+<Screenshot alt="Customer dashboard immediately after sign-in" caption="Once you're signed in, the dashboard opens a live connection to the server." />
+
+</TutorialStep>
+
+<TutorialStep title="Keep the tab open during a session">
+
+While the dashboard tab is open, the server streams three kinds of updates to you:
+
+- **Meter updates** from a charging session you own.
+- **Charger status** changes, so you can see when a charger becomes available.
+- **Notifications** that are either broadcast to everyone or addressed to you specifically.
+
+You don't have to do anything to subscribe — the connection opens when the page loads.
+
+</TutorialStep>
+
+<TutorialStep title="Watch for a notification">
+
+When a notification arrives, it shows up in the dashboard without a page reload. Notifications addressed to you only reach your browser; notifications addressed to another customer never appear on your screen.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You'll know the live feed is working when:
+
+- Meter readings from your own charging session update on screen while the session runs.
+- A new notification appears in the dashboard shortly after it's sent, without you refreshing the page.
+
+If you start a charging session on a charger linked to your account, the meter ticks should appear within a few seconds. If they don't, see Troubleshooting below.
+
+## Troubleshooting
+
+**The meter isn't updating during my session.**
+
+Meter updates only reach you when the session is linked to your account through a <Glossary term="<Glossary term="User mapping">User mapping</Glossary>">user mapping</Glossary>. If the mapping is missing, the server drops the updates rather than risk showing you someone else's session. Contact your site operator to confirm your account is mapped to the <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary> or <Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary> you used to start the session.
+
+**I'm not seeing any notifications at all.**
+
+Make sure you're signed in. The live feed requires an authenticated session — if you've been signed out in another tab, this tab's connection will be rejected too. Sign in again and reload the dashboard.
+
+:::caution
+If you close the browser tab, the live feed stops. Anything that happens while the tab is closed won't appear retroactively as an in-app notification — check your email for important updates instead.
+:::
+
+**I see another customer's charger going from "available" to "in use".**
+
+That's expected. Charger status is broadcast to all customers so you can spot a free charger nearby. You won't see who is using it or any details about their session.
+
+<!-- TODO: confirm exact list of email templates and triggers in web/src/email/ -->
+
+## Related
+
+- [Start a charging session](/user/web/getting-started/start-a-session/)
+- [Manage your EV cards](/user/web/account/ev-cards/)
+- [Glossary](/glossary/)

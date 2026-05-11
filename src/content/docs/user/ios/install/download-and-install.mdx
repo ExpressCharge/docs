@@ -1,0 +1,91 @@
+---
+title: Install the iOS app
+description: Install the Polaris Express iOS app on your iPhone so you can charge using your phone.
+sidebar:
+  order: 10
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/README.md
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+<!-- TODO: confirm install path once App/ target ships (Wave 3 / E-app-skel). The source README states the SwiftUI app target, Info.plist, and project.yml are not yet in the repo, so the App Store / TestFlight distribution channel is not yet documented in code_refs. -->
+
+The iOS app turns your iPhone into a charger key. You hold your phone near a charger, and the app starts a session for you. This page will walk you through installing the app on your iPhone.
+
+<Aside type="caution">
+The iOS app is still in development. A public release through the App Store is not yet available. If you are a tester, your invite email will point you to the current distribution channel.
+</Aside>
+
+## Before you start
+
+- An iPhone running a recent version of iOS.
+- An invite email from your fleet operator or from Polaris Express.
+- A Polaris Express account. If you do not have one, ask your operator to invite you.
+
+<Tutorial goal="Install the iOS app on your iPhone" estimatedMinutes={5}>
+
+<TutorialStep title="Open the invite email on your iPhone">
+
+Open the invite email on the iPhone you plan to use for charging. Installing on the same device you read the email on lets the install link open the right app store page directly.
+
+<Screenshot alt="Invite email open in the iOS Mail app" caption="The invite email contains the install link." />
+
+</TutorialStep>
+
+<TutorialStep title="Tap the install link">
+
+Tap the install link in the email. Your iPhone opens the distribution page for the app.
+
+<!-- TODO: confirm whether the install link routes to TestFlight or the App Store once App/ target lands. -->
+
+</TutorialStep>
+
+<TutorialStep title="Install the app">
+
+Follow the prompts on the distribution page to install the app on your iPhone. You may be asked to confirm with Face ID, Touch ID, or your Apple ID password.
+
+</TutorialStep>
+
+<TutorialStep title="Open the app">
+
+Once the install finishes, tap **Open** on the install page, or find the app icon on your Home Screen and tap it.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You know the install worked when:
+
+- The app icon appears on your Home Screen.
+- Opening the app shows a sign-in screen instead of an error.
+
+If both are true, you are ready to sign in.
+
+## Troubleshooting
+
+**The install link does nothing when I tap it.**
+Make sure you are opening the email on your iPhone, not on a Mac or PC. The install link is designed for iOS.
+
+**I get a message that the app is not available in my region.**
+Contact your fleet operator. Distribution is limited during the beta, and your account may need to be added to the tester list.
+
+**The app opens but immediately closes.**
+Restart your iPhone, then open the app again. If the problem repeats, reinstall the app by deleting it from the Home Screen and tapping the install link again.
+
+:::caution
+Do not install builds from links you did not receive directly from your operator or from Polaris Express. The app reads NFC cards and signs in to your account — only install from a source you trust.
+:::
+
+## Related
+
+- [Sign in to the iOS app](/user/ios/install/sign-in/)
+- [Charge with your iPhone](/user/ios/charging/start-a-session/)
+- [Add an <Glossary term="EV card">EV card</Glossary> to your account](/user/account/ev-cards/)

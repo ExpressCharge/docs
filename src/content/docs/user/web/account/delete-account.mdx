@@ -1,0 +1,95 @@
+---
+title: Delete your account
+description: Start an account deletion request by emailing your operator from the Account page.
+sidebar:
+  order: 50
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/account/index.tsx
+  - web/routes/api/customer/delete-account.ts
+last_authored: 2025-01-29
+prompt_template: customer-tutorial
+---
+
+This guide is for drivers who want to close their Polaris account. Self-serve deletion isn't available yet, so you'll send a request to your operator from the Account page. Polaris prefills the email with the details the operator needs, so the round-trip is short.
+
+## Before you start
+
+- You're signed in to your Polaris account on the web.
+- You have a working default mail client (or you're ready to copy the prefilled message into webmail).
+- You understand that deletion is handled by your operator with a 30-day recovery window — anything done in error can be undone within that window.
+
+<Tutorial goal="Send an account deletion request to your operator" estimatedMinutes={3}>
+
+<TutorialStep title="Open your Account page">
+
+Go to **Account** in the sidebar. The page shows your profile, preferences, and account controls.
+
+<Screenshot alt="Customer Account page with Profile, Preferences, Sign out, and Account sections" caption="The Account page groups everything about your login into one view." />
+
+</TutorialStep>
+
+<TutorialStep title="Scroll to the Account section">
+
+Scroll to the bottom of the page. The last section is titled **Account** and contains a red-bordered panel with the heading **Delete account**.
+
+The panel explains that self-serve deletion isn't available yet and that your operator will confirm your identity and retire the account with a 30-day recovery window.
+
+</TutorialStep>
+
+<TutorialStep title="Open the prefilled email">
+
+Click **Contact operator to delete account**.
+
+Your mail client opens a new message addressed to your operator. The subject is **Account deletion request**. The body already contains:
+
+- A short request to delete your account.
+- Your account email (if one is on file).
+- Your account ID.
+
+You can edit the body before sending — add anything you'd like the operator to know.
+
+</TutorialStep>
+
+<TutorialStep title="Send the message">
+
+Send the email. Your operator will reply to confirm your identity and walk you through the rest of the process.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You'll know the request is on its way when:
+
+- The email lands in your **Sent** folder.
+- Your operator replies (usually within their stated support window) asking to confirm your identity.
+
+Until the operator completes the deletion, you can keep using your account as normal.
+
+## Troubleshooting
+
+:::caution[Nothing happens when you click the button]
+The button opens a `mailto:` link. If your browser isn't set up to handle email links, nothing visible will happen.
+
+Right-click the button and choose **Copy link address**. The link starts with `mailto:` and contains the operator's email after it. Paste that address into your webmail client and write the message yourself — mention that you'd like to delete your account, and include your account email.
+:::
+
+:::caution[The email field shows a dash]
+If the **Email** tile on your profile shows `—`, no email is on file for your account. The prefilled message will only contain your account ID. That's fine — the operator can still find your record from the ID. Add a note about which charger or card you use if you want to speed things up.
+:::
+
+:::danger[Don't try the API directly]
+The `POST /api/customer/delete-account` endpoint exists but returns `501 Not Implemented`. It can't delete your account today. The email path is the only working route.
+:::
+
+If the **Account** section doesn't load at all, refresh the page. If the profile still won't load, sign out and back in, then try again.
+
+## Related
+
+- [Sign out of Polaris](/user/web/account/sign-out/)
+- [Update your name](/user/web/account/edit-profile/)
+- [What happens to your charging history](/user/web/sessions/history/)

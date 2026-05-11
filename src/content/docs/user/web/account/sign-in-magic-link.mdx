@@ -1,0 +1,95 @@
+---
+title: Sign in with a magic email link
+description: Sign in to Polaris Express on the web by requesting a one-tap link sent to your email.
+sidebar:
+  order: 10
+persona: Driver
+surface: web
+tier: P0
+code_refs:
+  - web/routes/login.tsx
+  - web/routes/api/auth/magic-link/preflight.ts
+  - web/routes/api/auth/magic-link/verify.ts
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This guide is for drivers who want to sign in to their Polaris Express account on the web without a password. You'll enter your email address, then open a link your operator sends you. The whole flow takes about a minute.
+
+## Before you start
+
+- An email address that your operator has already added to your account.
+- Access to your email inbox on the device you want to sign in on.
+
+<Tutorial goal="Sign in to your account with an email link" estimatedMinutes={2}>
+
+<TutorialStep title="Open the sign-in page">
+
+Go to your operator's Polaris Express address and open `/login`. You'll see the Polaris Express logo and a panel with the sign-in options your operator has turned on.
+
+<Screenshot alt="Customer sign-in page with the email and scan options" caption="The customer sign-in page. The options shown depend on what your operator has enabled." />
+
+<Aside type="note">
+If you don't see the email option, your operator hasn't configured email delivery. Contact them using the "Contact your operator" link at the bottom of the page.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Enter your email address">
+
+Type the email address tied to your account into the email field, then submit the form. The page confirms that, if your address is on file, a link is on its way.
+
+<Aside type="tip">
+The confirmation message looks the same whether or not your address is registered. This is deliberate — it stops strangers from probing which addresses have accounts.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Open the email and tap the link">
+
+Switch to your inbox and open the message from your operator. Tap the magic link inside it.
+
+The link is single-use and expires after a short time. If you tap it twice, only the first tap works.
+
+</TutorialStep>
+
+<TutorialStep title="Land on your dashboard">
+
+The link opens Polaris Express in your browser and signs you in. You're dropped on your customer dashboard at `/`.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You're signed in when:
+
+- The dashboard loads at the root of your operator's site.
+- Your name or email appears in the page header.
+
+If you instead see the sign-in page again, the link expired or was already used. Request a new one.
+
+## Troubleshooting
+
+**The email never arrives.** Wait a minute, then check your spam folder. If it's still missing, request another link. The sign-in page rate-limits requests — if you hammer the button, you'll see a "Too many requests" message and need to wait about a minute before trying again.
+
+**The link says it's invalid or expired.** Magic links are single-use and time-limited. Request a fresh one from the sign-in page and open it as soon as it arrives.
+
+**You see "No sign-in methods are available right now."** Your operator hasn't enabled email sign-in and no tap-enabled chargers or scanners are online. Use the "Contact your operator" link to get help.
+
+:::caution
+The link signs in whoever opens it. Don't forward the email, and don't open it on a shared device you don't want to stay signed in on.
+:::
+
+:::danger
+If you typed an email address that isn't yours, no link will be sent — but you also won't get an error. Double-check the address if nothing arrives.
+:::
+
+## Related
+
+- [Sign in by scanning your <Glossary term="EV card">EV card</Glossary>](/user/web/account/sign-in-scan-card)
+- [Update the email address on your account](/user/web/account/change-email)
+- [Sign out of all your devices](/user/web/account/sign-out-everywhere)

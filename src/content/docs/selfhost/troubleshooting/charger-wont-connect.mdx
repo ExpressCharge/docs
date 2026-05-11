@@ -1,0 +1,193 @@
+---
+title: A charger won't connect to SteVe
+description: Diagnose and recover when an OCPP charger fails to establish or keep a WebSocket session with SteVe.
+sidebar:
+  order: 10
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - steve/CLAUDE.md
+last_authored: 2025-01-22
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside } from '@astrojs/starlight/components';
+
+A charger that refuses to connect to <Glossary term="SteVe">SteVe</Glossary> is the most common
+first-day failure. This runbook walks you through the layered checks
+— network reachability, <Glossary term="OCPP">OCPP</Glossary> handshake, <Glossary term="ChargeBox">ChargeBox</Glossary> registration, and
+authentication — so you can find the failure and recover.
+
+## When to run this
+
+- A new charger has been pointed at SteVe but never appears as
+  connected in the admin UI.
+- A previously working charger has gone offline and isn't reconnecting.
+- You've just migrated SteVe to a new host or changed its public URL.
+
+## Before you start
+
+Have these on hand:
+
+- The charger's `chargeBoxId` (its OCPP identity string).
+- The SteVe public WebSocket URL — typically
+  `ws://<host>:8180/steve/websocket/CentralSystemService/<chargeBoxId>`
+  or `wss://...` if you're terminating TLS in front of SteVe.
+- Shell access to the host running SteVe (`docker compose` available).
+- The `AUTH_PASSWORD` for the SteVe admin UI.
+
+## Procedure
+
+### 1. Confirm SteVe is actually up
+
+```bash
+docker compose ps
+docker compose logs app --tail=200
+```
+
+You're looking for a clean Jetty start after Flyway migrations. If
+the container is restarting, this is not a charger problem — fix
+SteVe first. Boot takes around 30 seconds; Flyway runs before Jetty
+binds the port.
+
+Then verify the admin UI responds:
+
+```bash
+curl -i -u admin:$AUTH_PASSWORD http://localhost:8180/steve/manager/home
+```
+
+A `200 OK` means SteVe itself is healthy.
+
+### 2. Confirm the ChargeBox is registered
+
+SteVe rejects unknown chargers by default. Open the admin UI at
+`/steve/manager/chargepoints` and confirm the `chargeBoxId` is
+present. If it isn't, add it — the identity string in SteVe must
+match exactly what the charger sends in its WebSocket URL path
+(case-sensitive).
+
+<Aside type="caution">
+The `chargeBoxId` is part of the URL path, not a query parameter.
+A trailing slash, a typo, or differing case all produce a 404 from
+SteVe and a confused charger that retries forever.
+</Aside>
+
+### 3. Confirm the charger can reach SteVe
+
+From the network the charger sits on (or as close to it as you can
+get), test the WebSocket endpoint:
+
+```bash
+curl -i \
+  -H "Connection: Upgrade" \
+  -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Version: 13" \
+  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  -H "Sec-WebSocket-Protocol: ocpp1.6" \
+  http://<steve-host>:8180/steve/websocket/CentralSystemService/<chargeBoxId>
+```
+
+You want a `101 Switching Protocols` response. Other outcomes:
+
+- **Connection refused / timeout** — firewall, NAT, or wrong host.
+  Port 8180 (or whatever you've published) must be reachable from
+  the charger's network.
+- **`404 Not Found`** — the `chargeBoxId` in the URL doesn't match
+  a registered ChargeBox. Re-check step 2.
+- **`400 Bad Request` with no subprotocol** — the charger is
+  negotiating an OCPP version SteVe doesn't accept. Confirm the
+  charger is configured for `ocpp1.6` (or `ocpp1.5` / `ocpp2.0.1`
+  if you've explicitly enabled them).
+
+### 4. Watch the OCPP handshake live
+
+In one terminal:
+
+```bash
+docker compose logs app -f | grep -i "<chargeBoxId>"
+```
+
+Then power-cycle the charger or trigger a reconnect. You should see
+a `BootNotification` arrive within 30 seconds. If you see the
+WebSocket open and then immediately close, the charger is likely
+rejecting SteVe's `BootNotification` response — check that SteVe's
+clock is correct (`date` on the host); chargers will refuse a
+response timestamp that's wildly skewed.
+
+### 5. If you front SteVe with a reverse proxy
+
+WebSocket upgrades require explicit proxy configuration. The proxy
+must:
+
+- Forward the `Upgrade` and `Connection` headers.
+- Not buffer the response.
+- Allow long-lived connections (idle timeout well above 60 seconds —
+  OCPP heartbeats default to longer intervals).
+
+For nginx:
+
+```nginx title="nginx site fragment"
+location /steve/websocket/ {
+    proxy_pass http://steve-app:8180;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
+}
+```
+
+If you've moved from `ws://` to `wss://`, also confirm the
+charger's CA trust store includes whatever certificate authority
+signed your TLS cert. Many chargers ship with a limited CA bundle
+and will silently reject Let's Encrypt-signed certs until firmware
+is updated.
+
+### 6. Confirm the WebAPI token if ExpresSync is involved
+
+If the charger appears connected in SteVe but ExpresSync can't see
+it, the bridge between ExpresSync and SteVe's REST API is the
+problem, not the charger.
+
+```bash
+curl -i -H "Authorization: Bearer $WEBAPI_VALUE" \
+  http://<steve-host>:8180/steve/api/v1/chargepoints
+```
+
+A `401` means the `WEBAPI_VALUE` on the ExpresSync side doesn't
+match the one SteVe was started with. Both `AUTH_PASSWORD` and
+`WEBAPI_VALUE` are injected at JVM startup as `-D` overrides from
+`docker-compose.app.env` — if you changed them, SteVe needs a
+restart.
+
+## Audit and rollback
+
+None of the checks above are destructive. The only state-changing
+action is adding a ChargeBox in step 2; you can remove it again from
+the same admin UI page if it was added in error.
+
+If you restart SteVe to pick up a changed `docker-compose.app.env`:
+
+```bash
+docker compose up -d app
+```
+
+Active charging sessions will reconnect once the container is back —
+chargers retry indefinitely. There is no data loss on a clean
+restart; session state lives in MariaDB.
+
+## Still stuck?
+
+Capture the following before asking for help:
+
+- `docker compose logs app --tail=500` from a window covering at
+  least one full reconnect attempt.
+- The exact WebSocket URL configured on the charger.
+- The `chargeBoxId` as it appears in the SteVe admin UI (copy-paste,
+  don't retype).
+- Output of the `curl` upgrade probe from step 3.
+
+<!-- TODO: confirm exact upstream default for accepted OCPP subprotocol list -->

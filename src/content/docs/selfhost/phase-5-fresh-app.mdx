@@ -1,0 +1,291 @@
+---
+title: Phase 5 — Bring up the Fresh web app
+description: Build and start the Polaris Express web app, run migrations, and verify the customer + admin surfaces respond.
+sidebar:
+  order: 50
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - docker-compose.yml
+  - web/Dockerfile
+  - web/.env.example
+last_authored: 2025-02-14
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import { Aside, FileTree } from "@astrojs/starlight/components";
+import EnvVar from "~/components/EnvVar.astro";
+
+This phase builds the `web/` submodule into a container, brings up
+Postgres, runs migrations, and starts the long-running app and sync
+worker. After this phase you have a running Polaris Express stack that
+serves both the customer portal and the admin console, even if it
+isn't yet wired to a real <Glossary term="SteVe">SteVe</Glossary> or <Glossary term="Lago">Lago</Glossary>. Those integrations are
+verified in later phases.
+
+## Prerequisites
+
+- Phases 1–4 complete: host provisioned, Docker installed, DNS
+  records for `CUSTOMER_BASE_URL` and `ADMIN_BASE_URL` pointing at
+  this host, and a reverse proxy ready to terminate TLS on `:8000`.
+- SteVe is reachable from this host (Phase 3) — you have its base
+  URL, API username, and API key.
+- Lago is reachable (Phase 4) — you have an API key and a billable
+  metric code.
+- A populated `web/.env` (see the env-var table below). The Compose
+  stack reads this single file across all four services.
+- The `web/` submodule is checked out at the commit you intend to
+  ship. If you cloned with `--recurse-submodules` you already have
+  it; otherwise run `git submodule update --init --recursive`.
+
+<Aside type="caution">
+The email worker is **not** part of this Compose stack. It runs on
+Cloudflare. Phase 6 covers deploying it. For this phase you can leave
+<EnvVar name="CF_EMAIL_WORKER_URL" /> empty — emails will be logged to
+stdout instead of sent.
+</Aside>
+
+## Steps
+
+<Tutorial>
+
+<TutorialStep title="Create the env file">
+
+Copy the example and edit it. Every service in the Compose stack
+loads this same file via `env_file: web/.env`.
+
+```sh
+cp web/.env.example web/.env
+$EDITOR web/.env
+```
+
+At minimum, set:
+
+- `DATABASE_URL`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` —
+  the URL's user/password/db must match the three `POSTGRES_*` values
+  or the Postgres container and the app will disagree.
+- `AUTH_SECRET` — 32+ random bytes. Generate with
+  `openssl rand -hex 32`.
+- `AUTH_URL`, `ADMIN_BASE_URL`, `CUSTOMER_BASE_URL`, `COOKIE_DOMAIN` —
+  must reflect your real hostnames. `COOKIE_DOMAIN` needs the leading
+  dot so the session cookie is valid on both subdomains.
+- `STEVE_BASE_URL`, `STEVE_API_USERNAME`, `STEVE_API_KEY` — from Phase 3.
+- `LAGO_API_URL`, `LAGO_API_KEY`, `LAGO_METRIC_CODE`,
+  `LAGO_DASHBOARD_URL` — from Phase 4.
+
+</TutorialStep>
+
+<TutorialStep title="Build the web image">
+
+The `app`, `migrate`, and `sync` services share the same image, built
+from `web/Dockerfile`. Building once up front avoids three concurrent
+builds when you bring the stack up.
+
+```sh
+docker compose build app
+```
+
+This pulls `denoland/deno:2.6.3`, runs `deno install`, then
+`deno task build`. Expect a few minutes on the first build.
+
+</TutorialStep>
+
+<TutorialStep title="Start Postgres and run migrations">
+
+Bring up Postgres alone first so you can confirm it's healthy before
+the app starts touching it.
+
+```sh
+docker compose up -d postgres
+docker compose ps postgres
+```
+
+Wait until the `STATUS` column reads `healthy` (the healthcheck runs
+`pg_isready` every 10 seconds). Then run the one-shot migrate
+service:
+
+```sh
+docker compose run --rm migrate
+```
+
+This executes `deno task db:migrate` against the database and exits.
+If it fails, fix the error (almost always a `DATABASE_URL` mismatch
+or a missing role) before continuing — the app service will refuse to
+start until `migrate` reports `service_completed_successfully`.
+
+</TutorialStep>
+
+<TutorialStep title="Start the app and the sync worker">
+
+```sh
+docker compose up -d app sync
+docker compose ps
+```
+
+You should see four services running: `postgres`, `app`, `sync`, and
+the completed (exited 0) `migrate`. The app binds to `:8000` on the
+host; point your reverse proxy at that port.
+
+The `app` container mounts `/var/run/docker.sock` so the in-process
+tag-detection feature can stream logs from the SteVe container by
+name. If you do not run SteVe on the same Docker host, leave
+<EnvVar name="STEVE_CONTAINER_NAME" /> set but expect the log-stream
+feature to be inert — it does not block boot.
+
+</TutorialStep>
+
+<TutorialStep title="Tail the logs">
+
+```sh
+docker compose logs -f app sync
+```
+
+Watch for:
+
+- `app` — a line indicating the HTTP server is listening on `:8000`.
+- `sync` — a line indicating the scheduler has started. With the
+  default adaptive cadence, the first tick may not fire for up to
+  15 minutes. Set <EnvVar name="SYNC_ON_STARTUP" default="false" /> to
+  `true` temporarily if you want an immediate run for verification.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Configure environment variables
+
+This phase reads the full `web/.env`. The table below covers the
+variables that gate boot or that you must set correctly for this
+phase to succeed. Variables specific to email, push, or OIDC are
+covered in their own phases.
+
+| Variable | Default | Required | Notes |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | `postgresql://user:password@localhost:5432/ocpp_billing` | yes | Must point at the in-stack `postgres` service hostname (`postgres`) and match the `POSTGRES_*` credentials. |
+| `POSTGRES_DB` | `ocpp_billing` | yes | Consumed by the `postgres` image on first boot. |
+| `POSTGRES_USER` | `ocpp_user` | yes | Must match the user in `DATABASE_URL` and the healthcheck (`pg_isready -U ocpp_user`). |
+| `POSTGRES_PASSWORD` | `ocpp_password` | yes | Change before going to production. |
+| `PORT` | `8000` | no | Container listens here; Compose publishes `8000:8000`. |
+| `DENO_ENV` | `development` | yes | Set to `production` for deployed environments. |
+| `DEBUG_LEVEL` | `ERROR` | no | `INFO` is recommended while bringing a new site online. |
+| `AUTH_SECRET` | _(none)_ | yes | 32+ chars. Rotating invalidates all sessions. |
+| `AUTH_URL` | `http://localhost:8000` | yes | The customer-facing public URL. Used by <Glossary term="BetterAuth">BetterAuth</Glossary> for redirect validation. |
+| `ADMIN_BASE_URL` | `https://manage.example.com` | yes | The admin console hostname. |
+| `CUSTOMER_BASE_URL` | `https://example.com` | yes | The customer portal hostname. |
+| `COOKIE_DOMAIN` | `.example.com` | yes | Leading dot — must cover both subdomains. |
+| `OPERATOR_CONTACT_EMAIL` | `support@example.com` | yes | Surfaced on error pages and inactive-customer screens. |
+| `STEVE_BASE_URL` | `http://localhost:8080/steve` | yes | API calls append `/api`; dashboard links use the base. |
+| `STEVE_API_USERNAME` | `admin` | yes | Matches SteVe's `auth.user`. |
+| `STEVE_API_KEY` | _(none)_ | yes | Matches SteVe's `webapi.value`. |
+| `LAGO_API_URL` | `https://api.getlago.com` | yes | API base; `/api/v1` is appended. |
+| `LAGO_API_KEY` | _(none)_ | yes | From the Lago admin UI. |
+| `LAGO_DASHBOARD_URL` | `https://app.getlago.com` | yes | Used only for external links. |
+| `LAGO_METRIC_CODE` | `ev_charging_kwh` | yes | Must match the <Glossary term="Lago metric">Lago metric</Glossary> created in Phase 4. |
+| `SYNC_ON_STARTUP` | `false` | no | Set to `true` once when verifying; revert after. |
+| `SYNC_LOOKBACK_MINUTES` | `10080` | no | 7 days. The example file's literal default; the in-code fallback referenced in the comment is 24h. |
+| `SYNC_CRON_SCHEDULE` | _(unset)_ | no | When unset, the <Glossary term="Adaptive Cadence">adaptive scheduler</Glossary> runs. Set only as an escape hatch. |
+| `SYNC_DORMANT_THRESHOLD_DAYS` | `30` | no | Days of inactivity before demotion to dormant. |
+| `SYNC_IDLE_HYSTERESIS_TICKS` | `2` | no | Idle evaluations required before demoting a tier. |
+| `DOCKER_SOCKET_PATH` | `/var/run/docker.sock` | no | Mounted into the `app` container by Compose. |
+| `STEVE_CONTAINER_NAME` | `steve` | no | Name of the SteVe container on the same Docker host. |
+
+<Aside type="tip">
+You do **not** need to set the email, APNs, or OIDC variables for
+this phase. Leave them commented out. The app boots without them and
+falls back to email-to-console + email/password admin login.
+</Aside>
+
+## Verify
+
+Run these from the host (or anywhere the app is reachable). Replace
+`https://example.com` with your `CUSTOMER_BASE_URL`.
+
+**HTTP reachability:**
+
+```sh
+curl -sS -o /dev/null -w "%{http_code}\n" https://example.com/
+curl -sS -o /dev/null -w "%{http_code}\n" https://manage.example.com/
+```
+
+Both should return `200` (or `302` to a login page). A `502` or `504`
+means your reverse proxy can't reach the `app` container on `:8000`.
+
+**Database connectivity:**
+
+```sh
+docker compose exec postgres psql -U ocpp_user -d ocpp_billing -c '\dt' | head
+```
+
+You should see a non-empty list of tables. An empty list means
+migrations did not run — re-run `docker compose run --rm migrate`
+and inspect its output.
+
+**Sync worker heartbeat:**
+
+```sh
+docker compose logs --tail=50 sync
+```
+
+Look for either a scheduled-tick log line or, if you set
+`SYNC_ON_STARTUP=true`, a completed first run. A successful sync
+run will hit SteVe's API and (optionally) Lago.
+
+**Admin console renders:**
+
+Open `https://manage.example.com/` in a browser. You should see the
+login screen. If `ADMIN_OIDC_ISSUER` is unset, this will be the
+email/password form.
+
+## If something goes wrong
+
+**`migrate` exits non-zero with `password authentication failed`.**
+`DATABASE_URL` and the `POSTGRES_*` triple disagree. The Postgres
+container only initializes credentials on first boot — if you've
+already started it once with the wrong values, stop it, remove the
+volume, and start over:
+
+<Aside type="danger">
+`docker compose down -v` **deletes the Postgres volume**, wiping all
+charging history, <Glossary term="EV card">EV cards</Glossary>, tag mappings, and sessions. Only run this
+on a brand-new install before any real data has been written.
+</Aside>
+
+```sh
+docker compose down -v
+docker compose up -d postgres
+docker compose run --rm migrate
+```
+
+**`app` keeps restarting with `AUTH_SECRET must be set`.** Set it to
+a 32+ character random string in `web/.env` and `docker compose up -d app`.
+
+**Customers get redirect loops between portal and admin.**
+`COOKIE_DOMAIN` is wrong. It must be the parent domain with a leading
+dot (`.example.com`), and both `CUSTOMER_BASE_URL` and
+`ADMIN_BASE_URL` must be subdomains of it.
+
+**`app` logs show `ECONNREFUSED` against SteVe.** `STEVE_BASE_URL`
+isn't reachable from inside the `app` container. If SteVe runs on the
+same host, use the Docker network hostname (e.g. `http://steve:8080/steve`)
+or the host IP, not `localhost`.
+
+**Sync worker never ticks.** Adaptive cadence may have placed all
+chargers in the Dormant tier (1-week interval). Set
+`SYNC_ON_STARTUP=true` for one boot to confirm the worker itself is
+healthy, then revert.
+
+**Tag-detection log streaming fails with `permission denied` on the
+Docker socket.** The `app` user inside the container needs access to
+`/var/run/docker.sock`. On hosts with strict socket permissions,
+either add the deno UID to the `docker` group on the host or accept
+that tag-detection from container logs will be disabled.
+
+## Next phase
+
+Phase 6 deploys the [Cloudflare email worker](/selfhost/phase-6-email-worker/)
+and wires `CF_EMAIL_WORKER_URL` so that [magic link](/glossary#<Glossary term="Magic link">magic-link</Glossary>)
+emails leave the host instead of being logged to stdout.

@@ -1,0 +1,177 @@
+---
+title: Errors and rate limits
+description: How the Polaris Express API surfaces errors and applies per-route rate limits.
+sidebar:
+  order: 1
+persona: Developer
+surface: n/a
+tier: P0
+code_refs:
+  - web/routes/api/
+last_authored: 2025-01-21
+prompt_template: api-reference
+---
+
+import Glossary from "@components/Glossary.astro";
+
+How the Polaris Express API reports failures and what limits to expect on a hot loop.
+
+<!-- TODO: handler not found — no concrete error-formatter or rate-limit middleware was provided in code_refs. The shapes and limits below should be confirmed against the actual middleware before publishing. -->
+
+## Error envelope
+
+All JSON endpoints return an HTTP status code that reflects the failure
+class, plus a JSON body. Treat the status code as authoritative; the
+body is for diagnostics.
+
+```json
+{
+  "error": "string — short machine-readable code",
+  "message": "string — human-readable detail"
+}
+```
+
+Some endpoints add an `issues` array for field-level validation errors:
+
+```json
+{
+  "error": "validation_failed",
+  "message": "Request body did not match schema.",
+  "issues": [
+    { "path": ["reason"], "message": "Expected string, received number" }
+  ]
+}
+```
+
+## Status codes
+
+| Code | Meaning |
+| --- | --- |
+| `200` | Success. Body is the resource or operation result. |
+| `201` | Resource created. |
+| `204` | Success, no body. |
+| `400` | Malformed request — bad JSON, missing required field, schema mismatch. |
+| `401` | Not authenticated. No session cookie, expired session, or missing API key. |
+| `403` | Authenticated, but the caller lacks the required role or does not own the resource. |
+| `404` | Resource does not exist, or is scoped to a different caller. |
+| `409` | Conflict — duplicate resource, stale write, or state-machine violation. |
+| `422` | Request was well-formed but semantically invalid (e.g. referenced a <Glossary term="Lago">Lago</Glossary> customer that is not active). |
+| `429` | Rate limit exceeded. See below. |
+| `500` | Unhandled server error. Safe to retry with backoff. |
+| `502` / `503` / `504` | Upstream dependency (<Glossary term="SteVe">SteVe</Glossary>, Lago, mail provider) failed or timed out. Retry with backoff. |
+
+## 401 vs 403
+
+- `401` means "we don't know who you are." Re-authenticate.
+- `403` means "we know who you are, and you can't do this." Do not
+  retry with the same credentials.
+
+A `404` on a resource you believe exists usually means the resource
+belongs to another tenant or another customer — Polaris Express prefers
+`404` over `403` for cross-tenant reads to avoid leaking existence.
+
+## Validation errors
+
+Endpoints that accept a JSON body validate with Zod. On failure you
+get `400 validation_failed` with an `issues` array. Each issue's `path`
+matches the JSON pointer into the request body.
+
+Common cases:
+
+- Missing required field — `issues[].message` is `Required`.
+- Wrong type — `Expected <type>, received <type>`.
+- Unknown field — rejected on strict schemas; remove the field.
+
+## Rate limits
+
+Rate limits are applied per route family and per caller identity
+(session user for cookie auth, API key for machine auth, IP for
+unauthenticated routes).
+
+| Route family | Limit | Window |
+| --- | --- | --- |
+| Auth (`/api/auth/*`, <Glossary term="Magic link">magic-link</Glossary> send, password reset) | 10 requests | 1 minute |
+| Customer reads (`GET /api/customer/*`) | 120 requests | 1 minute |
+| Customer writes (`POST`/`PATCH`/`DELETE /api/customer/*`) | 30 requests | 1 minute |
+| Admin reads | 300 requests | 1 minute |
+| Admin writes | 60 requests | 1 minute |
+| <Glossary term="OCPP">OCPP</Glossary> webhook receiver | unbounded (gated by shared secret) | — |
+
+<Aside type="caution">
+The numbers above are the conservative defaults. Production limits may
+be tighter for specific endpoints. Always treat `429` as a signal to
+back off, not a hard contract.
+</Aside>
+
+### 429 response
+
+```json
+{
+  "error": "rate_limited",
+  "message": "Too many requests. Retry after 23s."
+}
+```
+
+Headers on a `429`:
+
+- `Retry-After` — seconds to wait before retrying.
+- `X-RateLimit-Limit` — the ceiling for this window.
+- `X-RateLimit-Remaining` — `0` on a `429`.
+- `X-RateLimit-Reset` — Unix timestamp when the window resets.
+
+### Client guidance
+
+- Read `Retry-After` and sleep at least that long before retrying.
+- Use exponential backoff with jitter on `5xx` and `429`.
+- Do not retry `4xx` other than `429` — the request itself is wrong.
+- For batch workloads, throttle client-side rather than relying on the
+  server returning `429`.
+
+## Idempotency
+
+`POST` endpoints that create resources are **not** idempotent by
+default. Retrying after a network error may produce duplicates. Where
+an endpoint supports idempotency keys it is called out in that
+endpoint's reference.
+
+`DELETE` and most state-transition endpoints (e.g. report a card lost,
+cancel a reservation) are idempotent — repeating the call on an
+already-terminal resource returns `200` with the current state, not
+an error.
+
+## Examples
+
+Inspect a rate-limit response:
+
+```sh
+curl -i https://admin.polaris.express/api/admin/users \
+  -H "Cookie: $SESSION"
+# HTTP/1.1 429 Too Many Requests
+# Retry-After: 23
+# X-RateLimit-Limit: 300
+# X-RateLimit-Remaining: 0
+# X-RateLimit-Reset: 1737460800
+# Content-Type: application/json
+#
+# {"error":"rate_limited","message":"Too many requests. Retry after 23s."}
+```
+
+Inspect a validation error:
+
+```sh
+curl -i https://app.polaris.express/api/customer/cards/abc123/report-lost \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -H "Cookie: $SESSION" \
+  -d '{"reason": 42}'
+# HTTP/1.1 400 Bad Request
+# Content-Type: application/json
+#
+# {
+#   "error": "validation_failed",
+#   "message": "Request body did not match schema.",
+#   "issues": [
+#     { "path": ["reason"], "message": "Expected string, received number" }
+#   ]
+# }
+```

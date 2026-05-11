@@ -1,0 +1,218 @@
+---
+title: HMAC webhook failures
+description: Diagnose and recover from 401 unauthorized responses on the SteVe → ExpresSync OCPP webhooks.
+sidebar:
+  order: 30
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - web/routes/api/ocpp/pre-authorize.ts
+  - web/routes/api/ocpp/meter-values.ts
+last_authored: 2025-02-14
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Tabs, TabItem, FileTree } from "@astrojs/starlight/components";
+
+The [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve) fork calls two HMAC-signed hooks on ExpresSync
+during normal [<Glossary term="OCPP">OCPP</Glossary>](/glossary#ocpp) traffic: `POST /api/ocpp/pre-authorize`
+on every `Authorize.req` and `StartTransaction.req`, and
+`POST /api/ocpp/meter-values` on every `MeterValues.req`. Both verify a hex
+HMAC-SHA256 in the `X-Signature` header against the raw request body. When
+the keys disagree, ExpresSync returns `401 unauthorized`, SteVe logs a
+warning, and the system fails open — chargers keep charging, but
+[scan-arm](/glossary#scan-arm) interception breaks and live
+[<Glossary term="Meter value">meter values</Glossary>](/glossary#meter-value) stop flowing into the customer <Glossary term="SSE">SSE</Glossary>
+stream and <Glossary term="Lago">Lago</Glossary>.
+
+This runbook covers diagnosing and fixing those 401s.
+
+## When to run this
+
+Run this runbook when any of these happen:
+
+- Customers report that scanning a charger QR code no longer logs them in
+  (the [scan-arm](/glossary#scan-arm) flow returns the charger to a normal
+  `ACCEPTED` decision and the session starts on the physical tag instead).
+- The admin live-session card stops updating kWh / power during an active
+  transaction, but the transaction itself completes and reconciles after the
+  fact.
+- SteVe logs show repeated `HttpPreAuthorizeHook` or `HttpMeterValueHook`
+  warnings with HTTP 401 from ExpresSync.
+- ExpresSync logs show `Missing HMAC key or signature` or HMAC verify
+  failures from the `PreAuthorize` or `MeterValues` child loggers.
+
+## Symptoms and what they mean
+
+The two hooks have the same auth path, so the same symptoms apply to both.
+
+| ExpresSync response | SteVe behavior | What it tells you |
+| --- | --- | --- |
+| `401 unauthorized` with `hasKey: false` | Fails open | ExpresSync is running without the HMAC env var set. |
+| `401 unauthorized` with `hasSig: false` | Fails open | SteVe didn't send `X-Signature` — either the SteVe hook is disabled or its key is unset. |
+| `401 unauthorized` with both present | Fails open | Keys are set on both sides but don't match. |
+| `500 internal` from `PreAuthorize` | Fails open | DB outage or HMAC subtle-crypto threw. |
+| `503` from `PreAuthorize` | Fails open | <Glossary term="Pre-authorize">Pre-authorize</Glossary> [feature flag](/glossary#feature-flag) is off. |
+
+<Aside type="note">
+  Charging is never blocked by webhook failures. SteVe's hook timeout is
+  ~200ms and any non-2xx response is treated as "no override". The cost of a
+  silent 401 is degraded UX, not broken charging.
+</Aside>
+
+## Procedure
+
+### 1. Confirm both sides are talking
+
+Tail ExpresSync logs and watch for hook traffic. SSH onto the host and run:
+
+```bash
+docker compose logs -f --tail=50 web | grep -E "PreAuthorize|MeterValues"
+```
+
+Trigger a tag scan at a charger, or start a transaction. You should see one
+of three things:
+
+- **Successful auth + match**: a `scan.intercepted` publish and a 200 with
+  `override: "BLOCKED"`.
+- **Successful auth, no match**: a 200 with `override: null`. Normal when no
+  one is mid-scan.
+- **`Missing HMAC key or signature` warning + 401**: keys are misconfigured.
+  Continue below.
+
+If you see nothing at all, SteVe isn't reaching ExpresSync. That's a
+networking problem, not an HMAC problem — check the SteVe container's
+`SE_PREAUTH_HOOK_URL` / `SE_METERVALUE_HOOK_URL` and the internal Docker
+network before continuing here.
+
+### 2. Verify the env vars are set in ExpresSync
+
+The ExpresSync side reads two variables:
+
+| Variable | Required for | Source |
+| --- | --- | --- |
+| <code>STEVE_PREAUTH_HMAC_KEY</code> | `/api/ocpp/pre-authorize` | `web/.env` |
+| <code>STEVE_METERVALUE_HMAC_KEY</code> | `/api/ocpp/meter-values` | `web/.env` |
+
+Both must be set, both must be non-empty, and both must be at least 32
+characters of high-entropy data. Confirm they're loaded inside the running
+container, not just in your shell:
+
+```bash
+docker compose exec web printenv STEVE_PREAUTH_HMAC_KEY STEVE_METERVALUE_HMAC_KEY
+```
+
+If either prints empty, the variable isn't reaching the container. Common
+causes:
+
+- The var is in your shell but not in `web/.env`.
+- `web/.env` was edited after the container started — restart with
+  `docker compose up -d web`.
+- A typo in the variable name. The code reads the exact strings above; no
+  fallback.
+
+### 3. Verify the same keys are set in SteVe
+
+SteVe signs with its own copy of each key. They must be byte-identical to
+ExpresSync's copies. Check the SteVe container:
+
+```bash
+docker compose exec ocpp printenv \
+  STEVE_PREAUTH_HMAC_KEY \
+  STEVE_METERVALUE_HMAC_KEY
+```
+
+<Aside type="caution">
+  Compare the values directly, not just whether they're set. A trailing
+  newline, a stray quote, or a different secret-manager version on one side
+  is the most common cause of a "both keys are set but it still 401s"
+  failure. Pipe both through `sha256sum` if you want a quick equality check
+  without printing the secrets.
+</Aside>
+
+### 4. Reproduce with a manual request
+
+To rule out SteVe entirely, sign and send a minimal pre-authorize body
+yourself. From inside the `web` container:
+
+```bash title="sign-and-send.sh"
+KEY="$STEVE_PREAUTH_HMAC_KEY"
+BODY='{"idTag":"TEST","chargeBoxId":"TEST","connectorId":1,"isStartTx":false,"ts":0}'
+SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$KEY" -hex | awk '{print $2}')
+curl -sS -X POST http://localhost:8000/api/ocpp/pre-authorize \
+  -H "Content-Type: application/json" \
+  -H "X-Signature: $SIG" \
+  --data-binary "$BODY"
+```
+
+Expected: `{"override":null}` (no armed scan-pair row exists for the fake
+charger, so the hook correctly declines to override).
+
+If you get `401`, the key in your shell doesn't match the key the running
+ExpresSync process loaded. Restart the container after fixing `web/.env`.
+
+If you get `200`, ExpresSync is healthy and the problem is on the SteVe
+side — its key, its signing code, or its body framing.
+
+### 5. Rotate the keys
+
+If you can't reconcile the two sides, rotate. Generate one key per hook:
+
+```bash
+openssl rand -hex 32
+openssl rand -hex 32
+```
+
+Write both into `web/.env` and the SteVe environment, then restart both
+services together:
+
+```bash
+docker compose up -d web ocpp
+```
+
+<Aside type="danger">
+  Don't rotate one side and wait. Between the two restarts every
+  `Authorize.req` and `MeterValues.req` will 401. Charging continues
+  (fail-open), but [scan-arm](/glossary#scan-arm) login and the live session
+  card go dark for that window. Restart both in the same `docker compose up`
+  invocation.
+</Aside>
+
+## Verify
+
+Once the keys agree, confirm end-to-end:
+
+1. Tail the logs as in step 1.
+2. Start a real transaction on a test charger.
+3. You should see one `PreAuthorize` 200 on `Authorize.req`, another on
+   `StartTransaction.req`, and a steady stream of `MeterValues` 200s every
+   ~10–30 seconds for the duration.
+4. Open the admin live-session view for that charger. The kWh and kW
+   readings should advance.
+5. Stop the transaction. The final `MeterValues` call carries
+   `context: "Transaction.End"`; the `transaction.meter` event publishes
+   with `endedAt` set and the [<Glossary term="Lago metric">Lago metric</Glossary>](/glossary#lago-metric) flush
+   reconciles within the next billing cycle.
+
+## Audit and rollback
+
+HMAC key rotation has no destructive effect on stored data. Past
+transactions, [<Glossary term="User mapping">user mappings</Glossary>](/glossary#user-mapping), and Lago state are
+unaffected — the hooks only mutate transient `verifications` rows
+(scan-pair) and publish event-bus messages.
+
+If a rotation goes wrong:
+
+- The previous keys are recoverable from your secrets manager or
+  `web/.env.<timestamp>.bak` if you backed up before editing.
+- There is no migration to undo; just restore the old values and
+  `docker compose up -d web ocpp`.
+
+The post-transaction reconciliation sweep in the sync service backfills any
+kWh deltas dropped during the 401 window, so billing remains correct even
+across an extended outage of the meter-values hook. <Glossary term="Scan-arm">Scan-arm</Glossary> interceptions
+that didn't fire during the window are simply lost — the customer will have
+re-tapped or given up.

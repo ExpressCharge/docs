@@ -1,0 +1,321 @@
+---
+title: Phase 3 — Deploy the Cloudflare email Worker
+description: Stand up the HMAC-signed email Worker that bridges Polaris Express to Cloudflare Email Service.
+sidebar:
+  order: 30
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - email-worker/README.md
+  - email-worker/wrangler.jsonc
+last_authored: 2025-01-15
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tabs, TabItem, Aside, FileTree, Steps } from '@astrojs/starlight/components';
+
+Polaris Express does not send email directly. Instead, the Fresh app
+HMAC-signs a payload and POSTs it to a small Cloudflare Worker, which
+verifies the signature, dedupes nonces, enforces a per-recipient rate
+limit, and finally hands the message to Cloudflare Email Service. This
+phase deploys that Worker.
+
+This is **Phase 3** in the self-host sequence. You should have
+finished Phase 1 (DNS and zone setup) and Phase 2 (R2 assets) before
+starting here. The Fresh app itself comes in Phase 4 — but it will
+refuse to start without the Worker URL and shared secret you produce
+here.
+
+## Prerequisites
+
+- **Phase 1 complete.** `example.com` is on Cloudflare with SPF, DKIM,
+  and DMARC configured. Substitute your own apex for `example.com`
+  throughout this page.
+- **Phase 2 complete.** Brand artwork is uploaded to
+  `assets.example.com` (R2). The Worker doesn't serve these, but the
+  emails it sends will reference them.
+- **Cloudflare Workers Paid plan.** Cloudflare Email Service is in
+  public beta on the paid plan only. Verify in the dashboard before
+  deploying.
+- **Email Service enabled** on the `example.com` zone. The `send_email`
+  bindings declared in `wrangler.jsonc` will fail to deploy otherwise.
+- **A sender from-address you control.** This runbook uses
+  `noreply@example.com` (customer-facing, [Polaris](/glossary#) brand)
+  and `admin-noreply@example.com` (admin-facing,
+  [ExpresSync](/glossary#) brand).
+- **Local toolchain:** `git`, Node 20+, and `npx`. The Worker is npm-only;
+  the Fresh app is the Deno half.
+- **`openssl`** for generating the signing secret.
+
+## Steps
+
+<Steps>
+
+1. **Clone the repo and enter the Worker directory.**
+
+   ```sh
+   git clone https://github.com/your-org/polaris-express.git
+   cd polaris-express/email-worker
+   npm install
+   ```
+
+   <FileTree>
+   - email-worker/
+     - wrangler.jsonc Worker config — bindings, vars, KV
+     - src/
+       - index.ts Verify, dedup, rate-limit, send
+     - package.json npm scripts
+     - .dev.vars **(you create this, gitignored)**
+   </FileTree>
+
+2. **Authenticate `wrangler` against your Cloudflare account.**
+
+   ```sh
+   npx wrangler login
+   ```
+
+   The browser flow returns an OAuth token cached at
+   `~/.config/.wrangler/config/default.toml`. If you're deploying from
+   CI instead, set `CLOUDFLARE_API_TOKEN` with `Workers Scripts:Edit`
+   and `Workers KV Storage:Edit` permissions.
+
+3. **Create the KV namespace for nonce dedup and rate-limit counters.**
+
+   A single namespace holds both, distinguished by key prefix.
+
+   ```sh
+   npx wrangler kv namespace create EMAIL_NONCE_DEDUP
+   npx wrangler kv namespace create EMAIL_NONCE_DEDUP --preview
+   ```
+
+   Each command prints an `id`. Paste them into `wrangler.jsonc`:
+
+   ```jsonc title="wrangler.jsonc" {5,6}
+   "kv_namespaces": [
+     {
+       "binding": "EMAIL_NONCE_DEDUP",
+       "id": "<production id from first command>",
+       "preview_id": "<preview id from second command>"
+     }
+   ]
+   ```
+
+4. **Generate the signing secret and register it as `POLARIS_SECRET_A`.**
+
+   This is the shared HMAC secret between the Fresh app and the Worker.
+   Generate something random and long:
+
+   ```sh
+   openssl rand -base64 32
+   ```
+
+   Store the output in a password manager — you'll paste the same
+   value into the Fresh app's `<EnvVar name="CF_EMAIL_WORKER_SECRET" />`
+   in Phase 4.
+
+   ```sh
+   npx wrangler secret put POLARIS_SECRET_A
+   # Paste the secret at the prompt.
+   ```
+
+   Leave `POLARIS_SECRET_B` unset for now. It exists for [rolling
+   rotation](#rotating-the-signing-secret), not first-time install.
+
+5. **Dry-run the deploy to validate config.**
+
+   ```sh
+   npx wrangler deploy --dry-run
+   ```
+
+   This parses `wrangler.jsonc`, resolves bindings, and confirms the
+   Email Service bindings are valid for your zone — without publishing.
+   Fix any errors before continuing.
+
+6. **Deploy.**
+
+   ```sh
+   npx wrangler deploy
+   ```
+
+   Wrangler prints a `*.workers.dev` URL. That URL works, but the Fresh
+   app expects `mail.example.com`.
+
+7. **Bind the Worker to `mail.example.com`.**
+
+   In the Cloudflare dashboard, open the Worker and add a route:
+
+   ```
+   mail.example.com/*       Zone: example.com
+   ```
+
+   Alternatively, declare it in `wrangler.jsonc` under `routes` and
+   redeploy — but the dashboard approach keeps the route out of
+   version control, which is what you want if different self-host
+   tenants reuse the same Worker source.
+
+   <Aside type="caution">
+   `mail.example.com` must be **proxied** (orange cloud) in DNS for the
+   Worker route to intercept it. A grey-cloud record will bypass
+   Workers entirely.
+   </Aside>
+
+</Steps>
+
+## Configure environment variables
+
+The Worker is configured almost entirely via `wrangler.jsonc`. There
+is no `.env` file in production — secrets go through
+`wrangler secret put`, and non-secret tuning lives in the `vars`
+block.
+
+| Name | Default | Required | Source |
+|---|---|---|---|
+| `POLARIS_SECRET_A` | — | yes | `wrangler secret put` |
+| `POLARIS_SECRET_B` | — | no (for rotation) | `wrangler secret put` |
+| `DEFAULT_REPLY_TO` | `support@example.com` | no | `wrangler.jsonc` → `vars` |
+| `RATE_LIMIT_MAX` | `5` | no | `wrangler.jsonc` → `vars` |
+| `RATE_LIMIT_WINDOW_SECONDS` | `600` | no | `wrangler.jsonc` → `vars` |
+| `TS_WINDOW_MS` | `300000` | no | `wrangler.jsonc` → `vars` |
+| `NONCE_TTL_SECONDS` | `600` | no | `wrangler.jsonc` → `vars` |
+
+A few notes on the defaults:
+
+- `RATE_LIMIT_MAX` of **5 per 10 minutes** is keyed on
+  `sha256("${to}:${category}")`. That's enough headroom for a user who
+  bounces between [<Glossary term="Magic link">magic-link</Glossary>](/glossary#magic-link) requests but
+  blocks abuse. Raise it if you operate at scale; lower it if you're
+  paranoid.
+- `TS_WINDOW_MS` and `NONCE_TTL_SECONDS` must stay related:
+  `NONCE_TTL_SECONDS * 1000 >= TS_WINDOW_MS`. Otherwise a replay can
+  outlast its dedup record. The defaults satisfy this — if you change
+  one, change the other.
+- `DEFAULT_REPLY_TO` is what the Worker stamps onto outbound mail when
+  the Fresh-side payload doesn't specify `replyTo`. Point it at a
+  monitored mailbox.
+
+<Aside type="note">
+Local dev uses `.dev.vars` instead of `wrangler secret`. Create one
+with `POLARIS_SECRET_A=local-dev-secret-not-for-prod` and run
+`npx wrangler dev`. `.dev.vars` is gitignored.
+</Aside>
+
+## Verify
+
+You can't reach the Worker without a valid HMAC signature — that's
+the point — but you can confirm it's listening and rejecting bad
+input.
+
+1. **Confirm the route resolves.**
+
+   ```sh
+   curl -i https://mail.example.com/send \
+     -X POST \
+     -H 'Content-Type: application/json' \
+     -d '{}'
+   ```
+
+   Expect **`401 Unauthorized`** (missing/invalid `X-Polaris-Sig`).
+   Anything else — TLS error, `522`, `404` — means the route binding
+   in Step 7 didn't take.
+
+2. **Confirm logging is on.** Tail live logs:
+
+   ```sh
+   npx wrangler tail
+   ```
+
+   Replay the curl above in another terminal. You should see a single
+   JSON log line categorising the rejection. Note that **payload
+   contents are never logged** — only `to_hash` and `nonce_hash`.
+
+3. **Confirm KV is wired up.** From the dashboard, open the
+   `EMAIL_NONCE_DEDUP` namespace. It will be empty until your first
+   real send, but the namespace should exist and the Worker should be
+   bound to it (Workers → expresscharge-email-worker → Settings →
+   Bindings).
+
+4. **End-to-end send (optional, after Phase 4).** Once the Fresh app
+   is up, trigger a [magic-link](/glossary#magic-link) login. The
+   Worker should log `send ok` and the email should land within a few
+   seconds. If you want to test before Phase 4, use the Fresh repo's
+   `scripts/preview-email.ts --send=you@example.com` against a staging
+   Fresh deployment.
+
+## If something goes wrong
+
+**`wrangler deploy` fails with "binding `send_email` not allowed".**
+Email Service isn't enabled on the zone, or your account isn't on the
+Workers Paid plan. Check Cloudflare dashboard → Email → Email Workers
+for the `example.com` zone.
+
+**`wrangler deploy` succeeds, but `curl` returns `522` or `1016`.**
+The route binding didn't land or the DNS record for
+`mail.example.com` is grey-cloud. Either add a proxied `AAAA`/`CNAME`
+record pointing at `100::` (Cloudflare's "Workers-only" placeholder)
+or attach the route to an existing proxied subdomain.
+
+**Worker returns `401` even when the Fresh app signs correctly.** The
+secret values are out of sync. Re-run `wrangler secret put POLARIS_SECRET_A`
+on the Worker side, then push the same value into the Fresh app's
+`<EnvVar name="CF_EMAIL_WORKER_SECRET" />` and restart the container.
+A trailing newline pasted into one side but not the other is the most
+common cause.
+
+**Sends succeed but emails never arrive.** SPF/DKIM/DMARC from
+Phase 1 are missing or wrong. Check the Cloudflare Email Service
+dashboard for delivery failures, and run your apex through
+[mail-tester.com](https://www.mail-tester.com) to verify alignment.
+
+**Emails arrive but images are broken.** Phase 2 (R2 assets) isn't
+finished — the templates link to `assets.example.com/email/*.png`.
+Upload the four required PNGs before going live.
+
+**`429 Too Many Requests`** on a legitimate user. Per-recipient rate
+limit tripped. The bucket clears in `RATE_LIMIT_WINDOW_SECONDS`
+(default 600s). If this happens often, raise `RATE_LIMIT_MAX` in
+`vars` and redeploy.
+
+## Rotating the signing secret
+
+The Worker accepts a signature from **either** `POLARIS_SECRET_A` or
+`POLARIS_SECRET_B`. That's how you rotate without downtime:
+
+<Steps>
+
+1. Set the new value as `POLARIS_SECRET_B` on the Worker and redeploy.
+
+   ```sh
+   npx wrangler secret put POLARIS_SECRET_B
+   npx wrangler deploy
+   ```
+
+2. Roll the new value into the Fresh app's
+   `<EnvVar name="CF_EMAIL_WORKER_SECRET" />` and restart it. Both old
+   and new signatures verify during this window.
+
+3. Confirm via `wrangler tail` that the Fresh app is signing with the
+   new secret. Then retire the old one:
+
+   ```sh
+   npx wrangler secret delete POLARIS_SECRET_A
+   npx wrangler secret put POLARIS_SECRET_A   # paste the same value as B
+   npx wrangler secret delete POLARIS_SECRET_B
+   npx wrangler deploy
+   ```
+
+</Steps>
+
+<Aside type="danger">
+Do **not** delete `POLARIS_SECRET_A` before the Fresh app is signing
+with the new value. The Worker will reject every send and your
+[magic-link](/glossary#magic-link) login will silently break.
+</Aside>
+
+## Next phase
+
+With the Worker live and verified, you're ready for **Phase 4 — Deploy
+the Fresh app and Postgres**, which wires `CF_EMAIL_WORKER_URL` and
+`CF_EMAIL_WORKER_SECRET` into the customer-facing container.

@@ -1,0 +1,119 @@
+---
+title: Activate kiosk mode on a device
+description: Flip an enrolled iOS device into chrome-stripped kiosk mode from the admin console, and learn the on-device escape.
+sidebar:
+  order: 10
+persona: Operator
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Kiosk/KioskShell.swift
+  - web/routes/api/admin/devices/[deviceId]/settings.ts
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+Use this runbook when you want a wall-mounted or counter-mounted iPad or iPhone to present only its single assigned capability — no navigation bar, no status bar, no system overlays. Typical case: an iPad at a service desk that should only show <Glossary term="expreScan">expreScan</Glossary> and never let staff wander off into Settings or sign out.
+
+[<Glossary term="Kiosk mode">Kiosk mode</Glossary>](/reference/glossary/#kiosk-mode) is a UX simplification, **not** a security lockdown. There is an on-device escape gesture (documented below) so a device whose admin console becomes unreachable is never bricked.
+
+## Prerequisites
+
+- You are signed into the admin console with an **admin** role. Operator-level sessions cannot PATCH device settings.<!-- TODO: confirm role label for non-admin operator -->
+- The target device is already enrolled and visible on **Devices**. The device row must not be revoked (soft-deleted).
+- The device has exactly one [capability](/reference/glossary/#capability) assigned. Kiosk mode strips navigation chrome, so a multi-capability device would become unusable.<!-- TODO: confirm single-capability requirement is enforced server-side -->
+- The device is online, or you accept that the change will apply on its next sync. Per-key last-write-wins is in play: a phone with a strictly-later `clientUpdatedAt` will still win on its next sync — your admin save is the new floor.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the device's settings page">
+
+In the admin console, go to **Devices**, then click the row for the device you want to kiosk. The detail page opens on the **Settings** tab by default.
+
+<Screenshot alt="Device detail page in the admin console, Settings tab selected." />
+
+</TutorialStep>
+
+<TutorialStep title="Add the `kiosk` capability">
+
+Kiosk mode activates when `kiosk` is present in the device's capability set. Under **Capabilities**, add `kiosk` alongside the device's existing single capability (for example, `expreScan` + `kiosk`).<!-- TODO: confirm exact UI control for editing capabilities -->
+
+<Screenshot alt="Capabilities editor with kiosk added to the set." />
+
+</TutorialStep>
+
+<TutorialStep title="Save">
+
+Click **Save**. The console issues a <Endpoint method="PATCH" path="/api/admin/devices/{deviceId}/settings" /> with your change. On success, the server:
+
+- UPSERTs the change into `device_settings` with `updated_by = admin:{your user id}`.
+- Emits a `device.settings.changed` [<Glossary term="SSE">SSE</Glossary>](/reference/glossary/#sse) event so the device reconciles within roughly one second.
+- Writes a `device.settings.updated` entry to the [audit log](/reference/glossary/#audit-log) with the changed keys and values.
+
+</TutorialStep>
+
+<TutorialStep title="Confirm on the device">
+
+Within about one second, the device should redraw with its toolbar, tab bar, status bar, and persistent system overlays hidden. Only the assigned capability's screen is visible.
+
+If the device is offline, it will pick up the change on its next sync.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+- **<Glossary term="Audit log">Audit log</Glossary>.** Filter by `device.settings.updated` for the device's ID. You should see your save with `changedKeys` including the capability change and `changedByUserId` set to your admin user.
+- **Device screen.** The device shows only the capability content. There is no visible toolbar, gear icon, status bar, or volume HUD. Sign-out is not reachable from the device UI.
+- **SSE event log.** A `device.settings.changed` event was published for the device's ID.<!-- TODO: confirm admin-surfaced SSE event log exists -->
+
+## If something goes wrong
+
+<Aside type="caution">
+Do not put a device into kiosk mode if you do not have working admin-console access to that environment. The only way to take a device **out** of kiosk mode is from the admin console — the on-device sheet lets you reach Settings and Diagnostics, but does not flip the capability back off.
+</Aside>
+
+**The device still shows its toolbar after saving.**
+The device may be offline or its sync is delayed. Check **Devices → \[device\] → Last seen**. Wait for the next sync, or power-cycle the device.<!-- TODO: confirm Last seen field name -->
+
+**You get `403 forbidden` on save.**
+Your session is not an admin session. Sign in with an admin account.
+
+**You get `410 device_revoked` on save.**
+The device has been soft-deleted. Restore it first, or re-enroll, before changing kiosk capability.
+
+**You get `404 not_found` on save.**
+The device ID in the URL is wrong, likely because you navigated from a stale tab. Refresh the **Devices** list and try again.
+
+**The device is in kiosk mode and you cannot reach the admin console.**
+Use the on-device escape gesture to reach Settings and Diagnostics so the device is not bricked from the operator's point of view:
+
+1. On the device, tap the **top-right corner** of the screen five times in rapid succession. The zone is a 96-point square, inset 20 points from the top edge (the same spot where an un-kiosked screen renders the Settings gear).
+2. Each tap fires a light haptic; the fifth tap fires a success haptic and opens the **Settings** sheet.
+3. If you pause more than two seconds between taps, the counter resets — start the five taps over.
+4. Inside Settings, you can reach **Connectivity → Diagnostics** to troubleshoot the device's connection to the admin console.
+
+The escape gesture does **not** disable kiosk mode. It only surfaces the Settings sheet. To turn kiosk mode off, you must remove the `kiosk` capability from the admin console.
+
+## Audit and reversibility
+
+Every save writes a `device.settings.updated` audit record with:
+
+- `userId` — the admin who made the change.
+- `route` — `/api/admin/devices/[deviceId]/settings`.
+- `metadata.deviceId`, `metadata.changedKeys`, `metadata.values` — the keys and the values you set. The two known non-sensitive setting keys (`device.label`, `notifications.scanRequest`) are recorded verbatim for forensic value.<!-- TODO: confirm whether the capability change itself is audited via this same route or a separate one -->
+- `ip`, `ua` — the IP and user-agent of the admin session that made the change.
+
+**To reverse:** open the same device's **Settings** tab, remove `kiosk` from the capability set, and **Save**. The device will redraw with its full chrome on its next sync. The reversal is itself audited.
+
+## Related
+
+- [Glossary: Kiosk mode](/reference/glossary/#kiosk-mode)
+- [Glossary: <Glossary term="Capability">Capability</Glossary>](/reference/glossary/#capability)
+- [Glossary: <Glossary term="Sync run">Sync run</Glossary>](/reference/glossary/#sync-run)
+- [Glossary: Audit log](/reference/glossary/#audit-log)

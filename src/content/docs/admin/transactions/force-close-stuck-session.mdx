@@ -1,0 +1,161 @@
+---
+title: Force-close a stuck session
+description: Recover a charging session that won't end on its own by issuing RemoteStopTransaction from the admin console.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/admin/charger/operation.ts
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+
+A customer calls: their car has been unplugged for ten minutes but the
+session is still "Charging" in the app and the meter is still ticking
+on their statement. The charger never sent a `StopTransaction`. This
+runbook walks you through ending that session from the admin console
+without touching <Glossary term="SteVe">SteVe</Glossary> directly.
+
+## Prerequisites
+
+- You are signed in as an `admin` role on the admin host.
+- You have the customer's [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) ID or
+  enough context (account email, connector address) to find it.
+- You've confirmed the session is actually stuck — not just slow to
+  refresh. Check the charger's live status panel and the most recent
+  [meter value](/glossary#meter-value) timestamp. If <Glossary term="Meter value">meter values</Glossary> are
+  still advancing, the session isn't stuck; the car is still drawing.
+- You have a way to reach the customer (chat, phone) in case the
+  charger doesn't acknowledge the stop and you need to escalate to a
+  physical unlock.
+
+## Procedure
+
+<Aside type="danger">
+  `RemoteStopTransaction` ends the customer's active session. It will
+  trigger billing finalization for whatever energy was metered up to
+  the stop. Make sure you're targeting the correct ChargeBox and
+  transaction before submitting — there is no "undo," only a new
+  start.
+</Aside>
+
+<Steps>
+
+1. **Open the charger detail page.** From the admin sidebar, go to
+   **Chargers** and search for the ChargeBox ID or the customer's
+   email. Click into the row.
+
+   <Screenshot alt="Charger detail page header showing ChargeBox ID and live status" />
+
+2. **Confirm the active transaction.** In the **Current session**
+   panel, note the transaction ID, connector number, and the
+   `idTag` ([<Glossary term="idTag"><Glossary term="OCPP">OCPP</Glossary> tag</Glossary>](/glossary#idtag)) that started it. Cross-check
+   the `idTag` against the customer's [<Glossary term="EV card">EV card</Glossary>](/glossary#ev-card)
+   on their account page in another tab. If they don't match, stop
+   and investigate before issuing any operation — you may be looking
+   at the wrong charger.
+
+3. **Dry-run the stop first.** Open the **Remote operations** panel
+   and pick **RemoteStopTransaction**. Fill in the `transactionId`
+   from the previous step. Toggle **Dry run** on and click
+   **Submit**.
+
+   The dry run writes a row to the operation log with status
+   `dry_run` and does not contact SteVe. Use it to confirm your
+   params parse cleanly before the real call.
+
+4. **Submit the real stop.** Toggle **Dry run** off and click
+   **Submit** again. The console will return an operation log ID and
+   a SteVe `taskId`, and the row's status will move to `submitted`.
+
+5. **Watch for the StopTransaction.** The charger should respond
+   within a few seconds. The **Current session** panel will clear and
+   the session will appear in the customer's recent sessions list
+   with an end time.
+
+</Steps>
+
+## Verify
+
+- The **Recent operations** strip on the charger page shows your
+  `RemoteStopTransaction` with status `submitted` and, shortly after,
+  a `taskId` you can correlate in SteVe.
+- The charger's live status returns to `Available` (or `Finishing`
+  briefly, then `Available`).
+- The session appears as ended in the customer's session history with
+  a real `stoppedAt` and final energy total.
+- The [audit log](/glossary#audit-log) entry on
+  `charger_operation_log` records you as `requestedByUserId` — every
+  operation routes through this table before SteVe is called, so
+  there is always a record of who pressed the button.
+
+## If something goes wrong
+
+<Aside type="caution">
+  If you submit a stop and the charger never sends `StopTransaction`,
+  the session stays open on Polaris's side even though SteVe accepted
+  the task. The operation log will show `submitted` but the session
+  will not close.
+</Aside>
+
+**The API returns `502` with `status: "failed"`.** SteVe rejected the
+call or was unreachable. The operation log row is marked `failed`
+with the error message in `result`. Common causes:
+
+- Charger is offline. Confirm in the live status panel; if it's
+  offline, the stop cannot be delivered. Wait for it to reconnect, or
+  ask the customer to power-cycle the unit if you're on the phone
+  with them.
+- Stale `transactionId`. The session may have already ended between
+  your dry run and the real submit. Refresh the charger detail page.
+
+**The API returns `422` with `error: "unmanaged_charger"`.** The
+charger is not in [SteVe](/glossary#steve) — it doesn't speak
+[OCPP](/glossary#ocpp), so remote operations aren't available.
+Resolve the customer's issue through billing instead.
+
+**The API returns `400` with "Operation '…' is not allowed."** You
+tried an operation outside the allowlist. Destructive operations
+(`Reset`, `ClearCache`, `UpdateFirmware`, `SendLocalList`,
+`ClearChargingProfile`, `ChangeConfiguration`) are intentionally
+blocked here — use the SteVe admin UI directly.
+
+**Stop accepted but session never closes.** The charger has stopped
+acknowledging transaction state. Try `UnlockConnector` for the
+correct connector as a follow-up — this often nudges the firmware
+into sending the missing `StopTransaction`. If that also fails,
+escalate to a site visit; the session will need to be reconciled
+manually with billing.
+
+## Audit and reversibility
+
+Every call to `POST /api/admin/charger/operation` writes a
+`charger_operation_log` row **before** SteVe is contacted, with your
+user ID, the operation name, the validated params, and the dry-run
+flag. The row's status transitions through `pending → submitted` (or
+`→ failed`), and the SteVe `taskId` is recorded on success.
+
+<Endpoint method="POST" path="/api/admin/charger/operation" />
+<Endpoint method="GET" path="/api/admin/charger/operation" />
+
+A `RemoteStopTransaction` is not reversible — you cannot un-stop a
+session. If you stopped the wrong session, you can immediately issue
+a `RemoteStartTransaction` with the same `idTag` and connector to let
+the customer resume; this will start a new transaction with a new ID,
+and you'll need to coordinate with billing to reconcile the
+prematurely-closed one.
+
+## Related
+
+- [Cancel a stuck reservation](/admin/<Glossary term="Reservation">reservations</Glossary>/cancel-stuck)
+  <!-- TODO: confirm -->
+- [Unlock a connector](/admin/chargers/unlock-connector)
+  <!-- TODO: confirm -->
+- [Read the operation log](/admin/audit/operation-log)
+  <!-- TODO: confirm -->

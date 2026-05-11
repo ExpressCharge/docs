@@ -1,0 +1,130 @@
+---
+title: Link an EV card to a customer
+description: Connect an OCPP EV card to a Lago customer and subscription so charging sessions get billed correctly.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/tags/[tagPk]/link.tsx
+  - web/routes/api/admin/tag/link.ts
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Tutorial, TutorialStep, Screenshot, Endpoint } from "~/components";
+
+Run this when a customer needs an <Glossary term="EV card">EV card</Glossary> attached to their billing identity — typically right after issuing a new card, after a card swap, or when a card arrived in the fleet unlinked. The link is what tells Polaris Express which <Glossary term="Lago">Lago</Glossary> customer to charge when a session starts on that card.
+
+## Prerequisites
+
+- Operator access to the admin console.
+- The EV card already exists in <Glossary term="SteVe">SteVe</Glossary> (it appears in `/tags`). If it doesn't, create it first via the tag wizard — this surface will auto-create a missing tag, but you should know which <Glossary term="idTag">idTag</Glossary> you're working with.
+- The target customer already exists in Lago. If they don't, create the <Glossary term="Lago customer">Lago customer</Glossary> first; this flow will auto-provision the local user account from the Lago customer, but it won't create the Lago customer for you.
+- You know whether the customer has an active <Glossary term="Lago subscription">Lago subscription</Glossary>. Subscription is optional at link time — if you skip it, the next [sync run](/glossary#sync-run) will pick one if available.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the EV card detail page">
+
+From the admin console, navigate to **Tags** and click the row for the card you want to link. You'll land on `/admin/tags/{pk}`.
+
+<Screenshot alt="EV card detail page with the Link action visible" />
+
+</TutorialStep>
+
+<TutorialStep title="Start the link flow">
+
+Click **Link** on the card detail page. You'll arrive at `/admin/tags/{pk}/link` with the page card titled **Link EV Card**.
+
+If the card already has a customer attached, the page title reads **Edit linking** instead — you're editing, not creating. The form behaves the same but the destructive-action surface differs (see [Audit and reversibility](#audit-and-reversibility)).
+
+</TutorialStep>
+
+<TutorialStep title="Select the Lago customer">
+
+In the **Customer** field, pick the Lago customer this card belongs to. The dropdown is searchable by Lago `external_id` and by name.
+
+<Aside type="note">
+If the Lago customer has never been linked to anything in Polaris Express before, this submit will auto-provision a local user account for them. The new user inherits the Lago customer's email. If the Lago customer has no email on file, the account is still created but with a `null` email — fix the email in Lago and re-sync.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Optionally select the subscription">
+
+In the **Subscription** field, pick the Lago subscription that should be billed for sessions on this card. You can leave this empty — Polaris Express will auto-select an active subscription on the next [sync run](/glossary#sync-run).
+
+Set the subscription explicitly when the customer has more than one active subscription and you need to route this card to a specific one.
+
+</TutorialStep>
+
+<TutorialStep title="Confirm the tag type">
+
+The **Tag type** field defaults to `ev_card`. Leave it on `ev_card` unless you're linking a meta/parent tag, in which case pick the appropriate type.
+
+<!-- TODO: confirm full TAG_TYPES allowlist from src/lib/types/tags.ts -->
+
+</TutorialStep>
+
+<TutorialStep title="Submit">
+
+Click **Create** (or **Edit** if you're editing an existing link).
+
+The form posts to <Endpoint method="POST" path="/api/admin/tag/link" /> for new links, or <Endpoint method="PUT" path="/api/admin/tag/link?id={mappingId}" /> for edits. On success you're returned to the card detail page.
+
+</TutorialStep>
+
+<TutorialStep title="If you came from the create-tag wizard">
+
+If you arrived here via the create-tag wizard (URL contains `?fromCreate=1`), the form shows **Back** and **Skip** buttons instead of Cancel. **Skip** drops you on the card detail page without a customer link — useful if you want to create the card now and link it later.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+1. On the card detail page, confirm the **Linked customer** section shows the Lago customer you selected.
+2. Open the [sync run](/glossary#sync-run) log and confirm the inline sync for this card succeeded. The link handler runs `syncSingleTagToSteve` for the parent mapping and every child mapping immediately after the DB transaction commits.
+3. If this card has child tags in SteVe (it's a parent in the `parentIdTag` hierarchy), confirm the child tags now show the same Lago customer. Child mappings are created in the same transaction as the parent.
+4. If the customer account was auto-provisioned, check the user list — they should appear with the email from Lago.
+
+## If something goes wrong
+
+**The tag wasn't in SteVe.** The API auto-creates the tag in SteVe before inserting the mapping. If SteVe is unreachable at that moment, the link fails with a `502` and the error message names SteVe as the failure point. Retry once SteVe is healthy.
+
+**Account provisioning failed.** If the Lago customer can't be resolved or provisioned (the `ProvisionerError` path), you'll get a 4xx with a `code` field describing why. Common cases: the Lago customer ID doesn't exist in Lago, or the auto-provisioner refused because of a conflict on email. Fix the Lago-side state and retry.
+
+<Aside type="caution">
+The SteVe-side tag creation is **not** rolled back if the DB transaction fails afterward. A dangling SteVe tag with no mapping is harmless and self-heals on the next admin attempt — you do not need to clean it up manually.
+</Aside>
+
+**The inline SteVe sync failed but the link succeeded.** The DB is source of truth. The link is committed and the background sync will reconcile SteVe. An admin notification will fire from `syncSingleTagToSteve` so you'll see it in the notification feed.
+
+**You linked the wrong customer.** This is a reassignment, not a fix — see below.
+
+## Audit and reversibility
+
+**Reassigning to a different customer.** Editing an existing link to change the Lago customer is treated as destructive. The PUT endpoint refuses the rewrite with a `409 REASSIGN_REQUIRED` unless you re-submit with `?confirm_reassign=true`. The admin UI prompts you to confirm. Reassignment transfers historical session visibility from the old customer account to the new one and is recorded in the [audit log](/glossary#audit-log) as `customer.account.auto_provisioned` with `event: mapping.reassigned`, including both the previous and new user IDs and Lago customer IDs.
+
+<Aside type="danger">
+Reassigning a linked card moves historical session visibility from the old customer to the new one. The old customer's account will no longer see sessions that happened on this card. There is no automatic undo — to reverse, run the same flow again with the original customer and `?confirm_reassign=true`. The audit log retains both transitions.
+</Aside>
+
+**Unlinking (deactivation).** The DELETE path flips `is_active=false` on the mapping and on every descendant tag in the [parentIdTag](/glossary#chargebox) hierarchy, then inline-syncs each one to SteVe so the card stops authorizing immediately. If the customer has no other active mappings left, their future-dated <Glossary term="Reservation">reservations</Glossary> get bulk-cancelled. The mapping row is preserved (not deleted) so historical session joins still resolve.
+
+**Child tags cascade.** Whenever you change the Lago customer, the subscription, or the active state on a parent tag, the change cascades to all descendant tags inside the same DB transaction. Grandchildren are included. You don't need to update children manually.
+
+## Related
+
+- [Create an EV card](/admin/cards/create)
+- [Unlink an EV card](/admin/cards/unlink)
+- [Reassign a card to a different customer](/admin/cards/reassign)
+- [Sync runs](/admin/sync/runs)
+- [<Glossary term="Audit log">Audit log</Glossary>](/glossary#audit-log)

@@ -1,0 +1,158 @@
+---
+title: View charger and device health
+description: Check the status of OCPP chargers and NFC scanners from the unified Devices listing in the admin console.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/admin/devices/index.tsx
+last_authored: 2025-02-14
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+Use this runbook when you need a fleet-wide snapshot of every charger and NFC scanner Polaris Express is tracking — for a morning health check, when a customer reports a charger offline, or when you're triaging a scanner that won't arm. The `/admin/devices` page is the single surface that merges <Glossary term="OCPP">OCPP</Glossary> [ChargeBoxes](/glossary#chargebox) and iOS/macOS NFC scanners into one grid.
+
+## Prerequisites
+
+- An admin account. Non-admin sessions are rejected with `403 Forbidden`.
+- You're signed in to the admin console at `/admin`.
+- For owner-scoped scanner queries: the user's owner ID (visible from `/admin/users`).
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the Devices page">
+
+From the admin sidebar, click **Devices**. The page loads at `/admin/devices` and shows a stat strip across the top followed by a responsive card grid mixing chargers and scanners.
+
+If you bookmarked the old `/admin/chargers` URL, it now `302`-redirects here with `?type=charger` preselected.
+
+<Screenshot alt="Admin Devices listing with stat strip and card grid" />
+
+</TutorialStep>
+
+<TutorialStep title="Read the stat strip">
+
+The strip at the top of the page reports six aggregates over the **currently filtered** result set:
+
+- **Total** — devices matching the active filters.
+- **Online** — chargers whose normalized status is not `Offline`, plus scanners that have sent a heartbeat in the last 90 seconds.
+- **Offline** — the complement of Online.
+- **Chargers** — entries from the `chargers` table.
+- **Scanners** — entries from the `devices` table.
+- **Unmanaged** — chargers whose `managementMode` is `unmanaged` (i.e. not connected over [OCPP](/glossary#ocpp) via [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve)).
+
+The totals reflect filters, so if you narrow to scanners only, the **Chargers** count drops to zero. This is intentional — the strip and grid always agree.
+
+</TutorialStep>
+
+<TutorialStep title="Filter by device type">
+
+Use the **Type** control in the filter bar to scope the grid:
+
+- **All** — chargers and scanners merged.
+- **Charger** — OCPP chargers only. Adds `?type=charger`.
+- **Scanner** — NFC scanners only. Adds `?type=scanner`.
+
+The loader skips the irrelevant database query when you pick a single type, so the page is cheap to refresh.
+
+</TutorialStep>
+
+<TutorialStep title="Narrow scanners by kind">
+
+When you're looking at scanners, the **Kind** filter accepts:
+
+- `phone_nfc` — iPhone running the ExpressCharge app.
+- `tablet_nfc` — iPad.
+- `laptop_nfc` — macOS NFC reader.
+
+The kind filter is ignored for chargers.
+
+</TutorialStep>
+
+<TutorialStep title="Filter by online state">
+
+Set **Online** to `online` or `offline` to limit the grid. Online state is computed differently per device class:
+
+- **Chargers** — derived from `lastStatus` and `lastStatusAt` via the shared `normalizeStatus` helper. Anything other than `Offline` counts as online.
+- **Scanners** — online if `lastSeenAt` is within the last 90 seconds. This matches the freshness window used by scan-stream and [scan-arm](/glossary#scan-arm).
+
+The online filter runs after the merge, so it works uniformly across both types.
+
+</TutorialStep>
+
+<TutorialStep title="Filter chargers by management mode">
+
+The **Mode** filter applies only to chargers:
+
+- **All** — both modes.
+- **OCPP** — chargers reporting via SteVe over OCPP.
+- **Unmanaged** — chargers added manually that don't speak OCPP back to us.
+
+Unmanaged entries never go online — they exist so you can record an asset for billing or asset-tracking purposes without a live OCPP session.
+
+</TutorialStep>
+
+<TutorialStep title="Filter scanners by owner">
+
+To see every scanner registered to a single user, paste their user ID into the **Owner** field. The match is exact on `devices.owner_user_id`. This is the same contract the `/api/admin/devices` JSON endpoint uses, so IDs are interchangeable between the two surfaces.
+
+</TutorialStep>
+
+<TutorialStep title="Open a device card">
+
+Click any card to drill into the device detail page. Cards are sorted by **last-seen descending** across both data sources, so the freshest device — charger or scanner — floats to the top.
+
+Each charger card shows the [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) ID, friendly name, last status, form factor, and capability pills. Each scanner card shows the device label, platform, model, app version, and owner.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You've correctly read the listing when:
+
+- The stat strip's **Total** equals the number of cards in the grid.
+- Sorting by last-seen puts your most recently active charger or scanner first.
+- A device you know is live (you can see it transacting in the audit log or scan stream) shows as **Online**.
+
+Cross-check against:
+
+- **`/admin/audit`** — the [audit log](/glossary#audit-log) for boot, status, and registration events.
+- **Scan stream** — for scanners, a fresh heartbeat there will be reflected within 90 seconds in the Online count here.
+
+## If something goes wrong
+
+<Aside type="caution">
+If the page renders with a yellow banner reading *"Couldn't reach one of the device sources — showing partial results"*, one of the two underlying queries (chargers or devices) failed. The other half of the grid is still trustworthy.
+</Aside>
+
+**Partial results banner.** The loader queries `chargers` and `devices` independently and catches errors per source. A failure on one side does not 500 the whole page — you get a banner and half a grid. Check the application logs for `AdminDevicesPage` entries with messages `Failed to load chargers` or `Failed to load devices` to see the underlying error.
+
+**Empty grid when you expect data.** Re-check your filters first — the most common cause is leaving **Mode** set to `unmanaged` or **Online** set to `online` from a previous session. The URL carries filter state, so removing query parameters resets the view.
+
+**Charger missing entirely.** If a charger never appears even with all filters cleared, it hasn't booted into SteVe yet. The row is created on the first OCPP `BootNotification`. For a charger that should be there but isn't, confirm it's pointed at the right SteVe endpoint.
+
+**Scanner missing.** Soft-deleted devices (`deleted_at IS NOT NULL`) are hidden from this listing by design. If a user reports their phone is gone, it may have been removed via the device management flow.
+
+**<Glossary term="Capability">Capability</Glossary> pill missing on a charger.** The `'charger'` capability is force-added in the loader even if the database row is misconfigured, so this should never happen. If it does, file a bug with the `chargeBoxId`.
+
+<Aside type="note">
+The grid is capped at 200 rows per source. If your fleet has grown past this, narrow with filters before assuming a device is missing.
+</Aside>
+
+## Audit and reversibility
+
+This page is read-only — viewing the listing logs nothing and changes nothing. The only mutation reachable from here is **Add unmanaged charger** in the page header, which routes to `/admin/devices/new-unmanaged`. See the unmanaged-charger runbook for the audit trail on that flow.
+
+## Related
+
+- [Add an unmanaged charger](/admin/devices/add-unmanaged-charger)
+- [Investigate an offline charger](/admin/devices/offline-charger)
+- [Glossary: ChargeBox](/glossary#chargebox), [scan-arm](/glossary#scan-arm), [SteVe](/glossary#steve)

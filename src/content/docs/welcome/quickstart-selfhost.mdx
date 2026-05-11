@@ -1,0 +1,168 @@
+---
+title: Self-host 60-second tour
+description: A whirlwind look at what self-hosting Polaris Express involves, before you commit to the full install.
+sidebar:
+  order: 1
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - README.md
+  - docker-compose.yml
+last_authored: 2025-01-21
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import { Aside, FileTree } from "@astrojs/starlight/components";
+import EnvVar from "../../../components/EnvVar.astro";
+
+Before you set aside an afternoon for the full install, take sixty
+seconds to see what self-hosting Polaris Express actually looks like.
+This page is not a tutorial — it is a tour. It shows you the shape of
+the system, what you will run, and what you will need on hand. When
+you are ready to install for real, jump to the prerequisites page.
+
+## What you are deploying
+
+Polaris Express is five components. Three of them run on infrastructure
+you control:
+
+<FileTree>
+- expresscharge/
+  - web/ Deno + Fresh fullstack app (admin + customer UI, API, [<Glossary term="SSE">SSE</Glossary>](/reference/glossary/#sse))
+  - steve/ [<Glossary term="SteVe">SteVe</Glossary>](/reference/glossary/#steve) [<Glossary term="OCPP">OCPP</Glossary>](/reference/glossary/#ocpp) backend — your [ChargeBoxes](/reference/glossary/#chargebox) connect here
+  - email-worker/ Cloudflare Worker for transactional email
+  - ios/ Native iOS app (you do not host this)
+  - docs/ This site (you do not host this)
+</FileTree>
+
+The `web` app, a Postgres database, and a sync worker run together as
+one Docker Compose stack. SteVe runs as its own stack — your chargers
+talk to it over WebSocket. The email worker is deployed to Cloudflare
+(it is not in the Compose stack).
+
+## What the integrated stack looks like
+
+The root `docker-compose.yml` brings up four services:
+
+| Service    | What it does                                                       |
+| ---------- | ------------------------------------------------------------------ |
+| `postgres` | Postgres 17, holds all application state                           |
+| `migrate`  | One-shot — runs `deno task db:migrate` then exits                  |
+| `app`      | The Fresh web app, exposes port `8000`                             |
+| `sync`     | Background worker that reconciles SteVe ↔ web ↔ [<Glossary term="Lago">Lago</Glossary>](/reference/glossary/#lago) |
+
+Once it is up, you `curl localhost:8000/healthz` and you are looking
+at your own copy of Polaris Express.
+
+## Sixty seconds, end to end
+
+<Tutorial>
+
+<TutorialStep title="Clone the monorepo">
+
+```bash
+git clone --recursive git@github.com:expresscharge/monorepo.git expresscharge
+cd expresscharge
+```
+
+The `--recursive` flag pulls all five submodules. If you forget it,
+`make bootstrap` will fix it.
+
+</TutorialStep>
+
+<TutorialStep title="Fill in web/.env">
+
+The whole stack reads `web/.env`. You will set database credentials,
+the SteVe WebSocket URL, [<Glossary term="BetterAuth">BetterAuth</Glossary>](/reference/glossary/#betterauth)
+secrets, and (optionally) Lago and Cloudflare email-worker URLs. The
+full reference is on the [environment variables](/selfhost/reference/env/)
+page.
+
+</TutorialStep>
+
+<TutorialStep title="Bring it up">
+
+```bash
+make up
+```
+
+This runs `docker compose up` against the root `docker-compose.yml`.
+First boot pulls images, builds `web/` from its Dockerfile, runs
+migrations, and starts the app and sync worker.
+
+</TutorialStep>
+
+<TutorialStep title="Stand up SteVe separately">
+
+SteVe is its own Docker stack inside `steve/`. It needs its own
+Postgres and its own config. Your chargers will point at SteVe's
+WebSocket endpoint; the web app will point at SteVe's REST API.
+
+</TutorialStep>
+
+<TutorialStep title="Deploy the email worker">
+
+From `email-worker/`, run `npx wrangler deploy`. Then set
+<EnvVar name="CF_EMAIL_WORKER_URL" /> in `web/.env` to the deployed
+worker URL. Without this, [magic link](/reference/glossary/#<Glossary term="Magic link">magic-link</Glossary>)
+emails will not send.
+
+</TutorialStep>
+
+</Tutorial>
+
+## What you need on hand before you start the real install
+
+- A Linux host with Docker and Docker Compose. 4 GB RAM is enough for
+  a small site.
+- A domain name and the ability to set DNS records. The web app, the
+  SteVe WebSocket, and the email worker each need their own hostname.
+- A TLS terminator in front of the stack (Caddy, Traefik, or a cloud
+  load balancer). The Compose stack exposes plain HTTP on `:8000`.
+- A Cloudflare account for the email worker, plus an email-sending
+  provider (Resend, Postmark, or SES) that the worker will call.
+- _Optional_ — a Lago instance if you want metered billing. Polaris
+  Express works without it; you just lose the billing surface.
+
+## Verify the tour, not the install
+
+This page does not install anything. To check that you can at least
+clone the repo and that Docker is healthy:
+
+```bash
+git clone --recursive git@github.com:expresscharge/monorepo.git /tmp/expre-tour
+cd /tmp/expre-tour && docker compose config
+```
+
+`docker compose config` prints the resolved Compose file. If it errors
+on a missing `web/.env`, that is expected — you have not filled it in
+yet. If it errors on Docker itself, fix that before proceeding.
+
+## If something feels wrong
+
+- **"I do not want to run SteVe."** You have to. SteVe is the OCPP
+  endpoint your chargers connect to. There is no hosted alternative.
+- **"Can I skip the email worker?"** Only if you are happy with no
+  user signups, no [magic link](/reference/glossary/#magic-link)
+  logins, and no transactional email. For any real deployment, no.
+- **"Can I skip Lago?"** Yes. Leave the Lago env vars unset and the
+  billing surface will be inert. Sessions and charging still work.
+
+<Aside type="note">
+The root `docker-compose.yml` mounts `/var/run/docker.sock` into the
+`app` container. This is intentional — the web app uses it for
+managing the [SteVe](/reference/glossary/#steve) container lifecycle
+in some flows. If your security posture forbids this, plan to patch
+it out and run SteVe on a separate host.
+</Aside>
+
+## Next phase
+
+Ready to do it for real? Start with
+[prerequisites](/selfhost/prereqs/) — the checklist of accounts,
+DNS records, and host requirements you will want lined up before
+the first `make up`.

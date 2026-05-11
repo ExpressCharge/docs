@@ -1,0 +1,113 @@
+---
+title: Set a per-user feature-flag override
+description: Override feature flag values for a single user and fan out the change to their eligible devices.
+sidebar:
+  order: 30
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/admin/users/[userId]/feature-flags.ts
+last_authored: 2026-06-12
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+Use this runbook when you need to change a [feature flag](/glossary#feature-flag) for one specific user — for example, to enable a beta capability for a pilot customer, or to disable a flag that's misbehaving for a single account without touching the global default. The change applies at the user tier and overrides the registry default for every flag-eligible device that user owns.
+
+## Prerequisites
+
+- An admin role on your operator account. Bearer tokens are rejected; you must be signed in with a cookie session.
+- The target user's Polaris Express user ID. Find it from **Admin → Users** and copy the ID from the user detail page.
+- A clear idea of which flag key and value you intend to set. Unknown keys and values that fail the registry's schema are rejected.
+- If a device-level override already exists for the same flag on one of this user's devices, that device override will continue to win. Check **Admin → Devices → Feature flags** for the user's devices first if you need the user-level value to take effect everywhere.
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Open the user's feature-flag panel">
+    From **Admin → Users**, search for the target user and open their detail page. Select the **Feature flags** tab.
+
+    <Screenshot alt="Admin user detail with Feature flags tab selected" />
+  </TutorialStep>
+
+  <TutorialStep title="Locate the flag you want to override">
+    The panel lists every flag in the registry along with its current effective value for this user and the source of that value (registry default or user override). Find the row for the flag key you want to change.
+  </TutorialStep>
+
+  <TutorialStep title="Set the override value">
+    Click **Edit** on the flag row. Enter the value you want — the form coerces it to the flag's expected type (boolean, number, string, or JSON object) before submission. Click **Save**.
+
+    Under the hood this issues a <Endpoint method="PATCH" path="/api/admin/users/{userId}/feature-flags" /> with a body of the form `{ flags: [{ key, value }] }`. The value is validated against the flag's Zod schema before anything is written. Up to 32 entries can be sent in a single request; if you submit duplicate keys, the last one wins.
+
+    <Aside type="caution">
+      The PATCH endpoint validates `key` against the flag registry and rejects unknown keys with `400 invalid_flag`. If you've recently added a flag in code but the admin UI shows it as unknown, the web process likely hasn't picked up the new registry — redeploy before retrying.
+    </Aside>
+  </TutorialStep>
+
+  <TutorialStep title="Clear an override (optional)">
+    To remove the user-level override and fall back to the registry default, click **Clear override** on the row. This sends `{ key, value: null }`, which deletes the row from `user_feature_flag_values`. Any device-level override for the same key still applies on that device.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+1. The response from the save call returns `{ ok: true, flags: { … } }` where `flags` is the post-write effective user-scoped map. The row in the panel should refresh to show the new value with source `user override`.
+2. Open the [audit log](/glossary#audit-log) (**Admin → Audit**) and filter by event `user.feature_flags.changed`. You should see an entry with the admin user ID who made the change, the target user ID, and the `changedKeys` and `values` in the metadata.
+3. If the user has flag-eligible devices (phone, tablet, or laptop NFC clients — chargers are excluded), those devices receive a `device.feature-flags.changed` [<Glossary term="SSE">SSE</Glossary>](/glossary#sse) event and should reflect the new value on next reconnect. You can confirm in **Admin → Devices → {device} → Live events**.
+
+## If something goes wrong
+
+<Aside type="caution">
+  **`400 invalid_value`** — the value you submitted didn't match the flag's Zod schema. The response body includes `issues` from Zod with the exact path and expected type. Fix the value and resubmit.
+</Aside>
+
+<Aside type="caution">
+  **`400 invalid_flag`** — the key isn't in the registry. Double-check spelling. Flag keys are case-sensitive.
+</Aside>
+
+<Aside type="caution">
+  **`400 invalid_scope`** — the flag is device-scoped only and can't be set at the user tier. Use the device feature-flags endpoint instead.
+</Aside>
+
+<Aside type="caution">
+  **`404 user_not_found`** — the user ID is wrong or the account has been deleted. Re-copy the ID from the user detail page.
+</Aside>
+
+<Aside type="caution">
+  **The change saved but a device isn't reflecting it** — SSE fan-out is best-effort and non-fatal. If the publish failed (network blip, no live SSE connection), the device will pick up the new value on its next flag resolve. Force a refresh on the device or wait for its next reconnect.
+</Aside>
+
+<Aside type="caution">
+  **User-level change has no effect on a specific device** — that device probably has its own device-tier override for the same flag. Device overrides take precedence over user overrides. Clear the device override if you want the user value to apply.
+</Aside>
+
+## Audit and reversibility
+
+<Aside type="danger">
+  Per-user flag overrides can change billing-relevant or safety-relevant behavior depending on the flag. Confirm the flag's effect before saving, and prefer narrow per-user overrides over global default changes when piloting.
+</Aside>
+
+Every successful PATCH writes a `user.feature_flags.changed` audit entry containing:
+
+- the admin user ID who made the change (`changedByUserId`),
+- the target user ID,
+- the list of `changedKeys`,
+- the new `values` for each key (with `null` for deletions),
+- the requesting IP and user agent,
+- the route `/api/admin/users/[userId]/feature-flags`.
+
+**To reverse a change:**
+
+- If you set a value, edit the row again and either set it back to the previous value or click **Clear override** to fall back to the registry default.
+- If you cleared an override, re-save the previous value by editing the row. The audit log entry from the original write contains the prior `values` if you need to recover it.
+
+There is no automatic undo. Reversal is a second PATCH, which produces its own audit entry.
+
+## Related
+
+- [<Glossary term="Feature flag">Feature flag</Glossary> registry reference](/admin/feature-flags/registry)
+- [Set a per-device feature-flag override](/admin/feature-flags/per-device-overrides)
+- [How feature-flag resolution works](/admin/feature-flags/resolution-order)
+- [<Glossary term="Audit log">Audit log</Glossary>](/admin/audit-log)

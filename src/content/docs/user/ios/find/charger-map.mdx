@@ -1,0 +1,100 @@
+---
+title: Find a charger nearby
+description: Use the Chargers tab in the ExpresScan iOS app to locate the closest charger and open its details.
+sidebar:
+  order: 10
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Chargers/ChargersTabView.swift
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This tutorial is for drivers using the ExpresScan iOS app who want to find a charger they can plug into right now. You'll open the Chargers tab, let the app use your location, and pick the closest charger from the list.
+
+## Before you start
+
+- ExpresScan installed on your iPhone and signed in to your account.
+- Location services enabled on your iPhone.
+
+<Tutorial goal="Find the closest charger and open its detail screen" estimatedMinutes={2}>
+
+<TutorialStep title="Open the Chargers tab">
+
+Launch ExpresScan and tap **Chargers** in the bottom tab bar. The screen header reads **Chargers**.
+
+The first time you open this tab, iOS asks for permission to use your location. Tap **Allow While Using App** so the app can sort chargers by distance.
+
+<Screenshot alt="Chargers tab on first open, showing the iOS location permission prompt" caption="Granting location access lets ExpresScan promote the closest charger to the top of the list." />
+
+</TutorialStep>
+
+<TutorialStep title="Wait for the list to load">
+
+The app fetches the chargers linked to your account. While it loads, you'll see a spinner. Once the list resolves, your chargers appear as rows.
+
+<Aside type="note">
+If your account is linked to exactly one charger, the app skips the list and takes you straight to that charger's detail screen. Tap the back arrow if you want to return to the list.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Look for the highlighted card at the top">
+
+When you're within about 150 metres of one of your chargers, that charger moves into a tall card at the top of the list. The card shows the charger name and how far away it is.
+
+The remaining chargers appear as standard rows below the card, each with its own distance reading if your location is available.
+
+<Screenshot alt="Chargers list with the closest charger promoted to a large card at the top" caption="The closest charger sits in a promoted card; others follow as rows." />
+
+</TutorialStep>
+
+<TutorialStep title="Filter the list (optional)">
+
+If you have several chargers and want to narrow the list, tap the filter menu in the top-right of the screen. Pick an online-status option to show only chargers in that state.
+
+</TutorialStep>
+
+<TutorialStep title="Tap a charger to open its details">
+
+Tap the promoted card, or any row in the list, to open that charger's detail screen. From there you can start a session.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You know it worked when:
+
+- The Chargers tab shows at least one charger.
+- If you're near a charger, the closest one appears in a tall card at the top with a distance in metres.
+- Tapping a charger opens its detail screen.
+
+## Troubleshooting
+
+**The list is empty and says "No chargers yet".**
+No chargers are linked to your account yet. Chargers connected via <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> appear here once they're associated with you. Contact your site operator if you expected one to be listed.
+
+**The screen says "Couldn't load chargers".**
+The app couldn't reach the server. Tap **Try again**. If it keeps failing, check your internet connection.
+
+**No distance is shown on any charger.**
+Your location isn't available. Open **Settings → Privacy & Security → Location Services → ExpresScan** on your iPhone and set access to **While Using the App**. Return to the Chargers tab to refresh.
+
+**You scanned a sticker but the charger didn't open.**
+The sticker may point to a charger that isn't on your account, or one that was recently removed. Pull down on the list to refresh, then try scanning again.
+
+:::caution
+Leaving the Chargers tab stops live location updates. Stay on the tab while you're looking for the nearest charger so distances keep refreshing.
+:::
+
+## Related
+
+- [Start a charging session](/user/ios/charge/start-session)
+- [Scan a sticker to open a charger](/user/ios/find/sticker-scan)
+- [Manage your <Glossary term="EV card">EV cards</Glossary>](/user/ios/account/ev-cards)

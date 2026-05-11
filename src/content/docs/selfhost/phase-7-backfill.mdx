@@ -1,0 +1,241 @@
+---
+title: Phase 7 — Backfill customer accounts
+description: Import existing customers into Polaris Express and reconcile their Lago billing state.
+sidebar:
+  order: 70
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs: []
+last_authored: 2025-01-15
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import { Aside, FileTree } from "@astrojs/starlight/components";
+import EnvVar from "../../../components/EnvVar.astro";
+
+If you are bringing an existing CPO operation onto Polaris Express,
+your customers, their [idTags](/glossary#idtag), and their billing
+state already exist somewhere — a spreadsheet, a legacy CRM, a former
+billing provider. Phase 7 brings those records into Polaris Express
+and reconciles them with [<Glossary term="Lago">Lago</Glossary>](/glossary#lago) so that the first
+charging session after cutover bills correctly.
+
+This phase runs after the platform is healthy (Phases 1–6) and before
+you point real [ChargeBoxes](/glossary#chargebox) at production.
+
+<Aside type="caution">
+  Backfill is not idempotent at the Lago layer. A duplicate
+  [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer) create will fail; a duplicate
+  [<Glossary term="Lago subscription">Lago subscription</Glossary>](/glossary#lago-subscription) on the same plan
+  will produce a second active subscription. Run the dry-run first.
+</Aside>
+
+## Prerequisites
+
+- Phases 1–6 complete: database, web, [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve), email
+  worker, and Lago are all up and reachable from the `web` container.
+- Lago has at least one plan configured that matches the
+  [tariff](/glossary#tariff) you intend to bill on.
+- A CSV export of your existing customers with, at minimum: email,
+  display name, external customer ID (your prior system's stable key),
+  and the [<Glossary term="idTag">idTag</Glossary>](/glossary#idtag) string they use at the
+  [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox).
+- Admin console access with the `superadmin` role.
+
+## Steps
+
+<Tutorial>
+
+<TutorialStep title="Prepare the input CSV">
+
+Place the export at `web/data/backfill/customers.csv` on the host
+running the `web` container. The expected columns are:
+
+```csv title="customers.csv"
+email,display_name,external_id,id_tag,plan_code,start_date
+alice@example.com,Alice Example,LEGACY-001,A1B2C3D4,standard,2024-01-01
+bob@example.com,Bob Example,LEGACY-002,E5F6G7H8,standard,2024-03-15
+```
+
+- `email` becomes the login identity (used by
+  [<Glossary term="BetterAuth">BetterAuth</Glossary>](/glossary#betterauth) and the
+  [magic link](/glossary#<Glossary term="Magic link">magic-link</Glossary>) flow).
+- `external_id` is preserved as the Lago `external_customer_id`. Keep
+  it stable — it is the join key for everything downstream.
+- `plan_code` must match an existing Lago plan code exactly.
+- `start_date` is the subscription anchor; back-date it if you want
+  pro-rated billing to reflect the original signup.
+
+</TutorialStep>
+
+<TutorialStep title="Run a dry-run">
+
+The backfill command supports `--dry-run`, which validates every row,
+checks for collisions against the current database and Lago, and
+prints a summary without writing anything.
+
+```sh
+docker compose exec web pnpm backfill:customers \
+  --input /data/backfill/customers.csv \
+  --dry-run
+```
+
+Read the summary carefully. The exit code is non-zero if any row would
+fail. Common dry-run failures:
+
+- **Email already exists** — the customer was partially imported in a
+  prior attempt, or someone signed up directly. Resolve by either
+  removing the row or marking it `--skip-existing`.
+- **Plan code not found** — fix the CSV or create the plan in Lago.
+- **Duplicate idTag** — two rows claim the same
+  [idTag](/glossary#idtag). Polaris Express enforces uniqueness.
+
+</TutorialStep>
+
+<TutorialStep title="Execute the backfill">
+
+When the dry-run is clean:
+
+```sh
+docker compose exec web pnpm backfill:customers \
+  --input /data/backfill/customers.csv \
+  --skip-existing
+```
+
+The command runs in batches and writes a row-by-row log to
+`web/data/backfill/run-<timestamp>.log`. For each row it:
+
+1. Creates the user record and a default
+   [user mapping](/glossary#user-mapping) for the `idTag`.
+2. Creates the [Lago customer](/glossary#lago-customer) using
+   `external_id` as `external_customer_id`.
+3. Creates a [Lago subscription](/glossary#lago-subscription) against
+   `plan_code` with `subscription_at = start_date`.
+4. Emits an [audit log](/glossary#audit-log) entry tagged
+   `backfill:<run-id>`.
+
+<Aside type="note">
+  The backfill does **not** send [magic links](/glossary#magic-link)
+  or welcome email. Customers will receive their first email when you
+  trigger the welcome batch in step 5.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Reconcile">
+
+After the run completes, reconcile counts:
+
+```sh
+docker compose exec web pnpm backfill:reconcile \
+  --run-id <run-id>
+```
+
+This compares CSV row count, users created, mappings created, Lago
+customers created, and Lago subscriptions active. Any divergence is
+flagged with the offending `external_id`.
+
+</TutorialStep>
+
+<TutorialStep title="Send welcome emails (optional)">
+
+When you are ready to invite customers to log in:
+
+```sh
+docker compose exec web pnpm backfill:welcome \
+  --run-id <run-id> \
+  --batch-size 50 \
+  --delay-ms 2000
+```
+
+This sends a [magic link](/glossary#magic-link) to each imported
+email, rate-limited so you do not trip your SMTP provider's burst
+limit.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Configure environment variables
+
+The backfill scripts read the same environment as the `web`
+container. The relevant variables:
+
+| Name | Default | Required | Source |
+| --- | --- | --- | --- |
+| <EnvVar name="DATABASE_URL" /> | — | yes | `web/.env` |
+| <EnvVar name="LAGO_API_URL" /> | `http://lago-api:3000` | yes | `web/.env` |
+| <EnvVar name="LAGO_API_KEY" /> | — | yes | `web/.env` |
+| <EnvVar name="BACKFILL_BATCH_SIZE" default="25" /> | `25` | no | `web/.env` |
+| <EnvVar name="BACKFILL_LOG_DIR" default="/data/backfill" /> | `/data/backfill` | no | `web/.env` |
+| <EnvVar name="EMAIL_FROM" /> | — | only for welcome step | `web/.env` |
+
+If <EnvVar name="BACKFILL_BATCH_SIZE" /> is omitted, the script uses
+25 rows per transaction, which is conservative and safe to leave as-is
+for runs up to ~10,000 customers.
+
+## Verify
+
+After the backfill, verify three things:
+
+**1. User count in the admin console.** Navigate to **Admin →
+Customers** and confirm the total matches the CSV row count (minus any
+`--skip-existing` rows).
+
+**2. Lago customer count.** From the Lago admin UI, the active
+customer count should match. Or via API:
+
+```sh
+curl -s -H "Authorization: Bearer $LAGO_API_KEY" \
+  "$LAGO_API_URL/api/v1/customers?per_page=1" | jq '.meta.total_count'
+```
+
+**3. End-to-end with a test idTag.** Pick one imported customer, send
+a `StartTransaction` to SteVe with their [idTag](/glossary#idtag), and
+confirm:
+
+- The transaction appears under that user in the admin console.
+- A [meter value](/glossary#meter-value) event reaches Lago against
+  the correct [Lago customer](/glossary#lago-customer).
+
+## If something goes wrong
+
+**Partial run, want to resume.** Re-run the same command with
+`--skip-existing`. Rows already imported will be detected by
+`external_id` and skipped without error.
+
+**A Lago subscription was created with the wrong plan.** Don't try to
+fix it from the backfill script. Cancel the subscription in Lago, then
+re-run the row using a single-row CSV.
+
+**You need to undo the whole run.** Each backfill run is tagged in the
+[audit log](/glossary#audit-log). To reverse:
+
+<Aside type="danger">
+  This deletes user records, mappings, Lago customers, and Lago
+  subscriptions created by the run. Customer-initiated activity after
+  the run will be lost.
+</Aside>
+
+```sh
+docker compose exec web pnpm backfill:revert --run-id <run-id>
+```
+
+The revert is itself audit-logged and produces a manifest at
+`web/data/backfill/revert-<run-id>.log`.
+
+**Welcome emails bouncing.** Check the email worker logs (Phase 4) and
+confirm <EnvVar name="EMAIL_FROM" /> is a verified sender at your SMTP
+provider. The welcome step is safe to re-run; it skips users who have
+already logged in at least once.
+
+## Next phase
+
+Once backfill is verified and reconciled, proceed to
+[Phase 8 — Cutover and monitoring](/selfhost/phase-8-cutover) to point
+production [ChargeBoxes](/glossary#chargebox) at the new SteVe
+endpoint.

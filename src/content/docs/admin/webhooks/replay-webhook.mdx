@@ -1,0 +1,113 @@
+---
+title: Replay a failed webhook
+description: Re-dispatch a previously-persisted Lago webhook event from the admin console when downstream processing failed.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/admin/webhook-events/[id]/replay.ts
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+When a <Glossary term="Lago">Lago</Glossary> webhook arrives but the downstream dispatch fails — a <Glossary term="Lago customer">Lago customer</Glossary> didn't update, a subscription change didn't propagate, an invoice event didn't reconcile — you can replay the persisted event from the admin console. Replay clones the original event row, attributes the replay to your operator account, and runs the clone through the same dispatch pipeline as the original. Use this runbook when triaging billing discrepancies reported by support, or when a known dispatch bug has been patched and you need to re-process events received during the outage window.
+
+## Prerequisites
+
+- You are signed in with an account that has `role = "admin"`. Non-admin sessions are rejected with `403`.
+- You know the webhook event ID, or you can locate it in the admin webhook event log by filtering on customer, event type, or failure status.
+- You have confirmed the original failure mode is no longer present. Replaying into the same broken state will just create a second failed event.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the webhook event log">
+
+In the admin console sidebar, go to **Billing → Webhook events**.
+
+<Screenshot alt="Admin console webhook events list" />
+
+</TutorialStep>
+
+<TutorialStep title="Locate the failed event">
+
+Filter by **Status: failed** and narrow further by Lago customer or event type if needed. Click the event row to open its detail drawer. Confirm:
+
+- The `event_type` matches what you expect to replay.
+- The `payload` and `received_at` look correct.
+- `replayed_from_id` is empty. (If it's already set, this row is itself a replay — find and replay the original instead, or replay this clone knowingly.)
+
+</TutorialStep>
+
+<TutorialStep title="Replay the event">
+
+In the event detail drawer, click **Replay**.
+
+<Aside type="danger">
+Replay re-runs the full dispatch pipeline. If the event mutates Lago state, a Polaris record, or sends a notification, replaying will repeat that side effect. Confirm the event is idempotent (or that the original side effect did not land) before replaying.
+</Aside>
+
+The console posts to <Endpoint method="POST" path="/api/admin/webhook-events/[id]/replay" /> and waits for the dispatch result inline. A `200` response means the clone dispatched successfully; a `502` means the clone was created but dispatch failed again — the response body contains the `error` string and the `newEventId` of the clone.
+
+<Screenshot alt="Replay confirmation showing new event ID" />
+
+</TutorialStep>
+
+<TutorialStep title="Open the replayed clone">
+
+From the success toast, click **View replayed event**, or navigate to the event log and open the row with `id = newEventId`. Confirm:
+
+- `replayed_from_id` points to the original event.
+- `replayed_by_user_id` is your user ID.
+- `replayed_at` is set to the moment you clicked Replay.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+- The replayed event row exists in **Billing → Webhook events** with `status = success` and the `replayed_from_id` / `replayed_by_user_id` / `replayed_at` fields populated.
+- The downstream effect landed. Depending on `event_type`, check:
+  - **Lago customer / subscription events** — the relevant Lago customer or <Glossary term="Lago subscription">Lago subscription</Glossary> record in the Polaris admin reflects the change.
+  - **Invoice events** — the invoice appears (or updates) under the customer's billing tab.
+  - **Metric events** — the relevant <Glossary term="Lago metric">Lago metric</Glossary> counters move on the next sync run.
+- The original event row is unchanged. Replay never mutates the source row — it only writes a new clone. <!-- TODO: confirm the source row's status field is left untouched -->
+
+## If something goes wrong
+
+**`403 Forbidden: admin access required`** — your session isn't an admin session. Sign out and back in with an admin account, or ask another operator to perform the replay.
+
+**`400 Invalid event id`** — the event ID in the URL isn't a valid integer. This usually means a malformed link; navigate back to the event log and click into the event row directly.
+
+**`401 Unauthorized`** — your session expired mid-action. Re-authenticate and retry.
+
+**`502` with `success: false` and an `error` string** — the clone was written but dispatch failed again. The clone's `newEventId` is returned in the response so you can inspect it.
+
+<Aside type="caution">
+A `502` still leaves a clone row in the event log. If you replay repeatedly against a persistent failure, you will accumulate failed clones. Fix the underlying dispatch issue first, then replay the original (not the failed clones).
+</Aside>
+
+**Dispatch succeeded but the downstream record didn't change** — the handler may have treated the event as a no-op (for example, an `idempotency_key` already seen, or a state transition that's already applied). Compare the payload against the current state of the target record before assuming the replay failed.
+
+## Audit and reversibility
+
+Replay is **not reversible**. The clone runs through the same dispatch pipeline as a fresh inbound webhook, and any side effects it produces (Lago API calls, database writes, notifications) cannot be rolled back from this surface.
+
+What gets logged:
+
+- A new row in `lago_webhook_events` with `replayed_from_id`, `replayed_at`, and `replayed_by_user_id` set. This is your audit trail — every replay is attributable to the operator who triggered it.
+- The dispatch pipeline's own logs and any audit log entries the downstream handlers write.
+
+If a replay produced an incorrect side effect, you will need to correct it through the relevant surface (manual Lago adjustment, customer-facing refund, etc.) rather than by "undoing" the replay.
+
+## Related
+
+- [Webhook event log overview](/admin/webhooks/event-log/)
+- [Reconciling Lago billing discrepancies](/admin/billing/reconciliation/)
+- [<Glossary term="Audit log">Audit log</Glossary>](/glossary/#audit-log)

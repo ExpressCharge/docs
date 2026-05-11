@@ -1,0 +1,103 @@
+---
+title: My card isn't being recognized by NFC
+description: What to do when the iOS app can't read your EV card, and how to get a successful scan on the next try.
+sidebar:
+  order: 10
+persona: Driver
+surface: ios
+tier: P0
+code_refs:
+  - ios/App/Features/Scan/ErrorView.swift
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+You held your <Glossary term="EV card">EV card</Glossary> to your iPhone and the app showed a red X instead of confirming the scan. This page walks you through the messages the app might show, what each one means, and how to get a clean read on the next try.
+
+## Before you start
+
+- Have your EV card in hand.
+- Be in front of the device the admin is pairing (if a staff member started this scan for you).
+- Know that the error screen returns to ready on its own after 10 seconds. The ring in the top-right of the screen counts that time down. You can also tap the back arrow in the top-left to return sooner.
+
+<Screenshot alt="Error screen after a failed NFC scan, with the countdown ring in the top-right corner" caption="Every error screen carries a back arrow (top-left) and a 10-second countdown ring (top-right)." />
+
+## Match the message you saw
+
+<Tutorial goal="Recover from a failed NFC scan" estimatedMinutes={2}>
+
+<TutorialStep title='"Scan timed out"'>
+
+The app waited but didn't detect a card.
+
+Hold the card flat against the **top edge** of your iPhone — that's where the NFC antenna sits. Keep it there until you feel the haptic tap. Then tap **Try again**.
+
+If your card is inside a wallet or case with other contactless cards, take it out first. Other cards can block the read.
+
+</TutorialStep>
+
+<TutorialStep title='"Card not supported"'>
+
+The app saw a card, but it isn't a card type the system accepts.
+
+Tap **Try a different card** and scan an <Glossary term="EV card">EV card</Glossary> issued for charging. Hotel keys, transit passes, and most bank cards will not work here.
+
+<Aside type="note">
+If you believe your card should be supported, contact your fleet admin. They can check whether the card is registered to your account.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title='"Couldn'"'"'t reach ExpressCharge"'>
+
+Your phone read the card, but the app couldn't reach our servers to confirm it.
+
+Check your Wi-Fi or cellular signal. Step outside the parking structure if you're underground. Once you're back online, tap **Retry**.
+
+</TutorialStep>
+
+<TutorialStep title='"Scan expired"'>
+
+The scan window the admin opened for you ran out before the card was read.
+
+There is no retry button on this screen — the request itself is gone. Ask the admin to start a new scan, then hold your card up again.
+
+</TutorialStep>
+
+<TutorialStep title='"Signed out"'>
+
+An admin signed this device out while you were using it. The session is over.
+
+Tap **Sign in** to authenticate again. If you don't have credentials for this device, hand it back to the admin.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You'll know the scan worked when the red X is replaced by a success state and the app moves you forward in the flow. If you see any error screen at all, the scan did not succeed — even if your phone buzzed when the card touched it.
+
+## Troubleshooting
+
+**The countdown finished and I lost my place.** The error screen returns to ready automatically after 10 seconds. That's normal. Start the scan again from the ready screen.
+
+**I keep getting "Scan timed out" no matter what I do.** The NFC antenna is in the top edge of your iPhone, not the back. Hold the card so it touches the top inch of the phone, with the screen facing you.
+
+:::caution
+Phone cases that are thick, metal-backed, or contain magnets can interfere with NFC. If nothing else works, remove the case and try once more.
+:::
+
+**"Card not supported" appeared, but this card worked yesterday.** Contact your fleet admin. Your card may have been deactivated or reassigned.
+
+:::danger
+Don't share your EV card with other drivers. Charging sessions are billed to the account the card belongs to.
+:::
+
+## Related
+
+- [Scan your EV card to start a session](/user/ios/tutorials/scan-card/)
+- [Sign in to the iOS app](/user/ios/tutorials/sign-in/)
+- [What is an EV card?](/glossary/#ev-card)

@@ -1,0 +1,151 @@
+---
+title: Void an invoice
+description: Void a Lago invoice from the admin console, with optional credit note and refund.
+sidebar:
+  order: 30
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/admin/invoice/[id]/void.ts
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+Use this runbook when a customer has been issued an invoice in error,
+when a billing dispute is resolved in the customer's favor, or when an
+invoice must be cancelled before payment. Voiding is performed against
+[<Glossary term="Lago">Lago</Glossary>](/glossary#lago) and removes the invoice from collection while
+preserving an auditable record.
+
+<Aside type="danger">
+Voiding an invoice is a billing-state change. Once voided, the invoice
+cannot be un-voided in Lago — you would need to re-issue a new invoice
+to restore the charge. Confirm the customer, amount, and reason before
+proceeding.
+</Aside>
+
+## Prerequisites
+
+- You are signed in as an admin user. The void endpoint rejects
+  unauthenticated requests.
+- You have the invoice's Lago ID (the `id` shown on the invoice detail
+  page, not the human-readable invoice number).
+- You have confirmed with the customer (or with the team member who
+  raised the request) the void reason and whether a credit note or
+  refund should accompany the void.
+- The invoice is in a voidable state in Lago. Already-voided or
+  already-credited invoices will fail at the Lago API.
+
+## Procedure
+
+<Tutorial>
+
+<TutorialStep title="Open the invoice">
+
+Navigate to **Billing → Invoices** and locate the invoice. Use the
+customer email or invoice number to filter. Click the row to open the
+detail panel.
+
+<Screenshot alt="Invoice detail panel in the admin console" />
+
+</TutorialStep>
+
+<TutorialStep title="Decide on credit note and refund">
+
+Before clicking **Void**, decide which of the following apply. These
+are forwarded to Lago as the request body:
+
+- `generate_credit_note` — issue a credit note for the voided amount.
+  Use this when the customer should retain credit on their
+  [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer) account for future invoices.
+- `refund_amount` — amount (in the invoice's currency, in cents) to
+  refund to the original payment method. Use this when the customer
+  paid and is owed money back.
+- `credit_amount` — amount (in cents) to issue as wallet credit
+  instead of a refund.
+
+If the invoice is unpaid and you simply want to cancel it, none of
+these are required.
+
+</TutorialStep>
+
+<TutorialStep title="Void the invoice">
+
+Click **Void invoice**. In the confirmation dialog, fill in the
+credit-note and refund fields per the previous step, then confirm.
+
+<Screenshot alt="Void invoice confirmation dialog" />
+
+The console calls <Endpoint method="POST" path="/api/admin/invoice/[id]/void" />
+which proxies to Lago. On success, the panel refreshes with the
+updated invoice status.
+
+<!-- TODO: confirm exact button label "Void invoice" in the admin UI -->
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+- The invoice row now shows a voided UI status. This is derived by
+  `deriveInvoiceUiStatus` from Lago's `status`, `payment_status`, and
+  `payment_overdue` fields on the returned invoice.
+- If you requested a credit note, it appears under the customer's
+  **Credit notes** tab in Lago.
+- If you requested a refund, the refund is queued at the payment
+  provider. Verify in the payment provider's dashboard that the
+  refund has been initiated.
+- Check the [audit log](/glossary#audit-log) for the void event
+  against this invoice ID.
+
+<!-- TODO: confirm audit log entry shape for invoice void -->
+
+## If something goes wrong
+
+<Aside type="caution">
+A failed void returns HTTP 502 with the upstream Lago error message.
+The invoice is **not** voided when this happens. Read the error before
+retrying.
+</Aside>
+
+Common failure modes:
+
+- **`Unauthorized` (401)** — your session expired. Sign in again and
+  retry.
+- **`Missing invoice id` (400)** — the route was called without an
+  ID. Reload the invoice detail page and try again.
+- **`Failed to void invoice: ...` (502)** — Lago rejected the request.
+  Typical causes:
+  - The invoice is already voided. Reload the panel; the UI status
+    should reflect this.
+  - The invoice is in `draft` status and cannot be voided — finalize
+    or delete it instead.
+  - The `refund_amount` exceeds what was paid on the invoice. Reduce
+    the amount and retry.
+  - Lago is unreachable. Wait and retry; if persistent, check the
+    Lago status page.
+
+## Audit and reversibility
+
+- The void is recorded in Lago against the invoice and is visible in
+  the invoice history there.
+- The admin action is recorded in the Polaris [audit log](/glossary#audit-log)
+  with the acting user, invoice ID, and request body.
+- **Voiding is not reversible in Lago.** To restore the charge, issue
+  a new invoice (typically via a one-off charge or by re-running the
+  billing cycle). If a credit note was issued, it remains on the
+  customer's account and will apply against the new invoice unless
+  explicitly voided.
+
+<!-- TODO: confirm audit log writes on this route -->
+
+## Related
+
+- [Issue a credit note](/admin/billing/credit-note)
+- [Refund a payment](/admin/billing/refund)
+- [Reconcile a billing dispute](/admin/billing/disputes)
+- [Lago invoice lifecycle](/reference/lago/invoices)

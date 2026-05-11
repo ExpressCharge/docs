@@ -1,0 +1,285 @@
+---
+title: Phase 10 — Smoke tests
+description: Verify the deployment end-to-end by exercising the health endpoint, signing in, and confirming OCPP, billing, and sync subsystems are healthy.
+sidebar:
+  order: 110
+persona: Selfhoster
+surface: selfhost
+tier: P0
+code_refs:
+  - web/routes/api/health.ts
+last_authored: 2025-01-21
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
+import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import EnvVar from "../../../../components/EnvVar.astro";
+
+You have a running stack. Before you hand it to operators or wire up
+DNS for real charge points, prove it works. This phase walks through
+the smoke tests that catch the failure modes we have actually seen in
+the field: a database that responds but is missing migrations, a
+<Glossary term="SteVe">SteVe</Glossary> instance the web app cannot reach, a <Glossary term="Lago">Lago</Glossary> tenant that rejects
+the API key, and sync jobs that hang.
+
+By the end of this phase you will have a green health endpoint, a
+working admin login, and confirmation that <Glossary term="OCPP">OCPP</Glossary> traffic flows from a
+real or simulated <Glossary term="ChargeBox">ChargeBox</Glossary> through to the web UI.
+
+## Prerequisites
+
+- Phases 1–9 complete. The web app, SteVe, Postgres, Lago, and the
+  Email Worker are all running.
+- DNS resolves (or you have `/etc/hosts` overrides) for the web app
+  and SteVe public hostnames.
+- You have one administrator account that can sign in via magic link.
+- You have access to either a real ChargeBox you can point at SteVe,
+  or `ocpp-go` / `steve-cli` to simulate one.
+
+## Steps
+
+<Tutorial>
+
+<TutorialStep title="Hit the health endpoint">
+
+The health endpoint is unauthenticated and returns a JSON document
+describing each subsystem. From the host running the web container:
+
+```sh
+curl -sS https://app.example.com/api/health | jq
+```
+
+A healthy deployment returns HTTP 200 and:
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-01-21T12:00:00.000Z",
+  "checks": {
+    "database": { "status": "ok", "latencyMs": 3 },
+    "steve":    { "status": "ok" },
+    "lago":     { "status": "ok" },
+    "sync":     { "status": "ok", "lastRun": "2025-01-21T11:58:00.000Z" }
+  }
+}
+```
+
+The endpoint is defined in `web/routes/api/health.ts`. It returns
+HTTP 503 if any check is `unhealthy`, and HTTP 200 with
+`"status": "degraded"` if a check is degraded (for example, SteVe or
+Lago not configured).
+
+</TutorialStep>
+
+<TutorialStep title="Interpret each check">
+
+Read the response against the table below. Each key under `checks`
+maps to a specific subsystem.
+
+| Check      | What it tests                                                 | `ok`                        | `degraded`                                  | `unhealthy`                       |
+| ---------- | ------------------------------------------------------------- | --------------------------- | ------------------------------------------- | --------------------------------- |
+| `database` | `SELECT 1` against the configured Postgres                    | Query succeeds              | —                                           | Connection refused, auth failure  |
+| `steve`    | <EnvVar name="STEVE_API_URL" /> and <EnvVar name="STEVE_API_KEY" /> both set | Both configured             | One or both missing                         | —                                 |
+| `lago`     | <EnvVar name="LAGO_API_URL" /> and <EnvVar name="LAGO_API_KEY" /> both set   | Both configured             | One or both missing                         | —                                 |
+| `sync`     | No sync run has been in `running` state for more than 30 min  | Last run completed cleanly  | One or more <Glossary term="Sync run">sync runs</Glossary> stuck > 30 min        | Query against `sync_runs` failed  |
+
+<Aside type="note">
+  The `steve` and `lago` checks are configuration checks only. They
+  do not currently make a network call. A green `steve` check means
+  the env vars are populated; it does not prove the SteVe API is
+  reachable. You verify that in the next step.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Verify SteVe reachability from the web container">
+
+Open a shell inside the web container and call the SteVe API
+directly:
+
+```sh
+docker compose exec web sh -c \
+  'curl -sS -u "$STEVE_API_USER:$STEVE_API_KEY" "$STEVE_API_URL/api/v1/chargepoints" | head'
+```
+
+You should get a JSON array (possibly empty `[]`). If you get an HTML
+login page, the API user is not configured in SteVe. If you get a
+connection error, check that the web container can resolve and reach
+the SteVe service name on the Docker network.
+
+</TutorialStep>
+
+<TutorialStep title="Verify Lago reachability">
+
+From the same shell:
+
+```sh
+docker compose exec web sh -c \
+  'curl -sS -H "Authorization: Bearer $LAGO_API_KEY" \
+    "$LAGO_API_URL/api/v1/organizations" | jq .organization.name'
+```
+
+You should see your Lago organization name. A `401` means the API key
+is wrong. A connection error means the web container cannot reach
+Lago.
+
+</TutorialStep>
+
+<TutorialStep title="Sign in via magic link">
+
+1. Open `https://app.example.com` in a browser.
+2. Enter the email address of the bootstrapped admin user.
+3. Watch the Email Worker logs:
+
+   ```sh
+   docker compose logs -f email-worker
+   ```
+
+   You should see the magic link message being processed. If the
+   message is delivered to a real inbox, open it. If you are running
+   in dev with the email worker configured to log instead of send,
+   copy the link from the logs.
+
+4. Open the magic link. You should land on the admin console signed
+   in as the admin user.
+
+If the magic link email never arrives, see [Email worker
+troubleshooting](/selfhost/ops/email-worker/) — the most common cause
+is an unverified sender in your transactional email provider.
+
+</TutorialStep>
+
+<TutorialStep title="Drive an OCPP transaction">
+
+This is the end-to-end test that exercises the whole stack: SteVe
+accepts an OCPP `BootNotification`, the sync job picks it up, and the
+ChargeBox appears in the admin console.
+
+<Tabs>
+<TabItem label="Real charge point">
+
+Point the charge point's OCPP URL at:
+
+```
+wss://ocpp.example.com/steve/websocket/CentralSystemService/<chargeBoxId>
+```
+
+Power-cycle the charge point. Within 30 seconds, the ChargeBox
+should appear in **Admin → ChargeBoxes** with a green online dot.
+
+</TabItem>
+<TabItem label="Simulated">
+
+Use `ocpp-go` or any OCPP 1.6-J simulator:
+
+```sh
+ocpp-cli --url wss://ocpp.example.com/steve/websocket/CentralSystemService \
+         --id SMOKE-TEST-01 \
+         boot --vendor TestVendor --model TestModel
+```
+
+The simulator should receive an `Accepted` boot response. Refresh
+**Admin → ChargeBoxes**; `SMOKE-TEST-01` should appear.
+
+</TabItem>
+</Tabs>
+
+</TutorialStep>
+
+<TutorialStep title="Trigger a sync run and confirm it completes">
+
+From the admin console, navigate to **Admin → Sync** and trigger a
+manual sync. Refresh the health endpoint:
+
+```sh
+curl -sS https://app.example.com/api/health | jq .checks.sync
+```
+
+`lastRun` should reflect the timestamp you just triggered, and
+`status` should be `ok`. If `status` is `degraded` with the message
+`N sync(s) running > 30 minutes`, you have a stuck sync run — see
+[Sync runbook](/selfhost/ops/sync-runs/) for the recovery procedure.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Configure environment variables
+
+No new env vars are introduced in this phase. The variables that
+affect the health endpoint's output are:
+
+| Name                                                          | Source            | Required for `ok` |
+| ------------------------------------------------------------- | ----------------- | ----------------- |
+| <EnvVar name="DATABASE_URL" />                                | `web/.env`        | yes               |
+| <EnvVar name="STEVE_API_URL" />                               | `web/.env`        | yes (else degraded) |
+| <EnvVar name="STEVE_API_KEY" />                               | `web/.env`        | yes (else degraded) |
+| <EnvVar name="LAGO_API_URL" />                                | `web/.env`        | yes (else degraded) |
+| <EnvVar name="LAGO_API_KEY" />                                | `web/.env`        | yes (else degraded) |
+
+If any of the SteVe or Lago variables are unset, the health endpoint
+returns HTTP 200 with `status: "degraded"` — useful in lower
+environments where you may not have a Lago tenant yet, but **not
+acceptable in production**.
+
+## Verify
+
+A deployment passes smoke tests when all of the following are true:
+
+- `curl https://app.example.com/api/health` returns HTTP 200 with
+  `"status": "ok"`.
+- Every entry under `checks` is `"status": "ok"`.
+- An admin can sign in via magic link.
+- A real or simulated ChargeBox appears in the admin console after a
+  `BootNotification`.
+- A manual sync run completes and updates `checks.sync.lastRun`.
+
+## If something goes wrong
+
+**`database` is `unhealthy`.** The web app cannot reach Postgres.
+Check `DATABASE_URL`, network reachability from the web container,
+and Postgres logs. If the connection works but the query fails,
+migrations may not have been applied — re-run Phase 4.
+
+**`steve` or `lago` is `degraded` but you set the env vars.**
+Confirm the env vars are visible to the *web* container, not just the
+host shell:
+
+```sh
+docker compose exec web env | grep -E 'STEVE|LAGO'
+```
+
+Restart `web` after changing `.env`.
+
+**`sync` is `degraded` with stuck runs.** A previous sync crashed
+without releasing its lock. The health check flags runs in `running`
+state older than 30 minutes.
+
+<Aside type="danger">
+  Do not delete rows from `sync_runs` to clear stuck syncs in
+  production unless you have a backup. Use the documented unstick
+  procedure in the [sync runbook](/selfhost/ops/sync-runs/).
+</Aside>
+
+**<Glossary term="Magic link">Magic link</Glossary> email never arrives.** Check `email-worker` logs. The
+two common causes are an unverified sender address with your
+transactional email provider, or the worker not having credentials to
+pull from the outbound queue.
+
+**ChargeBox connects to SteVe but does not appear in the admin
+console.** SteVe accepted the connection but the web app has not
+synced it yet. Trigger a manual sync. If the ChargeBox still does not
+appear, confirm the SteVe API credentials used by the web app have
+read access to charge points.
+
+## Next phase
+
+Smoke tests passing means the stack is functionally complete. From
+here you should:
+
+- Configure backups — see [Backups runbook](/selfhost/ops/backups/).
+- Set up monitoring against `/api/health` — see [Monitoring](/selfhost/ops/monitoring/).
+- Plan your first upgrade — see [Upgrades runbook](/selfhost/ops/upgrades/).

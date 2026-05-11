@@ -1,0 +1,167 @@
+---
+title: Impersonate a customer for support
+description: Step into a customer's session to reproduce issues, with every action logged to the impersonation audit trail.
+sidebar:
+  order: 10
+persona: Operator
+surface: web
+tier: P0
+code_refs:
+  - web/routes/api/customer/impersonation/start.ts
+  - web/routes/api/customer/impersonation/end.ts
+last_authored: 2025-01-15
+prompt_template: admin-runbook
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+import Tutorial from "../../../../components/Tutorial.astro";
+import TutorialStep from "../../../../components/TutorialStep.astro";
+import Screenshot from "../../../../components/Screenshot.astro";
+import Endpoint from "../../../../components/Endpoint.astro";
+
+Use impersonation when a customer reports a bug you can't reproduce
+from your own account — a missing charger in their list, a stuck
+session, a tariff that looks wrong on their receipt. <Glossary term="Impersonation">Impersonation</Glossary>
+lets you load the customer surface scoped to their user, with every
+request you make written to the impersonation audit trail.
+
+<Aside type="danger">
+  Impersonation is a privileged action. Every route you touch while
+  impersonating is logged against your admin user ID alongside the
+  customer's. Treat it like reading a customer's inbox — only do it
+  with a support reason, and end the session as soon as you're done.
+</Aside>
+
+## Prerequisites
+
+- Your account has `role = admin`.
+- You are not already impersonating another customer. The start
+  endpoint refuses a second impersonation until the first ends.
+- You have the customer's [<Glossary term="Public ID">Public ID</Glossary>](/glossary#public-id) or their
+  email — enough to locate them in **Admin → Customers**.
+- A reason to be there: a support ticket, a billing dispute, a
+  reproducibility check. Note the ticket ID before you start.
+
+## Procedure
+
+<Tutorial>
+  <TutorialStep title="Locate the customer">
+    From the admin console, go to **Customers** and search by email
+    or Public ID. Open the customer's detail page.
+
+    <Screenshot alt="Admin customer detail page with the Impersonate button in the header." />
+  </TutorialStep>
+
+  <TutorialStep title="Start the impersonation">
+    Click **Impersonate** in the customer header. The console calls
+    <Endpoint method="POST" path="/api/customer/impersonation/start" />
+    with the customer's user ID and, on success, redirects you to
+    `/?as=<customerUserId>` — the customer home, scoped to them.
+
+    You'll see the **ImpersonationBanner** pinned to the top of every
+    page for the duration of the session. If the banner is missing,
+    you are not impersonating — stop and check the URL for `?as=`.
+
+    <Aside type="caution">
+      You can't impersonate yourself, another admin, or a user that
+      doesn't exist. The start endpoint returns `404 Customer not
+      found` for both "no such user" and "wrong role" — this is
+      intentional to prevent enumeration.
+    </Aside>
+  </TutorialStep>
+
+  <TutorialStep title="Reproduce the issue">
+    Navigate the customer surface as you normally would. Every
+    request you make is scoped to the customer via the `?as=` marker
+    — chargers, sessions, receipts, <Glossary term="EV card">EV cards</Glossary> all reflect what the
+    customer sees.
+
+    Keep the session short. Don't initiate charging sessions, don't
+    change payment methods, don't add or remove EV cards unless the
+    ticket explicitly authorizes it.
+  </TutorialStep>
+
+  <TutorialStep title="End the impersonation">
+    Click **Exit** on the ImpersonationBanner. The console calls
+    <Endpoint method="POST" path="/api/customer/impersonation/end" />,
+    logs the end event, and redirects you to `/admin`.
+
+    The marker lives in the URL, so closing the tab or manually
+    removing `?as=` from the address bar also ends the impersonation
+    on the next request. The Exit button is preferred because it
+    produces a paired audit entry.
+  </TutorialStep>
+</Tutorial>
+
+## Verify
+
+- The ImpersonationBanner is gone and you're back on `/admin`.
+- Check **Admin → <Glossary term="Audit log">Audit log</Glossary>** and filter by your user ID. You should
+  see paired `impersonation.start` and `impersonation.end` entries
+  with the customer's user ID in the metadata, plus one
+  `impersonation_audit` row per privileged route you touched while
+  impersonating.
+- Your admin session is intact — no re-login required. The start
+  endpoint preserves your primary session and uses the URL marker for
+  scoping, not a session swap.
+
+## If something goes wrong
+
+**`409 Already impersonating; end the current session first.`**
+You have a stale `?as=` marker in another tab or window. Find the
+tab with the ImpersonationBanner and click **Exit**, or open
+`/api/customer/impersonation/end` from devtools. Then retry.
+
+**`403 Forbidden` on start.**
+Your account isn't `role = admin`. A `privilege_violation` entry is
+written to the auth audit log for the attempt. If you should be an
+admin, escalate to whoever manages role assignments — don't retry.
+
+**The banner doesn't appear after redirect.**
+The middleware didn't pick up the `?as=` marker. Confirm the URL
+contains `?as=<id>`. If it does and the banner is still missing, the
+middleware step that sets `ctx.state.actingAs` isn't firing — file an
+incident; do not assume you're impersonating.
+{/* TODO: confirm middleware step 9 file path once routes/_middleware.ts is in code_refs */}
+
+**Exit button does nothing.**
+The end endpoint treats audit-write failures as non-fatal and still
+returns success, so the UI should always navigate. If the button is
+truly inert, manually strip `?as=` from the URL and reload — that
+ends the impersonation on the server side via the middleware.
+
+## Audit and reversibility
+
+Impersonation is read-mostly but not inherently reversible — if you
+take a destructive action while impersonating (deleting an EV card,
+cancelling a reservation), that action is real and affects the
+customer's account. The audit trail tells you what happened, not how
+to undo it.
+
+**What gets logged:**
+
+- One `auth_audit` row with tag `impersonation.start`, your user ID,
+  and the target customer's user ID in metadata.
+- One `impersonation_audit` row stamped at session start with the
+  start route and method.
+- Additional `impersonation_audit` rows per privileged route the
+  middleware sees during the session (rate-limited).
+- One `auth_audit` row with tag `impersonation.end` when you click
+  Exit. If you close the tab instead, the end row may be missing —
+  use Exit to guarantee the pair.
+
+**Reversing actions taken during impersonation:**
+Find the actions in the customer's normal activity history and undo
+them through standard admin tools (refund a charge, restore a
+reservation, re-issue an EV card). Reference the impersonation audit
+row IDs in your ticket notes so the chain is auditable end-to-end.
+
+## Related
+
+- [Audit log](/glossary#audit-log) — what's recorded and how to filter
+  it.
+- [Public ID](/glossary#public-id) — how to identify customers in
+  support flows.
+{/* TODO: confirm slugs once admin.audit-log and customer-lookup runbooks exist */}

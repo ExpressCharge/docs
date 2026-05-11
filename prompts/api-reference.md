@@ -77,7 +77,7 @@ body schema (look at Zod / shape validation), response shape, and
 error cases. Don't invent.
 
 If you cannot find a handler for an endpoint listed in the route
-inventory, omit it and add `<!-- TODO: handler not found -->`.
+inventory, omit it and add `{/* TODO: handler not found */}`.
 
 ## Output
 

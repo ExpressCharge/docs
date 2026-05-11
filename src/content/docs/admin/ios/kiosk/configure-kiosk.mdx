@@ -69,7 +69,7 @@ You want to dedicate an iPad or iPhone to a single task — a wall-mounted [expr
     bar, and status bar hidden — the chosen capability's screen now fills
     the display.
 
-    {/* <!-- TODO: confirm propagation channel (push vs. poll) and typical latency --> */}
+    {/* {/* TODO: confirm propagation channel (push vs. poll) and typical latency */} */}
   </TutorialStep>
 
   <TutorialStep title="Physically position the device">
@@ -116,7 +116,7 @@ From web admin, open the device record, remove `kiosk` from its capability set, 
 
 ## Audit and reversibility
 
-- Capability set changes are recorded in the [audit log](/glossary#audit-log) against the device. {/* <!-- TODO: confirm audit log coverage of capability mutations --> */}
+- Capability set changes are recorded in the [audit log](/glossary#audit-log) against the device. {/* {/* TODO: confirm audit log coverage of capability mutations */} */}
 - Removing `kiosk` from the capability set is fully reversible — the device returns to its normal shell with no data loss.
 - Kiosk mode does not alter the device's session, [user mapping](/glossary#user-mapping), or any local data; it is purely a rendering mode.
 

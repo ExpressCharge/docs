@@ -69,7 +69,7 @@ prompt_template: customer-tutorial
 Every claim about behavior must trace back to the `code_refs` files
 provided. If you cannot find a claim's source, don't make the claim
 — ask the reviewer for clarification by adding an HTML comment:
-`<!-- TODO: confirm that X happens in code_refs -->`.
+`{/* TODO: confirm that X happens in code_refs */}`.
 
 ## Glossary
 

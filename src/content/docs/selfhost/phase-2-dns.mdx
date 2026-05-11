@@ -253,8 +253,8 @@ Phase 3.
 | `POLARIS_SECRET_B` | _(none)_ | ⛔ optional — only set during rotation | `wrangler secret put` |
 | `TS_WINDOW_MS` | `300000` (5 min) | ⛔ | `wrangler.jsonc` `vars` |
 | `NONCE_TTL_SECONDS` | `600` | ⛔ | `wrangler.jsonc` `vars` |
-| `RATE_LIMIT_MAX` | `10` <!-- TODO: confirm --> | ⛔ | `wrangler.jsonc` `vars` |
-| `RATE_LIMIT_WINDOW_SECONDS` | `3600` <!-- TODO: confirm --> | ⛔ | `wrangler.jsonc` `vars` |
+| `RATE_LIMIT_MAX` | `10` {/* TODO: confirm */} | ⛔ | `wrangler.jsonc` `vars` |
+| `RATE_LIMIT_WINDOW_SECONDS` | `3600` {/* TODO: confirm */} | ⛔ | `wrangler.jsonc` `vars` |
 
 If a value is unset, the Worker falls back to the defaults shown above
 — suitable for production. Override only if you have a specific reason

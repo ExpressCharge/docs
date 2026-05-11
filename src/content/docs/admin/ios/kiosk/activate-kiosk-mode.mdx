@@ -20,9 +20,9 @@ Use this runbook when you want a wall-mounted or counter-mounted iPad or iPhone 
 
 ## Prerequisites
 
-- You are signed into the admin console with an **admin** role. Operator-level sessions cannot PATCH device settings.<!-- TODO: confirm role label for non-admin operator -->
+- You are signed into the admin console with an **admin** role. Operator-level sessions cannot PATCH device settings.{/* TODO: confirm role label for non-admin operator */}
 - The target device is already enrolled and visible on **Devices**. The device row must not be revoked (soft-deleted).
-- The device has exactly one [capability](/reference/glossary/#capability) assigned. Kiosk mode strips navigation chrome, so a multi-capability device would become unusable.<!-- TODO: confirm single-capability requirement is enforced server-side -->
+- The device has exactly one [capability](/reference/glossary/#capability) assigned. Kiosk mode strips navigation chrome, so a multi-capability device would become unusable.{/* TODO: confirm single-capability requirement is enforced server-side */}
 - The device is online, or you accept that the change will apply on its next sync. Per-key last-write-wins is in play: a phone with a strictly-later `clientUpdatedAt` will still win on its next sync — your admin save is the new floor.
 
 ## Procedure
@@ -39,7 +39,7 @@ In the admin console, go to **Devices**, then click the row for the device you w
 
 <TutorialStep title="Add the `kiosk` capability">
 
-Kiosk mode activates when `kiosk` is present in the device's capability set. Under **Capabilities**, add `kiosk` alongside the device's existing single capability (for example, `expreScan` + `kiosk`).<!-- TODO: confirm exact UI control for editing capabilities -->
+Kiosk mode activates when `kiosk` is present in the device's capability set. Under **Capabilities**, add `kiosk` alongside the device's existing single capability (for example, `expreScan` + `kiosk`).{/* TODO: confirm exact UI control for editing capabilities */}
 
 <Screenshot alt="Capabilities editor with kiosk added to the set." />
 
@@ -69,7 +69,7 @@ If the device is offline, it will pick up the change on its next sync.
 
 - **Audit log.** Filter by `device.settings.updated` for the device's ID. You should see your save with `changedKeys` including the capability change and `changedByUserId` set to your admin user.
 - **Device screen.** The device shows only the capability content. There is no visible toolbar, gear icon, status bar, or volume HUD. Sign-out is not reachable from the device UI.
-- **SSE event log.** A `device.settings.changed` event was published for the device's ID.<!-- TODO: confirm admin-surfaced SSE event log exists -->
+- **SSE event log.** A `device.settings.changed` event was published for the device's ID.{/* TODO: confirm admin-surfaced SSE event log exists */}
 
 ## If something goes wrong
 
@@ -78,7 +78,7 @@ Do not put a device into kiosk mode if you do not have working admin-console acc
 </Aside>
 
 **The device still shows its toolbar after saving.**
-The device may be offline or its sync is delayed. Check **Devices → \[device\] → Last seen**. Wait for the next sync, or power-cycle the device.<!-- TODO: confirm Last seen field name -->
+The device may be offline or its sync is delayed. Check **Devices → \[device\] → Last seen**. Wait for the next sync, or power-cycle the device.{/* TODO: confirm Last seen field name */}
 
 **You get `403 forbidden` on save.**
 Your session is not an admin session. Sign in with an admin account.
@@ -105,7 +105,7 @@ Every save writes a `device.settings.updated` audit record with:
 
 - `userId` — the admin who made the change.
 - `route` — `/api/admin/devices/[deviceId]/settings`.
-- `metadata.deviceId`, `metadata.changedKeys`, `metadata.values` — the keys and the values you set. The two known non-sensitive setting keys (`device.label`, `notifications.scanRequest`) are recorded verbatim for forensic value.<!-- TODO: confirm whether the capability change itself is audited via this same route or a separate one -->
+- `metadata.deviceId`, `metadata.changedKeys`, `metadata.values` — the keys and the values you set. The two known non-sensitive setting keys (`device.label`, `notifications.scanRequest`) are recorded verbatim for forensic value.{/* TODO: confirm whether the capability change itself is audited via this same route or a separate one */}
 - `ip`, `ua` — the IP and user-agent of the admin session that made the change.
 
 **To reverse:** open the same device's **Settings** tab, remove `kiosk` from the capability set, and **Save**. The device will redraw with its full chrome on its next sync. The reversal is itself audited.

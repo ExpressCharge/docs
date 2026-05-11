@@ -96,7 +96,7 @@ The finalize call is synchronous. When it returns:
 - Refreshing the invoice list and filtering by **Draft** should no
   longer show this invoice. Filtering by **Finalized** should.
 - The action appears in the [audit log](/glossary#audit-log) attributed
-  to your operator account. <!-- TODO: confirm finalize emits an audit log entry -->
+  to your operator account. {/* TODO: confirm finalize emits an audit log entry */}
 
 If the request failed, the panel shows an error toast with the upstream
 Lago message and the API returns `502` with `{ error: "Failed to
@@ -137,7 +137,7 @@ finalization:
 
 The original finalize action is recorded in the [audit log](/glossary#audit-log)
 with the operator who performed it, the invoice ID, and the
-timestamp. <!-- TODO: confirm audit log shape for finalize -->
+timestamp. {/* TODO: confirm audit log shape for finalize */}
 
 ## Related
 

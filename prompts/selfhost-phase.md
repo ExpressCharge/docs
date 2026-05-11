@@ -75,7 +75,7 @@ For ops runbooks:
 Env-var defaults must match `web/.env.example`. Compose service
 definitions must match the actual `docker-compose.yml`. SteVe
 behaviors must match `steve/`. Email Worker behavior must match
-`email-worker/`. If unclear, add `<!-- TODO: confirm -->`.
+`email-worker/`. If unclear, add `{/* TODO: confirm */}`.
 
 ## Output
 

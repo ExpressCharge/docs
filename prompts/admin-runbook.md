@@ -63,7 +63,7 @@ Same as customer-tutorial.md plus:
 Every claim must cite a source file in `code_refs`. Endpoints must
 trace to a real `web/routes/api/...` route. Env vars must exist in
 `web/.env.example`. SteVe behaviors must trace to `steve/`. If a claim
-has no source, add a `<!-- TODO: confirm -->` comment and move on.
+has no source, add a `{/* TODO: confirm */}` comment and move on.
 
 ## Glossary
 

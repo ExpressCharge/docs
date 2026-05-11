@@ -122,7 +122,7 @@ What gets recorded:
 
 - The web app logs `Manual sync triggered via notification` at INFO.
 - The worker logs `Received sync trigger notification from api` and the resulting `Sync completed` line with event and transaction counts.
-- The resulting [sync run](/glossary#sync-run) appears in the Sync dashboard's run history alongside scheduled runs. <!-- TODO: confirm whether the run row records `source=api` vs `source=cron` -->
+- The resulting [sync run](/glossary#sync-run) appears in the Sync dashboard's run history alongside scheduled runs. {/* TODO: confirm whether the run row records `source=api` vs `source=cron` */}
 
 There is no "undo" for a sync run, because a sync run is itself an idempotent reconciliation — running it again won't double-count events. If a manual trigger surfaces a bad event in Lago, the correction happens in Lago, not by reverting the sync.
 

@@ -14,7 +14,11 @@ prompt_template: admin-runbook
 ---
 
 
-import { Aside, Tutorial, TutorialStep, Screenshot, Endpoint } from "~/components";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import Screenshot from "@components/Screenshot.astro";
+import Endpoint from "@components/Endpoint.astro";
+import { Aside } from "@astrojs/starlight/components";
 
 Run this when a customer needs an EV card attached to their billing identity — typically right after issuing a new card, after a card swap, or when a card arrived in the fleet unlinked. The link is what tells Polaris Express which Lago customer to charge when a session starts on that card.
 

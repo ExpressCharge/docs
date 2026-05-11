@@ -14,8 +14,9 @@ prompt_template: selfhost-phase
 
 
 import { Aside, Tabs, TabItem } from "@astrojs/starlight/components";
-import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
-import EnvVar from "../../../../components/EnvVar.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import EnvVar from "@components/EnvVar.astro";
 
 You have a running stack. Before you hand it to operators or wire up
 DNS for real charge points, prove it works. This phase walks through

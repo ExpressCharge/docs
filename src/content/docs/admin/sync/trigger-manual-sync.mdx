@@ -15,9 +15,11 @@ prompt_template: admin-runbook
 ---
 
 
-import { Aside, Tutorial, TutorialStep } from "../../../components";
-import Endpoint from "../../../components/Endpoint.astro";
-import Screenshot from "../../../components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+import Endpoint from "@components/Endpoint.astro";
+import Screenshot from "@components/Screenshot.astro";
 
 The sync worker normally runs on an [Adaptive Cadence](/glossary#adaptive-cadence) — every 15 minutes when chargers are active, hourly when idle, weekly when dormant. Trigger a manual [sync run](/glossary#sync-run) when you need fresh transactions reflected in billing immediately: after closing out a session with a VIP customer, while investigating a missing [Lago](/glossary#lago) event, or before pulling a reconciliation report.
 

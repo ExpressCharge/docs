@@ -45,10 +45,10 @@ parsed into `URLComponents`.
 
 | Purpose | Universal Link | Custom scheme | Handler |
 |---|---|---|---|
-| Charger sticker | `https://<host>/c/<id>` | `expchg://c/<id>` | `chargerDeepLinkRequested` |
-| Magic-email sign-in | `https://<host>/m/<token>` | — | `magicEmailSignInRequested` |
-| User QR sign-in | `https://<host>/u/<publicId>` | — | `userQrSignInRequested` |
-| Registration PKCE callback | `https://<host>/<callback>?code=…` | — | `universalLinkRegistrationCallback` |
+| Charger sticker | `https://&lt;host&gt;/c/&lt;id&gt;` | `expchg://c/&lt;id&gt;` | `chargerDeepLinkRequested` |
+| Magic-email sign-in | `https://&lt;host&gt;/m/&lt;token&gt;` | — | `magicEmailSignInRequested` |
+| User QR sign-in | `https://&lt;host&gt;/u/<publicId>` | — | `userQrSignInRequested` |
+| Registration PKCE callback | `https://&lt;host&gt;/&lt;callback&gt;?code=…` | — | `universalLinkRegistrationCallback` |
 
 ### Dispatch order
 

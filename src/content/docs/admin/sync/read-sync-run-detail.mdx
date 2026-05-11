@@ -15,6 +15,10 @@ prompt_template: admin-runbook
 
 import { Aside } from "@astrojs/starlight/components";
 
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+
 When a sync run finishes — or fails — you open its detail page to understand what changed and what broke. This runbook walks through every panel on the sync-run detail page so you can read it fluently when a customer complaint or a Lago discrepancy lands on your desk.
 
 ## Prerequisites
@@ -27,7 +31,7 @@ When a sync run finishes — or fails — you open its detail page to understand
 
 <Tutorial>
   <TutorialStep title="Open the sync run">
-    Navigate to `/sync/<id>`, or click a row in the sync runs list. If the ID is invalid or the run does not exist, the console redirects you back to `/sync`.
+    Navigate to `/sync/&lt;id&gt;`, or click a row in the sync runs list. If the ID is invalid or the run does not exist, the console redirects you back to `/sync`.
 
     <Screenshot alt="Sync run detail page header showing run ID, status, and start time." />
   </TutorialStep>

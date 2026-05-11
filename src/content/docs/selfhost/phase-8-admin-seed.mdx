@@ -12,8 +12,9 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Tutorial, TutorialStep } from '@astrojs/starlight/components';
-import { Aside } from '@astrojs/starlight/components';
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
 
 By default Polaris Express has no admins. The first person to sign up
 is just a regular user — they can't reach `/admin`, can't promote

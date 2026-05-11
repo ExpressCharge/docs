@@ -13,10 +13,10 @@ prompt_template: admin-runbook
 ---
 
 
-import { Aside, Steps } from '@astrojs/starlight/components';
-import Tutorial from '~/components/Tutorial.astro';
-import TutorialStep from '~/components/TutorialStep.astro';
-import Screenshot from '~/components/Screenshot.astro';
+import { Aside, Steps } from "@astrojs/starlight/components";
+import Tutorial from '@components/Tutorial.astro';
+import TutorialStep from '@components/TutorialStep.astro';
+import Screenshot from '@components/Screenshot.astro';
 
 Use this runbook the first time you set up [expreScan](/glossary/#expre-scan) on a new device, or when an operator's existing registration has been revoked and they need to pair the app again. The handshake uses PKCE: the device generates a verifier locally, the web admin issues a one-time code over a custom-scheme callback, and the app exchanges the code plus verifier for a long-lived device credential.
 
@@ -98,7 +98,7 @@ something other than expreScan (for example, a corporate MDM
 configuration that rewrites custom schemes), or a stale Universal
 Link was tapped outside the auth session. The app has a
 belt-and-braces handler for the HTTPS Universal Link form
-(`https://<universal-link-host>/<registration-callback-path>?code=…`)
+(`https://&lt;universal-link-host&gt;/&lt;registration-callback-path&gt;?code=…`)
 that fires via `onOpenURL`. If neither path delivers the code within
 ~30 seconds, cancel and start again.
 

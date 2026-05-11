@@ -15,8 +15,9 @@ prompt_template: admin-runbook
 
 
 import { Aside } from "@astrojs/starlight/components";
-import { Tutorial, TutorialStep } from "@/components/Tutorial";
-import { Screenshot } from "@/components/Screenshot";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import Screenshot from "@components/Screenshot.astro";
 
 The admin console is your war-room for the ExpressCharge fleet. This runbook walks a new operator through the dashboard and the sidebar so you know where to look when something needs attention — live sessions, an in-flight [sync run](/glossary#sync-run), or a [ChargeBox](/glossary#chargebox) that's gone offline.
 

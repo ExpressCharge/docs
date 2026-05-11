@@ -29,7 +29,7 @@ The app advertises two ways of receiving these URLs:
 - **Universal Links** — `https://` URLs declared in the app's
   `apple-app-site-association` (AASA) file. iOS routes them to
   ExpresScan when installed; otherwise the URL opens in Safari.
-- **Custom-scheme URLs** — e.g. `expchg://c/<id>`. These only work
+- **Custom-scheme URLs** — e.g. `expchg://c/&lt;id&gt;`. These only work
   when the app is installed, but they survive contexts where Universal
   Links don't (some in-app browsers, QR scanners that strip `https`).
 
@@ -51,9 +51,9 @@ Each prefix corresponds to a specific surface:
 
 | Prefix | Purpose | Audience |
 | --- | --- | --- |
-| `/c/<id>` | Open a charger from its physical sticker | Anyone with the app |
+| `/c/&lt;id&gt;` | Open a charger from its physical sticker | Anyone with the app |
 | `/u/<publicId>` | Sign in via the QR code on an EV card | Customers |
-| `/m/<token>` | Sign in via a Magic link emailed to a customer | Customers |
+| `/m/&lt;token&gt;` | Sign in via a Magic link emailed to a customer | Customers |
 | `/auth/callback` | Complete operator/developer registration (PKCE) | Operators |
 
 ### Delivery paths

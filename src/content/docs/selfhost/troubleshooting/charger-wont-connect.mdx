@@ -13,7 +13,7 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside } from "@astrojs/starlight/components";
 
 A charger that refuses to connect to SteVe is the most common
 first-day failure. This runbook walks you through the layered checks
@@ -33,7 +33,7 @@ Have these on hand:
 
 - The charger's `chargeBoxId` (its OCPP identity string).
 - The SteVe public WebSocket URL — typically
-  `ws://<host>:8180/steve/websocket/CentralSystemService/<chargeBoxId>`
+  `ws://&lt;host&gt;:8180/steve/websocket/CentralSystemService/<chargeBoxId>`
   or `wss://...` if you're terminating TLS in front of SteVe.
 - Shell access to the host running SteVe (`docker compose` available).
 - The `AUTH_PASSWORD` for the SteVe admin UI.
@@ -86,7 +86,7 @@ curl -i \
   -H "Sec-WebSocket-Version: 13" \
   -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
   -H "Sec-WebSocket-Protocol: ocpp1.6" \
-  http://<steve-host>:8180/steve/websocket/CentralSystemService/<chargeBoxId>
+  http://&lt;steve-host&gt;:8180/steve/websocket/CentralSystemService/<chargeBoxId>
 ```
 
 You want a `101 Switching Protocols` response. Other outcomes:
@@ -153,7 +153,7 @@ problem, not the charger.
 
 ```bash
 curl -i -H "Authorization: Bearer $WEBAPI_VALUE" \
-  http://<steve-host>:8180/steve/api/v1/chargepoints
+  http://&lt;steve-host&gt;:8180/steve/api/v1/chargepoints
 ```
 
 A `401` means the `WEBAPI_VALUE` on the ExpresSync side doesn't

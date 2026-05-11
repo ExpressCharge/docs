@@ -206,7 +206,7 @@ unaffected — the hooks only mutate transient `verifications` rows
 If a rotation goes wrong:
 
 - The previous keys are recoverable from your secrets manager or
-  `web/.env.<timestamp>.bak` if you backed up before editing.
+  `web/.env.&lt;timestamp&gt;.bak` if you backed up before editing.
 - There is no migration to undo; just restore the old values and
   `docker compose up -d web ocpp`.
 

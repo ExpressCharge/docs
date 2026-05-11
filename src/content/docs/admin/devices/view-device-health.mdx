@@ -13,6 +13,11 @@ prompt_template: admin-runbook
 ---
 
 
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+
 Use this runbook when you need a fleet-wide snapshot of every charger and NFC scanner Polaris Express is tracking — for a morning health check, when a customer reports a charger offline, or when you're triaging a scanner that won't arm. The `/admin/devices` page is the single surface that merges OCPP [ChargeBoxes](/glossary#chargebox) and iOS/macOS NFC scanners into one grid.
 
 ## Prerequisites

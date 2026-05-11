@@ -13,6 +13,11 @@ last_authored: 2025-01-15
 prompt_template: customer-tutorial
 ---
 
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+
 This tutorial is for drivers who want to look at one of their invoices on the Polaris Express web app — to check what they were charged for, see the billing period, or download a copy. You'll open the Billing page, find the invoice in the list, and open its detail view.
 
 ## Before you start
@@ -50,7 +55,7 @@ If you have a lot of invoices, narrow the list with the filter bar above the tab
 
 <TutorialStep title="Open the invoice">
 
-Select the invoice row you want to view. The invoice detail page loads at `/billing/invoices/<id>`.
+Select the invoice row you want to view. The invoice detail page loads at `/billing/invoices/&lt;id&gt;`.
 
 The header shows the invoice number and its current status badge — for example, **Paid**, **Open**, **Overdue**, or **Voided**. If the invoice is tied to a subscription, the description shows the billing period start date.
 

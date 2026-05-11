@@ -14,7 +14,7 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Tabs, TabItem, Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Aside, FileTree, Steps } from "@astrojs/starlight/components";
 
 Polaris Express is composed as a superproject of git submodules — `web`,
 `email-worker`, `ios`, `steve`, and `docs`. Upgrading a self-hosted
@@ -136,7 +136,7 @@ automatically. It runs weekly (Monday 09:00 UTC) and on manual dispatch.
 - It runs `git checkout main && git pull origin main` inside every
   submodule.
 - If anything changed, it opens a PR titled `chore: bump submodules`
-  on a branch named `bump-submodules/<run-id>`.
+  on a branch named `bump-submodules/&lt;run-id&gt;`.
 
 You still review the PR (especially the per-submodule diffs) and merge
 manually. Rebuild and restart are still your job — the workflow does not
@@ -152,7 +152,7 @@ After restart, confirm each surface independently.
 <TabItem label="Web">
 
 ```sh
-curl -fsS https://<your-web-host>/api/health
+curl -fsS https://&lt;your-web-host&gt;/api/health
 ```
 
 Should return `200 OK`. Then log into the admin console and check that
@@ -162,7 +162,7 @@ the build SHA in the footer matches the commit you just bumped to.
 <TabItem label="SteVe">
 
 ```sh
-curl -fsS https://<your-steve-host>/manager/home
+curl -fsS https://&lt;your-steve-host&gt;/manager/home
 ```
 
 Should return the SteVe manager page (auth-gated). Then confirm at
@@ -183,7 +183,7 @@ arrives.
 The whole upgrade is one commit on the superproject. To roll back:
 
 ```sh
-git revert <bump-commit-sha>
+git revert &lt;bump-commit-sha&gt;
 git submodule update --init --recursive
 make compose-build
 make down

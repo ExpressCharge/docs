@@ -13,7 +13,7 @@ prompt_template: concept
 ---
 
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside } from "@astrojs/starlight/components";
 
 A driver tapping a sticker on the side of a charger should land
 directly on that charger inside ExpresScan — no manual ID entry, no
@@ -25,7 +25,7 @@ indirection through `NotificationCenter` exists.
 
 ExpresScan listens for two kinds of URLs:
 
-1. **Universal Links** — `https://<host>/...` URLs that iOS routes to
+1. **Universal Links** — `https://&lt;host&gt;/...` URLs that iOS routes to
    the app when the matching AASA file is published. These work from
    Safari, Messages, Mail, and the camera viewfinder.
 2. **Custom scheme** — `expchg://...` URLs. Useful for printed
@@ -43,12 +43,12 @@ subsystem respond.
 
 | Intent | Universal | Custom scheme |
 |---|---|---|
-| Open a [ChargeBox](/glossary#chargebox) | `https://<host>/c/<id>` | `expchg://c/<id>` |
-| User QR sign-in | `https://<host>/u/<publicId>` | — |
-| [Magic link](/glossary#magic-link) sign-in | `https://<host>/m/<token>` | — |
-| Registration PKCE callback | `https://<host>/<callback>?code=…` | — |
+| Open a [ChargeBox](/glossary#chargebox) | `https://&lt;host&gt;/c/&lt;id&gt;` | `expchg://c/&lt;id&gt;` |
+| User QR sign-in | `https://&lt;host&gt;/u/<publicId>` | — |
+| [Magic link](/glossary#magic-link) sign-in | `https://&lt;host&gt;/m/&lt;token&gt;` | — |
+| Registration PKCE callback | `https://&lt;host&gt;/&lt;callback&gt;?code=…` | — |
 
-The charger intent (`/c/<id>`) is the only one that uses the custom
+The charger intent (`/c/&lt;id&gt;`) is the only one that uses the custom
 scheme today. Sign-in URLs are Universal-Link-only by design: they
 must be hard for a malicious sticker to spoof, so they require AASA
 domain ownership.
@@ -70,7 +70,7 @@ sequenceDiagram
   Scan-->>Driver: Charger detail screen
 ```
 
-The same diagram applies to `/u/<publicId>` and `/m/<token>`, except
+The same diagram applies to `/u/<publicId>` and `/m/&lt;token&gt;`, except
 the receiver is the auth pipeline rather than the
 [scan](/glossary#expre-scan) coordinator, and the app must currently
 be in an unauthenticated state for the notification to fire.

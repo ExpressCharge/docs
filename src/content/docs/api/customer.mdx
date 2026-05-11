@@ -30,7 +30,7 @@ The customer API is served from the customer host, not the admin host. Requests 
 Every request must include a valid [BetterAuth](/glossary#betterauth) session cookie. Unauthenticated requests return `401`.
 
 ```http
-Cookie: better-auth.session_token=<token>
+Cookie: better-auth.session_token=&lt;token&gt;
 ```
 
 Session tokens are issued by the auth flow (email/password or [magic link](/glossary#magic-link)) and are scoped to a single customer identity. The session subject determines which [EV cards](/glossary#ev-card), sessions, and account data are visible — customers cannot read or mutate resources they do not own.

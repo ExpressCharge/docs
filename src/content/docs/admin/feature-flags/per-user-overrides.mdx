@@ -13,6 +13,12 @@ prompt_template: admin-runbook
 ---
 
 
+import Endpoint from "@components/Endpoint.astro";
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+
 Use this runbook when you need to change a [feature flag](/glossary#feature-flag) for one specific user — for example, to enable a beta capability for a pilot customer, or to disable a flag that's misbehaving for a single account without touching the global default. The change applies at the user tier and overrides the registry default for every flag-eligible device that user owns.
 
 ## Prerequisites
@@ -38,7 +44,7 @@ Use this runbook when you need to change a [feature flag](/glossary#feature-flag
   <TutorialStep title="Set the override value">
     Click **Edit** on the flag row. Enter the value you want — the form coerces it to the flag's expected type (boolean, number, string, or JSON object) before submission. Click **Save**.
 
-    Under the hood this issues a <Endpoint method="PATCH" path="/api/admin/users/{userId}/feature-flags" /> with a body of the form `{ flags: [{ key, value }] }`. The value is validated against the flag's Zod schema before anything is written. Up to 32 entries can be sent in a single request; if you submit duplicate keys, the last one wins.
+    Under the hood this issues a <Endpoint method="PATCH" path="/api/admin/users/\{userId\}/feature-flags" /> with a body of the form `{ flags: [{ key, value }] }`. The value is validated against the flag's Zod schema before anything is written. Up to 32 entries can be sent in a single request; if you submit duplicate keys, the last one wins.
 
     <Aside type="caution">
       The PATCH endpoint validates `key` against the flag registry and rejects unknown keys with `400 invalid_flag`. If you've recently added a flag in code but the admin UI shows it as unknown, the web process likely hasn't picked up the new registry — redeploy before retrying.
@@ -54,7 +60,7 @@ Use this runbook when you need to change a [feature flag](/glossary#feature-flag
 
 1. The response from the save call returns `{ ok: true, flags: { … } }` where `flags` is the post-write effective user-scoped map. The row in the panel should refresh to show the new value with source `user override`.
 2. Open the [audit log](/glossary#audit-log) (**Admin → Audit**) and filter by event `user.feature_flags.changed`. You should see an entry with the admin user ID who made the change, the target user ID, and the `changedKeys` and `values` in the metadata.
-3. If the user has flag-eligible devices (phone, tablet, or laptop NFC clients — chargers are excluded), those devices receive a `device.feature-flags.changed` [SSE](/glossary#sse) event and should reflect the new value on next reconnect. You can confirm in **Admin → Devices → {device} → Live events**.
+3. If the user has flag-eligible devices (phone, tablet, or laptop NFC clients — chargers are excluded), those devices receive a `device.feature-flags.changed` [SSE](/glossary#sse) event and should reflect the new value on next reconnect. You can confirm in **Admin → Devices → \{device\} → Live events**.
 
 ## If something goes wrong
 

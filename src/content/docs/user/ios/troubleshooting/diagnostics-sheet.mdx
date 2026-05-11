@@ -13,7 +13,12 @@ prompt_template: customer-tutorial
 ---
 
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside } from "@astrojs/starlight/components";
+
+import Persona from "@components/Persona.astro";
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
 
 When support asks "what does your app say?", the Diagnostics sheet is where you find the answer. This tutorial walks you through opening it, copying the values support needs, and running a test sync to confirm your phone is talking to the server.
 

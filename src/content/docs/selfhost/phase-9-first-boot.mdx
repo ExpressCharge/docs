@@ -13,9 +13,10 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
 import { Aside, FileTree } from "@astrojs/starlight/components";
-import EnvVar from "../../../components/EnvVar.astro";
+import EnvVar from "@components/EnvVar.astro";
 
 This is the moment of truth. With DNS, certificates, the database, the
 reverse proxy, [SteVe](/glossary#steve), and the email worker all wired

@@ -12,9 +12,10 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
 import { Aside, FileTree } from "@astrojs/starlight/components";
-import EnvVar from "../../../components/EnvVar.astro";
+import EnvVar from "@components/EnvVar.astro";
 
 If you are bringing an existing CPO operation onto Polaris Express,
 your customers, their [idTags](/glossary#idtag), and their billing
@@ -106,7 +107,7 @@ docker compose exec web pnpm backfill:customers \
 ```
 
 The command runs in batches and writes a row-by-row log to
-`web/data/backfill/run-<timestamp>.log`. For each row it:
+`web/data/backfill/run-&lt;timestamp&gt;.log`. For each row it:
 
 1. Creates the user record and a default
    [user mapping](/glossary#user-mapping) for the `idTag`.
@@ -115,7 +116,7 @@ The command runs in batches and writes a row-by-row log to
 3. Creates a [Lago subscription](/glossary#lago-subscription) against
    `plan_code` with `subscription_at = start_date`.
 4. Emits an [audit log](/glossary#audit-log) entry tagged
-   `backfill:<run-id>`.
+   `backfill:&lt;run-id&gt;`.
 
 <Aside type="note">
   The backfill does **not** send [magic links](/glossary#magic-link)
@@ -131,7 +132,7 @@ After the run completes, reconcile counts:
 
 ```sh
 docker compose exec web pnpm backfill:reconcile \
-  --run-id <run-id>
+  --run-id &lt;run-id&gt;
 ```
 
 This compares CSV row count, users created, mappings created, Lago
@@ -146,7 +147,7 @@ When you are ready to invite customers to log in:
 
 ```sh
 docker compose exec web pnpm backfill:welcome \
-  --run-id <run-id> \
+  --run-id &lt;run-id&gt; \
   --batch-size 50 \
   --delay-ms 2000
 ```
@@ -221,11 +222,11 @@ re-run the row using a single-row CSV.
 </Aside>
 
 ```sh
-docker compose exec web pnpm backfill:revert --run-id <run-id>
+docker compose exec web pnpm backfill:revert --run-id &lt;run-id&gt;
 ```
 
 The revert is itself audit-logged and produces a manifest at
-`web/data/backfill/revert-<run-id>.log`.
+`web/data/backfill/revert-&lt;run-id&gt;.log`.
 
 **Welcome emails bouncing.** Check the email worker logs (Phase 4) and
 confirm <EnvVar name="EMAIL_FROM" /> is a verified sender at your SMTP

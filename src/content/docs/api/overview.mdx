@@ -13,6 +13,8 @@ prompt_template: api-reference
 ---
 
 
+import Endpoint from "@components/Endpoint.astro";
+
 The Polaris Express HTTP API is split into namespaces under
 `/api/...`. Each namespace targets a distinct caller: the customer
 web app, the admin console, the OCPP webhook receiver, or
@@ -143,4 +145,4 @@ curl -s https://admin.polaris.express/api/health | jq .
 
 For uptime monitoring, treat any non-200 response as down. To alert
 on degraded dependencies without paging on every transient blip,
-parse the body and inspect `checks.<name>.status`.
+parse the body and inspect `checks.&lt;name&gt;.status`.

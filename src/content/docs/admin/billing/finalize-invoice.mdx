@@ -14,10 +14,10 @@ prompt_template: admin-runbook
 
 
 import { Aside, Steps } from "@astrojs/starlight/components";
-import Tutorial from "../../../../components/Tutorial.astro";
-import TutorialStep from "../../../../components/TutorialStep.astro";
-import Screenshot from "../../../../components/Screenshot.astro";
-import Endpoint from "../../../../components/Endpoint.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import Screenshot from "@components/Screenshot.astro";
+import Endpoint from "@components/Endpoint.astro";
 
 Finalize a draft invoice when you need to lock its line items and make
 it payable. Use this runbook at month-end close, before sending an
@@ -73,7 +73,7 @@ items.
     In the invoice detail panel, click **Finalize invoice**. The
     admin app issues:
 
-    <Endpoint method="POST" path="/api/admin/invoice/{id}/finalize" />
+    <Endpoint method="POST" path="/api/admin/invoice/\{id\}/finalize" />
 
     which calls Lago's `PUT /invoices/:id/finalize` and returns the
     refreshed invoice. The UI status updates from `draft` to whatever
@@ -100,7 +100,7 @@ The finalize call is synchronous. When it returns:
 
 If the request failed, the panel shows an error toast with the upstream
 Lago message and the API returns `502` with `{ error: "Failed to
-finalize invoice: <message>" }`.
+finalize invoice: &lt;message&gt;" }`.
 
 ## If something goes wrong
 

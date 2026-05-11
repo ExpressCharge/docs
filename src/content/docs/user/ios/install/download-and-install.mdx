@@ -13,6 +13,11 @@ prompt_template: customer-tutorial
 ---
 
 
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+
 {/* TODO: confirm install path once App/ target ships (Wave 3 / E-app-skel). The source README states the SwiftUI app target, Info.plist, and project.yml are not yet in the repo, so the App Store / TestFlight distribution channel is not yet documented in code_refs. */}
 
 The iOS app turns your iPhone into a charger key. You hold your phone near a charger, and the app starts a session for you. This page will walk you through installing the app on your iPhone.

@@ -13,6 +13,12 @@ prompt_template: admin-runbook
 ---
 
 
+import Endpoint from "@components/Endpoint.astro";
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+
 When a Lago webhook arrives but the downstream dispatch fails — a Lago customer didn't update, a subscription change didn't propagate, an invoice event didn't reconcile — you can replay the persisted event from the admin console. Replay clones the original event row, attributes the replay to your operator account, and runs the clone through the same dispatch pipeline as the original. Use this runbook when triaging billing discrepancies reported by support, or when a known dispatch bug has been patched and you need to re-process events received during the outage window.
 
 ## Prerequisites

@@ -13,7 +13,9 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Aside, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
+import { Aside, Tabs, TabItem, FileTree } from "@astrojs/starlight/components";
+
+import EnvVar from "@components/EnvVar.astro";
 
 You have a running stack: <abbr title="Polaris Express web app">web</abbr>, SteVe, the database, and the email Worker. Now you need to register at least one ChargeBox in SteVe and point a real (or simulated) charge point at it. Until you do, the Polaris Express dashboard has nothing to display and no transactions to authorize.
 
@@ -22,7 +24,7 @@ This phase wires up the OCPP side of your installation. After it, you have a cha
 ## Prerequisites
 
 - Phases 1–10 complete: stack is up, DNS resolves, TLS works, admin user can log in to Polaris Express.
-- You can reach the SteVe web UI at `https://<your-steve-host>/steve/manager` (or `http://<host>:8180/steve/manager` if you are running plain HTTP behind a reverse proxy).
+- You can reach the SteVe web UI at `https://&lt;your-steve-host&gt;/steve/manager` (or `http://&lt;host&gt;:8180/steve/manager` if you are running plain HTTP behind a reverse proxy).
 - You have the SteVe web credentials you set in `application-docker.properties` (`webapp.userName` / `webapp.password`).
 - You have at least one of:
   - A physical OCPP 1.6J charge point you can configure, or
@@ -37,7 +39,7 @@ This phase wires up the OCPP side of your installation. After it, you have a cha
 
 ### 1. Log in to SteVe
 
-Open `https://<your-steve-host>/steve/manager` and sign in with the SteVe web credentials.
+Open `https://&lt;your-steve-host&gt;/steve/manager` and sign in with the SteVe web credentials.
 
 You should see the SteVe dashboard with **Home**, **Data Management**, **Operations**, **Events and Certificates**, and **Settings** in the navigation.
 
@@ -61,7 +63,7 @@ Point the charge point at SteVe. The endpoint depends on the OCPP transport.
 <Tabs>
   <TabItem label="OCPP 1.6J (WebSocket)">
     ```
-    ws://<your-steve-host>:<port>/steve/websocket/CentralSystemService/<ChargeBoxId>
+    ws://&lt;your-steve-host&gt;:&lt;port&gt;/steve/websocket/CentralSystemService/<ChargeBoxId>
     ```
 
     If you are terminating TLS in front of SteVe, use `wss://` and the public hostname:
@@ -72,7 +74,7 @@ Point the charge point at SteVe. The endpoint depends on the OCPP transport.
   </TabItem>
   <TabItem label="OCPP 1.5/1.6 SOAP">
     ```
-    http://<your-steve-host>:<port>/steve/services/CentralSystemService
+    http://&lt;your-steve-host&gt;:&lt;port&gt;/steve/services/CentralSystemService
     ```
 
     Behind TLS:

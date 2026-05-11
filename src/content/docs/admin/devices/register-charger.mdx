@@ -14,6 +14,12 @@ prompt_template: admin-runbook
 ---
 
 
+import Endpoint from "@components/Endpoint.astro";
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+
 You're standing up a new charger and need it to appear in the Devices
 listing so customers can start sessions on it. There are two paths:
 the charger speaks [OCPP](/glossary#ocpp) and announces itself through

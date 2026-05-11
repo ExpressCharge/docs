@@ -15,10 +15,10 @@ prompt_template: admin-runbook
 
 
 import { Aside, Steps } from "@astrojs/starlight/components";
-import Tutorial from "../../../../components/Tutorial.astro";
-import TutorialStep from "../../../../components/TutorialStep.astro";
-import Screenshot from "../../../../components/Screenshot.astro";
-import Endpoint from "../../../../components/Endpoint.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import Screenshot from "@components/Screenshot.astro";
+import Endpoint from "@components/Endpoint.astro";
 
 Use impersonation when a customer reports a bug you can't reproduce
 from your own account — a missing charger in their list, a stuck
@@ -120,7 +120,7 @@ admin, escalate to whoever manages role assignments — don't retry.
 
 **The banner doesn't appear after redirect.**
 The middleware didn't pick up the `?as=` marker. Confirm the URL
-contains `?as=<id>`. If it does and the banner is still missing, the
+contains `?as=&lt;id&gt;`. If it does and the banner is still missing, the
 middleware step that sets `ctx.state.actingAs` isn't firing — file an
 incident; do not assume you're impersonating.
 {/* TODO: confirm middleware step 9 file path once routes/_middleware.ts is in code_refs */}

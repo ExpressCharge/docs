@@ -14,7 +14,7 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Aside, FileTree, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Aside, FileTree, Tabs, TabItem } from "@astrojs/starlight/components";
 
 Polaris Express keeps state in two databases: a Postgres instance (the web app, billing sync, audit log, sync runs) and a MariaDB instance (SteVe — OCPP charge box registry, transactions, idTags). Both must be backed up. Losing either one breaks the platform; losing them together is unrecoverable.
 

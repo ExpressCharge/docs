@@ -14,8 +14,10 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Aside, FileTree, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Aside, FileTree, Tabs, TabItem } from "@astrojs/starlight/components";
 import { PackageManagers } from 'starlight-package-managers';
+
+import EnvVar from "@components/EnvVar.astro";
 
 Polaris Express is a multi-service stack: a Deno/Fresh web app, a
 Postgres database, a sync worker, the SteVe OCPP backend, and a

@@ -15,6 +15,9 @@ prompt_template: admin-runbook
 
 import { Aside, Steps } from "@astrojs/starlight/components";
 
+import Endpoint from "@components/Endpoint.astro";
+import Screenshot from "@components/Screenshot.astro";
+
 A customer calls: their car has been unplugged for ten minutes but the
 session is still "Charging" in the app and the meter is still ticking
 on their statement. The charger never sent a `StopTransaction`. This

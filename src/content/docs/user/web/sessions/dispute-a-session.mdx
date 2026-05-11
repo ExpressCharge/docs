@@ -12,8 +12,9 @@ last_authored: 2025-01-15
 prompt_template: customer-tutorial
 ---
 
-import { Tutorial, TutorialStep } from "../../../../components/tutorial";
-import { Screenshot } from "../../../../components/screenshot";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import Screenshot from "@components/Screenshot.astro";
 import { Aside } from "@astrojs/starlight/components";
 
 If a charging session shows the wrong energy, the wrong duration, or a cost you didn't expect, you can open the session in your dashboard, gather the details, and send them to support for review. This guide walks you through finding the session, reading what the page shows, and writing a dispute that gets resolved quickly.

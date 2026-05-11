@@ -13,15 +13,16 @@ last_authored: 2025-01-15
 prompt_template: selfhost-phase
 ---
 
-import { Tutorial, TutorialStep } from "@trayce/starlight-tutorial";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
 import { Aside, FileTree } from "@astrojs/starlight/components";
-import EnvVar from "~/components/EnvVar.astro";
+import EnvVar from "@components/EnvVar.astro";
 import { PackageManagers } from "starlight-package-managers";
 
 This phase prepares the DNS surface and outbound email path for Polaris
 Express. By the end of it, your domain will resolve to your Traefik
 entry, mail sent from Polaris will be SPF/DKIM/DMARC-authenticated, and
-the Cloudflare Email Worker will be live at `mail.<your-domain>` ready
+the Cloudflare Email Worker will be live at `mail.&lt;your-domain&gt;` ready
 to accept signed `POST /send` requests from the Fresh app.
 
 This phase runs **after** you've provisioned a host and decided on a
@@ -39,10 +40,10 @@ inboxes — there is no fallback SMTP path.
   plan cannot bind `send_email`.
 - The zone added to Cloudflare with **Email Routing** enabled.
 - An R2 bucket (or other public-readable origin) for brand assets,
-  reachable at `assets.<your-domain>`.
+  reachable at `assets.&lt;your-domain&gt;`.
 - `npm` and `npx wrangler` available locally — you'll deploy the
   Worker from your workstation, not the production host.
-- A mailbox you can read for `dmarc-reports@<your-domain>` (a
+- A mailbox you can read for `dmarc-reports@&lt;your-domain&gt;` (a
   forwarding rule via Email Routing is fine).
 
 ## Steps
@@ -56,10 +57,10 @@ admin, and mail hostnames at the same Traefik entry. Add a CNAME for
 the assets host pointing at your R2 bucket.
 
 ```dns title="zone: example.com"
-manage.example.com   3600  IN  A      <traefik-ipv4>
-example.com          3600  IN  A      <traefik-ipv4>
-mail.example.com     3600  IN  A      <traefik-ipv4>
-assets.example.com   3600  IN  CNAME  <r2-bucket>.r2.cloudflarestorage.com.
+manage.example.com   3600  IN  A      &lt;traefik-ipv4&gt;
+example.com          3600  IN  A      &lt;traefik-ipv4&gt;
+mail.example.com     3600  IN  A      &lt;traefik-ipv4&gt;
+assets.example.com   3600  IN  CNAME  &lt;r2-bucket&gt;.r2.cloudflarestorage.com.
 ```
 
 The `mail.example.com` record is the public route for the Email
@@ -117,7 +118,7 @@ In the Cloudflare dashboard for the zone:
 3. Cloudflare will display a DKIM CNAME. Add it to your zone:
 
    ```dns
-   <selector>._domainkey.example.com.   3600  IN  CNAME  <selector>.dkim.cloudflare.net.
+   &lt;selector&gt;._domainkey.example.com.   3600  IN  CNAME  &lt;selector&gt;.dkim.cloudflare.net.
    ```
 
 4. Wait for the dashboard to mark DKIM as **Verified** before

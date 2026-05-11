@@ -14,7 +14,9 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Tabs, TabItem, Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Aside, FileTree, Steps } from "@astrojs/starlight/components";
+
+import EnvVar from "@components/EnvVar.astro";
 
 Polaris Express does not send email directly. Instead, the Fresh app
 HMAC-signs a payload and POSTs it to a small Cloudflare Worker, which

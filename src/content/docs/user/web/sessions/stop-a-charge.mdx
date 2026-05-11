@@ -14,6 +14,11 @@ prompt_template: customer-tutorial
 ---
 
 
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+
 This guide is for drivers who started a charging session and want to stop it before the car finishes on its own — for example, because you have enough range, you need to free the bay, or you plugged into the wrong charger. You'll stop the session from the session detail page in your dashboard and confirm the charger released the cable.
 
 ## Before you start
@@ -28,7 +33,7 @@ This guide is for drivers who started a charging session and want to stop it bef
 
 From the sidebar, go to **Sessions**, then click the session you want to stop. Active sessions show an in-progress status badge in the header.
 
-You can also open a session directly at `/sessions/<id>` if you have the link.
+You can also open a session directly at `/sessions/&lt;id&gt;` if you have the link.
 
 <Screenshot alt="Session detail page showing an in-progress session with the live card visible" caption="The session detail page. Live sessions show a green in-progress badge in the header." />
 

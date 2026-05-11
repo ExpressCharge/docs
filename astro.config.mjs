@@ -8,9 +8,6 @@ import starlightImageZoom from "starlight-image-zoom";
 import starlightLlmsTxt from "starlight-llms-txt";
 import starlightSidebarTopics from "starlight-sidebar-topics";
 import starlightHeadingBadges from "starlight-heading-badges";
-import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
-import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
-
 // Brand palette mirrored from web/src/lib/colors.ts. Mermaid diagrams
 // (v1.1) will theme against these values once we add a build-time
 // renderer with Playwright.
@@ -49,23 +46,19 @@ export default defineConfig({
         PageFrame: "./src/overrides/PageFrame.astro",
         Hero: "./src/overrides/Hero.astro",
       },
-      expressiveCode: {
-        themes: ["github-dark-default", "github-light-default"],
-        plugins: [pluginLineNumbers(), pluginCollapsibleSections()],
-        styleOverrides: {
-          borderRadius: "0.625rem",
-        },
-      },
+      // Expressive Code config lives in ec.config.mjs so MDX <Code>
+      // components can resolve it at build time.
       plugins: [
         starlightImageZoom(),
         starlightHeadingBadges(),
-        starlightSidebarTopics([
-          {
-            label: "User Guide",
-            link: "/user/",
-            icon: "user",
-            items: [{ slug: "user" }, { autogenerate: { directory: "user" } }],
-          },
+        starlightSidebarTopics(
+          [
+            {
+              label: "User Guide",
+              link: "/user/",
+              icon: "user",
+              items: [{ slug: "user" }, { autogenerate: { directory: "user" } }],
+            },
           {
             label: "Admin Guide",
             link: "/admin/",
@@ -102,7 +95,7 @@ export default defineConfig({
               { slug: "changelog" },
             ],
           },
-        ]),
+        ], { exclude: ["/welcome/**"] }),
         starlightLlmsTxt({
           projectName: "Polaris Express",
           description:

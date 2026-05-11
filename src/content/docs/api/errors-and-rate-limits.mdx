@@ -13,6 +13,8 @@ prompt_template: api-reference
 ---
 
 
+import { Aside } from "@astrojs/starlight/components";
+
 How the Polaris Express API reports failures and what limits to expect on a hot loop.
 
 {/* TODO: handler not found — no concrete error-formatter or rate-limit middleware was provided in code_refs. The shapes and limits below should be confirmed against the actual middleware before publishing. */}
@@ -78,7 +80,7 @@ matches the JSON pointer into the request body.
 Common cases:
 
 - Missing required field — `issues[].message` is `Required`.
-- Wrong type — `Expected <type>, received <type>`.
+- Wrong type — `Expected &lt;type&gt;, received &lt;type&gt;`.
 - Unknown field — rejected on strict schemas; remove the field.
 
 ## Rate limits

@@ -13,6 +13,10 @@ prompt_template: customer-tutorial
 ---
 
 
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+
 The Billing page is where you see what you owe, what you've paid, and the invoices your operator has issued to you. This tutorial walks you through opening that page, reading the totals, and filtering your invoice history.
 
 Billing in Polaris Express is run by your operator through Lago. You don't add a credit card yourself in the app — your operator sets up your billing account and charges against it. If you need to change how you pay, you contact your operator from this page.
@@ -39,7 +43,7 @@ Four tiles run across the top of the page:
 - **Amount due** — the total of your open invoices. If this is zero, the tile is muted.
 - **Next due** — the earliest payment due date across your open invoices, or `—` if nothing is outstanding.
 - **Paid last 30d** — the total your operator has marked as paid in the last 30 days.
-- **kWh · <period>** — how many kilowatt-hours you've charged in the current billing period.
+- **kWh · &lt;period&gt;** — how many kilowatt-hours you've charged in the current billing period.
 
 The **Amount due** and **Paid last 30d** tiles are clickable. Selecting them filters the invoice list below to **open** or **paid** invoices.
 
@@ -107,7 +111,7 @@ The Wallet section only appears if your operator has created a wallet for your a
 :::
 
 :::note[The Invoices table is empty but I know I've charged]
-Invoices appear here once your operator finalizes them in Lago. Usage between billing periods shows up under **kWh · <period>** in the stat strip before any invoice is issued.
+Invoices appear here once your operator finalizes them in Lago. Usage between billing periods shows up under **kWh · &lt;period&gt;** in the stat strip before any invoice is issued.
 :::
 
 ## Related

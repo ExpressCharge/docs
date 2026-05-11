@@ -14,6 +14,12 @@ prompt_template: admin-runbook
 ---
 
 
+import Endpoint from "@components/Endpoint.astro";
+import Screenshot from "@components/Screenshot.astro";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
+import { Aside } from "@astrojs/starlight/components";
+
 Use this runbook when you want a wall-mounted or counter-mounted iPad or iPhone to present only its single assigned capability — no navigation bar, no status bar, no system overlays. Typical case: an iPad at a service desk that should only show expreScan and never let staff wander off into Settings or sign out.
 
 [Kiosk mode](/reference/glossary/#kiosk-mode) is a UX simplification, **not** a security lockdown. There is an on-device escape gesture (documented below) so a device whose admin console becomes unreachable is never bricked.
@@ -47,7 +53,7 @@ Kiosk mode activates when `kiosk` is present in the device's capability set. Und
 
 <TutorialStep title="Save">
 
-Click **Save**. The console issues a <Endpoint method="PATCH" path="/api/admin/devices/{deviceId}/settings" /> with your change. On success, the server:
+Click **Save**. The console issues a <Endpoint method="PATCH" path="/api/admin/devices/\{deviceId\}/settings" /> with your change. On success, the server:
 
 - UPSERTs the change into `device_settings` with `updated_by = admin:{your user id}`.
 - Emits a `device.settings.changed` [SSE](/reference/glossary/#sse) event so the device reconciles within roughly one second.

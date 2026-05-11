@@ -13,9 +13,10 @@ prompt_template: selfhost-phase
 ---
 
 
-import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
+import Tutorial from "@components/Tutorial.astro";
+import TutorialStep from "@components/TutorialStep.astro";
 import { Aside, FileTree } from "@astrojs/starlight/components";
-import EnvVar from "../../../components/EnvVar.astro";
+import EnvVar from "@components/EnvVar.astro";
 
 Phase 6 applies the Drizzle migrations bundled with the `web` image
 to your PostgreSQL database. Once this completes, the schema is in
@@ -197,7 +198,7 @@ Another connection holds a lock on a table being altered. Find it:
 select pid, query, state from pg_stat_activity where state <> 'idle';
 ```
 
-Terminate the offender with `select pg_terminate_backend(<pid>)`
+Terminate the offender with `select pg_terminate_backend(&lt;pid&gt;)`
 and re-run the migration.
 
 <Aside type="danger">

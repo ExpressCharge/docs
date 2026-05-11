@@ -78,31 +78,26 @@ jobs:
         working-directory: monorepo/docs
         run: npm run autolink
 
-      - name: Open PR
+      - name: Commit straight to main
         if: inputs.dry_run != true
         working-directory: monorepo/docs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_TAG: ${{ inputs.slug != '' && inputs.slug || inputs.tier }}
         run: |
-          BRANCH="agent/author/${BRANCH_TAG}"
           git config user.name "polaris-docs-bot"
           git config user.email "docs-bot@users.noreply.github.com"
-          git checkout -B "$BRANCH"
+          git checkout main
           git add -A
           if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 0
           fi
           git commit -m "agent: author ${BRANCH_TAG}"
-          git push -fu origin "$BRANCH"
-          gh pr create \
-            --repo ExpressCharge/docs \
-            --title "agent: author ${BRANCH_TAG}" \
-            --body "Authored by the Polaris docs authoring fleet. Reviewer comment to follow." \
-            --base main \
-            --head "$BRANCH" || \
-          gh pr edit "$BRANCH" --repo ExpressCharge/docs --body "Authored by the Polaris docs authoring fleet. Updated by a re-run."
+          # Retry once on push race (concurrent workflows / fast-forward conflict).
+          if ! git push origin main; then
+            git pull --rebase origin main
+            git push origin main
+          fi
 
       - name: Review (advisory)
         if: inputs.dry_run != true && inputs.slug != ''
@@ -118,26 +113,23 @@ jobs:
         continue-on-error: true
         uses: actions/github-script@v7
         env:
-          BRANCH_TAG: ${{ inputs.slug }}
+          SLUG: ${{ inputs.slug }}
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const branch = `agent/author/${process.env.BRANCH_TAG}`;
+            const slug = process.env.SLUG;
             const reviewPath = path.join('monorepo', 'docs', 'review.json');
             const verdict = fs.existsSync(reviewPath)
               ? fs.readFileSync(reviewPath, 'utf-8')
               : 'No reviewer verdict available.';
             const owner = 'ExpressCharge';
             const repo = 'docs';
-            const prs = await github.rest.pulls.list({
-              owner, repo,
-              head: `${owner}:${branch}`,
-              state: 'open',
+            const { data: commit } = await github.rest.repos.getCommit({
+              owner, repo, ref: 'main',
             });
-            if (prs.data.length === 0) return;
-            await github.rest.issues.createComment({
-              issue_number: prs.data[0].number,
+            await github.rest.repos.createCommitComment({
               owner, repo,
-              body: `### Reviewer (advisory)\n\n\`\`\`json\n${verdict}\n\`\`\``,
+              commit_sha: commit.sha,
+              body: `### Reviewer (advisory) — ${slug}\n\n\`\`\`json\n${verdict}\n\`\`\``,
             });

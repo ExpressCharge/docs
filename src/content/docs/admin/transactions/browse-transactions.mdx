@@ -15,7 +15,7 @@ prompt_template: admin-runbook
 import Glossary from "@components/Glossary.astro";
 
 The Charging Sessions page is your primary view into every transaction
-that has synced from <Glossary term="SteVe">SteVe</Glossary>. Use it when a customer disputes a bill,
+that has synced from <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>. Use it when a customer disputes a bill,
 when you need to confirm a session is still active, or when you're
 spot-checking the last 24 hours of fleet activity.
 
@@ -25,7 +25,7 @@ spot-checking the last 24 hours of fleet activity.
 - At least one [sync run](/glossary#sync-run) has completed so that
   `transaction_sync_state` rows exist. An empty table on a fresh
   environment is expected.
-- For tag-based searches, know the [<Glossary term="idTag">idTag</Glossary>](/glossary#idtag) or a
+- For tag-based searches, know the [<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>](/glossary#idtag) or a
   substring of it.
 
 ## Procedure
@@ -66,7 +66,7 @@ spot-checking the last 24 hours of fleet activity.
     inclusive — it expands to `23:59:59` on the selected day.
   </TutorialStep>
 
-  <TutorialStep title="Filter by <Glossary term="EV card">EV card</Glossary> / idTag">
+  <TutorialStep title="Filter by <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary> / idTag">
     Type any substring into the **Tag** field. The query does a
     case-insensitive partial match against
     `user_mappings.steveOcppIdTag`. When this filter is active the
@@ -95,7 +95,7 @@ spot-checking the last 24 hours of fleet activity.
   count, e.g. *"42 sessions match current filters"*. Compare this to
   the row count you expect.
 - The live banner at the top of the page reflects new
-  [<Glossary term="SSE">SSE</Glossary>](/glossary#sse) events as sessions update in real time. If a
+  [<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>](/glossary#sse) events as sessions update in real time. If a
   session you just started is missing, give the banner a moment to
   tick before assuming a sync failure.
 - For any individual row, confirm the **Last synced** timestamp is
@@ -123,7 +123,7 @@ spot-checking the last 24 hours of fleet activity.
   **"Active now" never decreases.** The counter is driven by
   `isFinalized = false`. A session that never receives a
   `StopTransaction` event will remain active indefinitely. Investigate
-  the underlying [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) rather than the
+  the underlying [<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) rather than the
   console.
 </Aside>
 

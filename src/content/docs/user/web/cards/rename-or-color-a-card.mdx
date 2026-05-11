@@ -1,0 +1,77 @@
+---
+title: Rename or color-code your EV card
+description: Give your EV card a friendly name so you can tell it apart from your other cards on the dashboard.
+sidebar:
+  order: 30
+persona: Driver
+surface: web
+tier: P1
+code_refs:
+  - web/routes/cards/[id].tsx
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+If you have more than one <Glossary term="EV card">EV card</Glossary> — say, one for the car and one for the spare set of keys — a name like "Model Y daily" reads better than a string of hex digits. This page shows you how to open a card's detail page and what you'll find there.
+
+<!-- TODO: confirm rename + color-pick UI in code_refs. The current /cards/[id].tsx route renders display name and card ID but does not expose an editable rename control or a color picker. Color scheme on the page is fixed to cyan. -->
+
+## Before you start
+
+- You're signed in at `app.polaris.express`.
+- You have at least one EV card linked to your account. If not, see [Add an EV card](/user/web/cards/add-a-card/).
+
+<Tutorial goal="Open your card's detail page" estimatedMinutes={2}>
+
+<TutorialStep title="Open Cards from the sidebar">
+
+From any page in the dashboard, choose **Cards** in the left sidebar.
+
+<Screenshot alt="Cards list showing each EV card with its display name and status" caption="Each card shows its current name and whether it's active." />
+
+</TutorialStep>
+
+<TutorialStep title="Pick the card you want to rename">
+
+Select the card by name. The detail page opens with a **Summary** section, a **Stats** section, and a **Recent sessions** list for that card.
+
+<Screenshot alt="Card detail page open on the Summary section" caption="The Summary section shows the display name, card ID, issue date, and last-used date." />
+
+</TutorialStep>
+
+<TutorialStep title="Check the Summary tiles">
+
+The Summary section shows four tiles:
+
+- **Display name** — what the card is called on your dashboard. If you've never set one, this falls back to the card ID.
+- **Card ID** — the underlying <Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>. You can't change this; it's printed on the card itself.
+- **Issued** — the date the card was added to your account.
+- **Last used** — the date of the most recent session, or "Never" if the card hasn't been used yet.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You're on the right page when the header shows the card's name and a status badge ("Active" or "Inactive"). The **Recent sessions** section at the bottom lists charges made with this specific card.
+
+## Troubleshooting
+
+:::caution[The rename and color controls aren't on the page yet]
+Renaming a card and choosing a color are planned features. For now, the detail page is read-only for the display name. If you need a card renamed, contact your operator — their address is shown in the **Report lost** dialog on the same page.
+:::
+
+**The page says "Not Found".**
+The card either doesn't exist or isn't linked to your account. Go back to **Cards** and pick one from the list.
+
+**"Last used" says "Never" but I've charged with it.**
+Sessions appear after they sync from the charger. Wait a few minutes and refresh. If a session you remember is still missing after an hour, contact your operator.
+
+## Related
+
+- [Report a lost or stolen card](/user/web/cards/report-lost/)
+- [View sessions for one card](/user/web/sessions/filter-by-card/)
+- [Glossary: EV card](/reference/glossary/#ev-card)

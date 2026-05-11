@@ -23,7 +23,7 @@ import Endpoint from "../../../../components/Endpoint.astro";
 
 Use impersonation when a customer reports a bug you can't reproduce
 from your own account — a missing charger in their list, a stuck
-session, a tariff that looks wrong on their receipt. <Glossary term="Impersonation">Impersonation</Glossary>
+session, a tariff that looks wrong on their receipt. <Glossary term="<Glossary term="Impersonation">Impersonation</Glossary>">Impersonation</Glossary>
 lets you load the customer surface scoped to their user, with every
 request you make written to the impersonation audit trail.
 
@@ -39,7 +39,7 @@ request you make written to the impersonation audit trail.
 - Your account has `role = admin`.
 - You are not already impersonating another customer. The start
   endpoint refuses a second impersonation until the first ends.
-- You have the customer's [<Glossary term="Public ID">Public ID</Glossary>](/glossary#public-id) or their
+- You have the customer's [<Glossary term="<Glossary term="Public ID">Public ID</Glossary>">Public ID</Glossary>](/glossary#public-id) or their
   email — enough to locate them in **Admin → Customers**.
 - A reason to be there: a support ticket, a billing dispute, a
   reproducibility check. Note the ticket ID before you start.
@@ -75,7 +75,7 @@ request you make written to the impersonation audit trail.
   <TutorialStep title="Reproduce the issue">
     Navigate the customer surface as you normally would. Every
     request you make is scoped to the customer via the `?as=` marker
-    — chargers, sessions, receipts, <Glossary term="EV card">EV cards</Glossary> all reflect what the
+    — chargers, sessions, receipts, <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV cards</Glossary> all reflect what the
     customer sees.
 
     Keep the session short. Don't initiate charging sessions, don't
@@ -98,7 +98,7 @@ request you make written to the impersonation audit trail.
 ## Verify
 
 - The ImpersonationBanner is gone and you're back on `/admin`.
-- Check **Admin → <Glossary term="Audit log">Audit log</Glossary>** and filter by your user ID. You should
+- Check **Admin → <Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary>** and filter by your user ID. You should
   see paired `impersonation.start` and `impersonation.end` entries
   with the customer's user ID in the metadata, plus one
   `impersonation_audit` row per privileged route you touched while

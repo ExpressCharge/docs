@@ -1,0 +1,117 @@
+---
+title: Manage your active sessions
+description: Sign out of Polaris on the web and learn what other account controls live on the Account page.
+sidebar:
+  order: 40
+persona: Driver
+surface: web
+tier: P1
+code_refs:
+  - web/routes/account/index.tsx
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+If you share a computer, finish charging at a public terminal, or
+want to switch accounts, you sign out from the Account page. This
+tutorial shows you where to find that control and what to expect
+afterward. You need to be signed in to follow along.
+
+## Before you start
+
+- You're signed in to Polaris on the web.
+- You know the email address you use to sign back in.
+
+<Tutorial goal="Sign out of Polaris on the web" estimatedMinutes={1}>
+
+<TutorialStep title="Open the Account page">
+
+From the sidebar, go to **Account**. The page is titled "Account"
+and groups your profile, preferences, sign-out control, and a danger
+zone in one place.
+
+<Screenshot alt="Account page showing Profile, Preferences, Sign out, and Account sections" caption="The Account page collects every personal control in one view." />
+
+</TutorialStep>
+
+<TutorialStep title="Find the Sign out section">
+
+Scroll past **Profile** and **Preferences**. The **Sign out**
+section sits below them. It reads: "End this session on this device.
+You can sign back in from the login page."
+
+</TutorialStep>
+
+<TutorialStep title="Select Sign out">
+
+Select the **Sign out** button on the right of that section. Polaris
+ends the session on this device and sends you to the login page.
+
+<Aside type="note">
+  Sign-out only affects the device you're using right now. If you're
+  signed in on your phone or another browser, those sessions stay
+  active until you sign out from each one.
+</Aside>
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You're back at the login page. If you reload Polaris or visit a
+protected page, you're asked to sign in again.
+
+## What else lives on this page
+
+The Account page is also where you handle the rest of your account
+settings:
+
+- **Profile** — edit your name inline. Your email, account-created
+  date, and onboarded date are read-only. To change your email,
+  contact your operator.
+- **Preferences** — switch between light, dark, and system theme.
+  Language settings are coming in a later release.
+- **Account (danger zone)** — start an account-deletion request.
+  Self-serve deletion isn't available yet, so the button opens a
+  prefilled email to your operator. They confirm your identity and
+  retire the account with a 30-day recovery window, so a mistaken
+  request can be undone.
+
+<Aside type="caution">
+  If you see an **Account in view-only mode** banner at the top of
+  the page, your account has no active <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV cards</Glossary>
+  linked. You can still sign out, view past sessions, and view
+  invoices, but you can't start new charges until your operator
+  re-links a card.
+</Aside>
+
+## Troubleshooting
+
+**"Couldn't load profile right now."** Polaris couldn't read your
+profile from the database. Refresh the page. If the message stays,
+sign out, sign back in, and try again.
+
+**The Sign out button doesn't do anything.** Check your browser's
+network connection. Sign-out is a server request — if you're offline,
+it can't complete. Reconnect and select the button again.
+
+**You're signed out unexpectedly.** Your session may have expired,
+or you signed out from another tab. Sign in again from the login
+page using your <Glossary term="<Glossary term="Magic link">Magic link</Glossary>">magic link</Glossary> or
+your usual method.
+
+:::danger
+If you suspect someone else used your account, sign out everywhere
+you're signed in, then contact your operator. They can review your
+<Glossary term="<Glossary term="Audit log">Audit log</Glossary>">audit log</Glossary> and help secure the
+account.
+:::
+
+## Related
+
+- [Update your name and profile details](/user/web/account/edit-profile/)
+- [Switch between light and dark theme](/user/web/account/theme/)
+- [Request account deletion](/user/web/account/delete-account/)

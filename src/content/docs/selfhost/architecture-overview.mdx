@@ -19,7 +19,7 @@ Polaris Express is a small constellation of services rather than a single monoli
 
 ## The model
 
-A Polaris Express deployment is two stacks running side by side: the **Polaris stack** (the web app, sync worker, and its Postgres) and the **<Glossary term="SteVe">SteVe</Glossary> stack** (the <Glossary term="OCPP">OCPP</Glossary> server and its MariaDB). They are deliberately separate so that the OCPP server can be restarted, upgraded, or replaced without touching application state.
+A Polaris Express deployment is two stacks running side by side: the **Polaris stack** (the web app, sync worker, and its Postgres) and the **<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary> stack** (the <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> server and its MariaDB). They are deliberately separate so that the OCPP server can be restarted, upgraded, or replaced without touching application state.
 
 ```mermaid
 flowchart LR
@@ -51,10 +51,10 @@ flowchart LR
 
 Defined in the root `docker-compose.yml`. Four services, one volume:
 
-- **`postgres`** — Postgres 17. Source of truth for users, ChargeBoxes, <Glossary term="EV card">EV cards</Glossary>, idTags, tariffs, <Glossary term="Sync run">sync runs</Glossary>, and the audit log. The named volume `postgres_data` is the only piece of state Polaris itself owns.
+- **`postgres`** — Postgres 17. Source of truth for users, ChargeBoxes, <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV cards</Glossary>, idTags, tariffs, <Glossary term="<Glossary term="Sync run">Sync run</Glossary>">sync runs</Glossary>, and the audit log. The named volume `postgres_data` is the only piece of state Polaris itself owns.
 - **`migrate`** — a one-shot container that runs `deno task db:migrate` and exits. Other services wait on it via `service_completed_successfully` so the schema is always current before anything tries to read it.
-- **`app`** — the Deno web app. Serves the dashboard, the public booking surfaces, the API, and the <Glossary term="Kiosk mode">kiosk</Glossary> views. Mounts the Docker socket so it can introspect the stack from within. Exposed on port 8000.
-- **`sync`** — a long-running Deno process (`sync-worker.ts`) that reconciles state between Polaris and SteVe. ChargeBoxes, idTags, and <Glossary term="Reservation">reservations</Glossary> created in Polaris become OCPP entities in SteVe via this worker; transactions and <Glossary term="Meter value">meter values</Glossary> flow back.
+- **`app`** — the Deno web app. Serves the dashboard, the public booking surfaces, the API, and the <Glossary term="<Glossary term="Kiosk mode">Kiosk mode</Glossary>">kiosk</Glossary> views. Mounts the Docker socket so it can introspect the stack from within. Exposed on port 8000.
+- **`sync`** — a long-running Deno process (`sync-worker.ts`) that reconciles state between Polaris and SteVe. ChargeBoxes, idTags, and <Glossary term="<Glossary term="Reservation">Reservation</Glossary>">reservations</Glossary> created in Polaris become OCPP entities in SteVe via this worker; transactions and <Glossary term="<Glossary term="Meter value">Meter value</Glossary>">meter values</Glossary> flow back.
 
 All four containers share `web/.env`, so credentials and DB URLs only have to be defined once.
 
@@ -62,7 +62,7 @@ All four containers share `web/.env`, so credentials and DB URLs only have to be
 
 Defined in `steve/docker-compose.yml`. Two services, one external network:
 
-- **`mariadb`** — MariaDB 10.4. Holds SteVe's own data: <Glossary term="ChargeBox">charge box</Glossary> registrations, OCPP idTags, transactions, meter values. Bind-mounted to `/data/ocpp/mariadb` on the host.
+- **`mariadb`** — MariaDB 10.4. Holds SteVe's own data: <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">charge box</Glossary> registrations, OCPP idTags, transactions, meter values. Bind-mounted to `/data/ocpp/mariadb` on the host.
 - **`app`** — SteVe itself. Speaks OCPP-J (WebSocket) to chargers on its public endpoint and exposes a REST/SOAP API that the Polaris sync worker drives.
 
 SteVe lives on two Docker networks: an internal `ocpp` network (for MariaDB) and an external `pangolin` network used by the reverse proxy that fronts the OCPP WebSocket.

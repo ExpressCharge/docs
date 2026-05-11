@@ -185,7 +185,7 @@ A few notes on the defaults:
 
 - `RATE_LIMIT_MAX` of **5 per 10 minutes** is keyed on
   `sha256("${to}:${category}")`. That's enough headroom for a user who
-  bounces between [<Glossary term="Magic link">magic-link</Glossary>](/glossary#magic-link) requests but
+  bounces between [<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">magic-link</Glossary>](/glossary#magic-link) requests but
   blocks abuse. Raise it if you operate at scale; lower it if you're
   paranoid.
 - `TS_WINDOW_MS` and `NONCE_TTL_SECONDS` must stay related:

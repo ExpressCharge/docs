@@ -1,0 +1,120 @@
+---
+title: Dispute a charging session
+description: Find a charging session that looks wrong on your dashboard and send the details to support so they can review it.
+sidebar:
+  order: 40
+persona: Driver
+surface: web
+tier: P1
+code_refs:
+  - web/routes/sessions/[id].tsx
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import { Tutorial, TutorialStep } from "../../../../components/tutorial";
+import { Screenshot } from "../../../../components/screenshot";
+import { Aside } from "@astrojs/starlight/components";
+
+If a charging session shows the wrong energy, the wrong duration, or a cost you didn't expect, you can open the session in your dashboard, gather the details, and send them to support for review. This guide walks you through finding the session, reading what the page shows, and writing a dispute that gets resolved quickly.
+
+## Before you start
+
+- You signed in to your Polaris Express account on the web.
+- You know roughly when the session happened (date, charger, or rough cost).
+- You have an email client open, or you know your support contact.
+
+<Tutorial goal="Send a dispute for a charging session" estimatedMinutes={5}>
+
+<TutorialStep title="Open the session from your sessions list">
+
+From the sidebar, go to **Sessions**. Find the session you want to dispute and open it. The detail page is titled **Session #** followed by a number — that number is the session ID you'll quote to support.
+
+<Screenshot alt="Session detail page showing the session number, status badge, and summary tiles" caption="The session number in the page title is what support will ask for." />
+
+</TutorialStep>
+
+<TutorialStep title="Check the status badge">
+
+Look at the badge in the top right of the page. It shows either **In progress** or **Completed**.
+
+<Aside type="caution">
+If the badge still says **In progress**, the session hasn't finished syncing yet. Wait until it shows **Completed** before disputing — the kWh, duration, and cost can still change while a session is live.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Read the summary tiles">
+
+The summary section shows four numbers for the session:
+
+- **Total kWh** — energy delivered across the whole session.
+- **Duration** — time from start to end.
+- **Average kW** — total kWh divided by hours.
+- **Cost** — the estimated cost based on your current tariff.
+
+<!-- TODO: confirm the exact tile labels rendered by SessionDetailCard -->
+
+Write down which number looks wrong and what you expected instead. "The cost shows $14.20 but I only charged for 20 minutes" is more useful to support than "the cost is wrong".
+
+</TutorialStep>
+
+<TutorialStep title="Note the charger details">
+
+Below the summary, the page shows the charger you used — its public ID, connector type, and max kW. The public ID matches the sticker on the physical charger.
+
+If you remember which charger you plugged into, check that the public ID on the page matches the one on the sticker. A mismatch is worth mentioning in your dispute.
+
+</TutorialStep>
+
+<TutorialStep title="Scan the meter timeline">
+
+Scroll to **Meter timeline**. Each row is one reading the charger reported, with a timestamp and the kWh added since the previous reading.
+
+Look for:
+
+- Long gaps between readings (the charger may have dropped offline).
+- A jump in kWh that's much larger than the others.
+- A final reading that doesn't match what you saw on the charger screen.
+
+Note the time of any row that looks off. Support uses these timestamps to match your session against the charger's own logs.
+
+</TutorialStep>
+
+<TutorialStep title="Email support with the details">
+
+Send an email to your support contact with:
+
+- The session number (from the page title).
+- The date and rough time of the session.
+- Which number you're disputing (kWh, duration, cost, or charger).
+- What you expected, and why.
+- Any meter timeline timestamps that looked wrong.
+
+Keep the browser tab open while you write — copying values straight from the page avoids typos.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You'll get a reply from support confirming they received the dispute and have the session ID on file. If your tariff includes the energy, support can adjust the cost without involving your card. If the session was billed, any refund shows up on a future invoice.
+
+## Troubleshooting
+
+**The session doesn't appear in my list.** Sessions only show up after the charger reports them. If you finished charging in the last few minutes, wait and refresh. If a session is more than an hour old and still missing, contact support — the charger may not have synced.
+
+**Opening the session shows "Not Found".** The session belongs to a different account, or the session ID in the URL is wrong. Go back to **Sessions** and open it from the list instead of typing the URL.
+
+**The cost shows as unknown.** Your tariff couldn't be matched against this session. This usually resolves on its own once billing catches up. If it stays unknown for more than a day, mention it in your dispute.
+
+:::caution
+Don't dispute a session that's still **In progress**. The numbers update until the charger reports the session as final, and what looks wrong now may be correct once the session closes.
+:::
+
+## Related
+
+- [View your charging history](/user/web/sessions/view-history/)
+- [Understand your invoice](/user/web/billing/understand-invoice/)
+- [Charger public IDs and stickers](/user/web/chargers/public-id/)

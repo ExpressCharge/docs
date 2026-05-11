@@ -1,0 +1,118 @@
+---
+title: Manage payment methods
+description: Find your invoices, check what you owe, and reach your operator about payment on the Polaris Express Billing page.
+sidebar:
+  order: 30
+persona: Driver
+surface: web
+tier: P1
+code_refs:
+  - web/routes/billing/index.tsx
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+The Billing page is where you see what you owe, what you've paid, and the invoices your operator has issued to you. This tutorial walks you through opening that page, reading the totals, and filtering your invoice history.
+
+Billing in Polaris Express is run by your operator through <Glossary term="Lago">Lago</Glossary>. You don't add a credit card yourself in the app — your operator sets up your billing account and charges against it. If you need to change how you pay, you contact your operator from this page.
+
+## Before you start
+
+- You're signed in to the web app as a driver.
+- Your operator has set up a billing account for you. If they haven't, the Billing page will tell you so and offer a **Contact operator** link.
+
+<Tutorial goal="Review what you owe and reach your operator about payment" estimatedMinutes={3}>
+
+<TutorialStep title="Open the Billing page">
+
+In the sidebar, select **Billing**. The page header reads "Billing — Your plan, usage, and invoices."
+
+<Screenshot alt="Driver Billing page with the stat strip, Overview, and Invoices sections" caption="The Billing page groups everything money-related into one view." />
+
+</TutorialStep>
+
+<TutorialStep title="Read the stat strip">
+
+Four tiles run across the top of the page:
+
+- **Amount due** — the total of your open invoices. If this is zero, the tile is muted.
+- **Next due** — the earliest payment due date across your open invoices, or `—` if nothing is outstanding.
+- **Paid last 30d** — the total your operator has marked as paid in the last 30 days.
+- **kWh · <period>** — how many kilowatt-hours you've charged in the current billing period.
+
+The **Amount due** and **Paid last 30d** tiles are clickable. Selecting them filters the invoice list below to **open** or **paid** invoices.
+
+</TutorialStep>
+
+<TutorialStep title="Check the Overview card">
+
+Below the stat strip, the **Overview** section shows your current billing position. If everything is settled, you'll see a paid-up indicator. If you owe money, you'll see the amount and — when your operator has configured a contact address — a way to reach them.
+
+</TutorialStep>
+
+<TutorialStep title="Open your <Glossary term='Lago'>billing</Glossary> wallet, if you have one">
+
+If your operator has set up a wallet for you, a **Wallet** section appears between Overview and Invoices. It shows your current balance, what's been consumed, when it was last topped up, and your five most recent wallet transactions.
+
+If you don't see a Wallet section, your operator hasn't given you one. That's fine — invoices still work without it.
+
+</TutorialStep>
+
+<TutorialStep title="Filter your invoices">
+
+Scroll to the **Invoices** section. The filter bar above the table lets you narrow the list by:
+
+- **Status** — `open`, `paid`, or `voided`.
+- **From** and **To** dates — filter by issuing date.
+
+The table updates to match. If no invoices match your filters, you'll see an empty state with a **Reset filters** link.
+
+</TutorialStep>
+
+<TutorialStep title="Contact your operator to change how you pay">
+
+Polaris Express doesn't let you add or remove a card from the Billing page. Your operator manages that on your behalf.
+
+When you owe a balance, the Overview card shows a **Contact operator** action that opens an email to the address your operator has configured. Use that to ask about:
+
+- Updating the card or bank account they charge.
+- Disputing or correcting an invoice.
+- Topping up your wallet, if you have one.
+
+<!-- TODO: confirm whether the Overview card actually renders a "Contact operator" button, or whether the operator email only surfaces in the no-Lago-link empty state. The handler passes operatorEmail into BillingOverviewData, but the button copy isn't visible in code_refs. -->
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+- The **Amount due** tile shows `0` (and looks muted) when you have no open invoices.
+- Selecting **Paid last 30d** scrolls you to the Invoices section and shows only paid invoices.
+- Clearing the status and date filters brings every invoice back into the table.
+
+## Troubleshooting
+
+:::caution[The page says "No billing account on file"]
+Your driver account isn't linked to a billing customer yet. Select **Contact operator** on that screen — your operator needs to provision a plan before invoices and wallet data appear.
+:::
+
+:::caution[The "Amount due" tile shows a balance you've already paid]
+Payments take a moment to settle. If the figure doesn't update within a day, email your operator using the **Contact operator** link on the Overview card and include the invoice number.
+:::
+
+:::note[I don't see a Wallet section]
+The Wallet section only appears if your operator has created a wallet for your account. If you'd like one, ask your operator.
+:::
+
+:::note[The Invoices table is empty but I know I've charged]
+Invoices appear here once your operator finalizes them in Lago. Usage between billing periods shows up under **kWh · <period>** in the stat strip before any invoice is issued.
+:::
+
+## Related
+
+- [Start a charging session](/user/web/charging/start-session/)
+- [Read your charging history](/user/web/history/)
+- [Glossary: Lago, <Glossary term="Lago customer">Lago customer</Glossary>, <Glossary term="Lago subscription">Lago subscription</Glossary>](/glossary/)

@@ -148,8 +148,9 @@
   code_refs:
     - web/routes/account/index.tsx
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.web.cards.add-a-card
   title: Add an EV card to your account
   tier: P0
@@ -174,8 +175,9 @@
   code_refs:
     - web/routes/cards/[id].tsx
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.web.cards.report-lost-card
   title: Report a lost or stolen EV card
   tier: P0
@@ -253,8 +255,9 @@
   code_refs:
     - web/routes/sessions/[id].tsx
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.web.sessions.dispute-a-session
   title: Dispute a charging session
   tier: P1
@@ -265,8 +268,9 @@
   code_refs:
     - web/routes/sessions/[id].tsx
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.web.reservations.create-a-reservation
   title: Reserve a charger for later
   tier: P0
@@ -304,8 +308,9 @@
   code_refs:
     - web/routes/api/customer/reservations/index.ts
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.web.billing.view-invoice
   title: View an invoice
   tier: P0
@@ -343,8 +348,9 @@
   code_refs:
     - web/routes/subscription/index.tsx
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.web.billing.payment-methods
   title: Manage payment methods
   tier: P1
@@ -355,8 +361,9 @@
   code_refs:
     - web/routes/billing/index.tsx
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.web.troubleshooting.common-issues
   title: Common issues — cookies, magic-link expiry, card not recognized
   tier: P0
@@ -445,8 +452,9 @@
   code_refs:
     - ios/App/Features/Settings/SettingsView.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.ios.charging.start-charge-with-nfc
   title: Tap your card to start a charge
   tier: P0
@@ -497,8 +505,9 @@
   code_refs:
     - ios/App/Features/Scan/ErrorView.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.ios.find.charger-map
   title: Find a charger nearby
   tier: P0
@@ -535,8 +544,9 @@
   code_refs:
     - ios/App/Features/Chargers/ChargersTabView.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.ios.notifications.enable-push
   title: Enable push notifications
   tier: P0
@@ -561,8 +571,9 @@
   code_refs:
     - ios/App/AppDelegate.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.ios.deep-links.expchg-scheme
   title: Open chargers from URLs (expchg:// scheme)
   tier: P1
@@ -573,8 +584,9 @@
   code_refs:
     - ios/App/RootView.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.ios.deep-links.universal-links
   title: Open the app from web links
   tier: P1
@@ -585,8 +597,9 @@
   code_refs:
     - ios/App/RootView.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.ios.troubleshooting.nfc-not-reading
   title: My card isn't being recognized by NFC
   tier: P0
@@ -623,8 +636,9 @@
   code_refs:
     - ios/App/Features/Scan/DiagnosticsSheet.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: admin.getting-started.operator-onboarding
   title: Operator onboarding
   tier: P0
@@ -1262,8 +1276,11 @@
     - Makefile
     - .github/workflows/bump-submodules.yml
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha:
+    Makefile: 690e8416f05f03cfafd471add17898dce6271ad1
+    .github/workflows/bump-submodules.yml: f61e780285b7c7fe42840da9b26de4ca37f0941e
 - slug: selfhost.ops.monitoring
   title: Monitoring — logs and sync health
   tier: P1
@@ -1274,8 +1291,9 @@
   code_refs:
     - web/docs/logging/contract.md
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: selfhost.ops.secrets-rotation
   title: Rotate secrets — HMAC keys and AUTH_SECRET
   tier: P1
@@ -1287,8 +1305,9 @@
     - email-worker/README.md
     - web/.env.example
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: selfhost.troubleshooting.charger-wont-connect
   title: A charger won't connect to SteVe
   tier: P0
@@ -1396,8 +1415,9 @@
   code_refs:
     - ios/Sources/Capabilities/Capabilities.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: concepts.feature-flags
   title: Feature flags
   tier: P1
@@ -1408,8 +1428,9 @@
   code_refs:
     - web/src/lib/devices/feature-flags.ts
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: concepts.accent-color-system
   title: The accent color system
   tier: P1
@@ -1421,8 +1442,9 @@
     - web/src/lib/colors.ts
     - web/CLAUDE.md
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: concepts.deep-link-routing
   title: Deep-link routing
   tier: P1
@@ -1433,8 +1455,9 @@
   code_refs:
     - ios/App/RootView.swift
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: api.overview
   title: API overview
   tier: P0

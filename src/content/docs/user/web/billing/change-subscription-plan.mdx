@@ -1,0 +1,105 @@
+---
+title: Change your subscription plan
+description: Open the Lago customer portal from your subscription page to switch plans or update billing details.
+sidebar:
+  order: 40
+persona: Driver
+surface: web
+tier: P1
+code_refs:
+  - web/routes/subscription/index.tsx
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This tutorial is for drivers who want to move to a different plan — for example, upgrading for more kWh or switching to one with a higher amp limit. You'll start from your subscription page in Polaris Express, open the hosted customer portal, and make the change there. You need a Polaris Express account that's already linked to a plan.
+
+## Before you start
+
+- Sign in to Polaris Express with the account that holds the subscription.
+- Have your payment method handy in case the new plan needs one.
+- If you don't yet have a plan on file, your operator has to provision one for you — the subscription page can't create one.
+
+<Tutorial goal="Switch to a different subscription plan" estimatedMinutes={5}>
+
+<TutorialStep title="Open your subscription page">
+
+In the sidebar, go to **Your subscription**. The page header shows your current plan name (for example, "Standard plan") and a status badge.
+
+<Screenshot alt="Your subscription page showing current plan, estimated bill, and recent activity" caption="The subscription page is your starting point for plan changes." />
+
+</TutorialStep>
+
+<TutorialStep title="Check your current plan details">
+
+Scroll to the **Plan** section. You'll see your plan name, the start date, and the date your current billing period ends. The tiles on the right show your entitlements — **Max amps** and **Ramped charge** — so you can compare them against the plan you're considering.
+
+<Aside type="tip">
+Note your current **Estimated bill** in the stat strip at the top. After you switch plans, this number will reflect the new pricing on your next session.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Open the customer portal">
+
+Scroll to the **Manage** section at the bottom of the page and select the link to the customer portal. Polaris Express opens the <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> hosted portal in a new tab, already signed in for your account.
+
+<!-- TODO: confirm the exact label of the Manage CTA button in PageCard/SectionCard once the Manage section markup is visible in code_refs -->
+
+<Aside type="caution">
+If you don't see a link in the **Manage** section, the portal URL couldn't be loaded for your account. Refresh the page once. If it still doesn't appear, contact your operator — see Troubleshooting below.
+</Aside>
+
+</TutorialStep>
+
+<TutorialStep title="Change your plan in the portal">
+
+In the Lago portal, find the subscription section and pick the plan you want to switch to. Confirm the change in the portal's checkout flow. The portal handles proration and payment.
+
+</TutorialStep>
+
+<TutorialStep title="Return to Polaris Express">
+
+Close the portal tab and go back to **Your subscription**. Refresh the page so it pulls the latest subscription data from Lago.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You'll know the switch worked when:
+
+- The **Plan** section shows the new plan name in the header.
+- The **Max amps** and **Ramped charge** tiles match the new plan's entitlements.
+- The **Period ends** date may update if the new plan starts a fresh billing period.
+- The **Estimated bill** in the stat strip recalculates the next time you charge.
+
+If any of these still show the old values after a refresh, wait a minute and refresh again — Polaris Express reads from Lago on each page load, and Lago can take a moment to reflect the change.
+
+## Troubleshooting
+
+**The page says "No subscription on file."**
+Your account isn't linked to a plan yet. Use the **Contact operator** button on that screen to email your operator and ask them to provision one.
+
+**The Manage section doesn't show a link to the portal.**
+The portal URL is fetched per request and is hidden if the fetch fails. Refresh the page. If the link still doesn't appear, the portal may be temporarily unavailable — try again later, or contact your operator.
+
+**The plan didn't update after I switched.**
+Refresh **Your subscription**. Polaris Express re-fetches your subscription, current usage, and plan from Lago on every page load. If the old plan still shows after several refreshes, contact your operator.
+
+:::caution
+Plan changes can affect your **Max amps** entitlement, which limits how fast you can charge. If your new plan has a lower amp limit, sessions started after the switch will charge more slowly.
+:::
+
+:::danger
+Cancelling your subscription in the portal stops future charging sessions from being authorized. Only cancel if you're sure you no longer need to charge through this operator.
+:::
+
+## Related
+
+- [View your estimated bill](/user/web/billing/estimated-bill)
+- [See your recent charging sessions](/user/web/sessions)
+- [Contact your operator](/user/web/account/contact-operator)

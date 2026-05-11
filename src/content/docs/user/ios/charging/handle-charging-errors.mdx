@@ -1,0 +1,114 @@
+---
+title: Understand charging errors
+description: What each error screen in the ExpresScan iOS app means and how to recover from it.
+sidebar:
+  order: 40
+persona: Driver
+surface: ios
+tier: P1
+code_refs:
+  - ios/App/Features/Scan/ErrorView.swift
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+When a card scan fails, the ExpresScan app shows a full-screen error with a red X icon, a short explanation, and (in most cases) a button to try again. This page walks you through each error you might see, what it means, and what to do next.
+
+## Before you start
+
+- You have the ExpresScan app installed and open on your iPhone.
+- You've seen one of the error screens described below after tapping or scanning a card.
+
+## What happens on every error screen
+
+<Tutorial goal="Recognize and recover from a scan error" estimatedMinutes={3}>
+
+<TutorialStep title="Read the title and message">
+
+Each error screen has a bold title and a short message below it. The title tells you what went wrong; the message tells you what to do.
+
+<Screenshot alt="ExpresScan error screen with red X icon, title, message, and a primary action button" caption="Every error variant shares the same layout: red X icon, title, message, optional action button." />
+
+</TutorialStep>
+
+<TutorialStep title="Watch the countdown in the top-right corner">
+
+A small ring in the top-right corner counts down from 10 seconds. When it reaches zero, the app returns to the ready screen on its own. You don't need to do anything to dismiss the error.
+
+</TutorialStep>
+
+<TutorialStep title="Tap the action button, or go back">
+
+Most errors offer a button at the bottom — "Try again", "Retry", "Try a different card", or "Sign in". Tap it to take the suggested next step. If you'd rather dismiss the error immediately, tap the back chevron in the top-left corner.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You're back on the ready screen, ready to scan a card again — either because you tapped back, tapped the action button, or waited 10 seconds for the auto-dismiss.
+
+## Troubleshooting
+
+Match the title on your screen to the section below.
+
+### "Scan timed out"
+
+The app didn't detect a card in time.
+
+- Hold your card flat against the top edge of your iPhone, where the NFC reader sits.
+- Keep the card still until the app reacts.
+- Tap **Try again**.
+
+### "Card not supported"
+
+The card you scanned isn't one ExpresScan can read.
+
+- Use a different NFC card. Not every contactless card works — your <Glossary term="EV card">EV card</Glossary> from your operator is the one to use.
+- Tap **Try a different card**.
+
+### "Couldn't reach ExpressCharge"
+
+Your iPhone can't talk to the ExpressCharge service.
+
+- Check that you have a cellular or Wi-Fi connection.
+- Move to a spot with better signal if you're in a basement or parking garage.
+- Tap **Retry** once you're back online.
+
+:::caution
+Scans don't queue while you're offline. You need a connection at the moment you scan.
+:::
+
+### "Scan expired"
+
+The scan request from the admin timed out before you tapped your card. There's no retry button on this one — the request has to be started fresh.
+
+- Ask the admin to start a new scan.
+- The app returns to the ready screen automatically.
+
+### "Signed out"
+
+An admin signed this device out of ExpresScan. Your session is no longer valid.
+
+- Tap **Sign in** to authenticate again.
+- If you don't have credentials, contact the admin who manages this device.
+
+:::danger
+If you weren't expecting to be signed out, check with your admin before signing back in. Someone with access to your account revoked this device on purpose.
+:::
+
+### "Something went wrong"
+
+A generic server error. The app couldn't complete the request and doesn't have a more specific reason.
+
+- Tap **Retry**.
+- If it happens repeatedly, wait a minute and try again, or contact support.
+
+## Related
+
+- [Scan your EV card to start charging](/user/ios/charging/scan-to-charge/)
+- [Sign in to ExpresScan](/user/ios/account/sign-in/)
+- [Glossary: EV card](/glossary/#ev-card)

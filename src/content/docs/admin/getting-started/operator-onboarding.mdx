@@ -19,13 +19,13 @@ import Tutorial from "../../../components/Tutorial.astro";
 import TutorialStep from "../../../components/TutorialStep.astro";
 import Screenshot from "../../../components/Screenshot.astro";
 
-This runbook is for the first operator setting up Polaris Express. Use it once, on the day you log into a fresh deployment, to register your first charger, activate your first [<Glossary term="EV card">EV card</Glossary>](/glossary#ev-card), and confirm the dashboard is reporting live signal from your fleet. After this, the dashboard at `/admin` becomes your daily war-room.
+This runbook is for the first operator setting up Polaris Express. Use it once, on the day you log into a fresh deployment, to register your first charger, activate your first [<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>](/glossary#ev-card), and confirm the dashboard is reporting live signal from your fleet. After this, the dashboard at `/admin` becomes your daily war-room.
 
 ## Prerequisites
 
-- An admin account with permission to access `/admin` (created via [<Glossary term="BetterAuth">BetterAuth</Glossary>](/glossary#betterauth) — see your deployment setup).
-- A [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve) instance reachable from Polaris Express, with credentials configured.
-- At least one physical charge point ready to register (you'll need its [<Glossary term="ChargeBox">chargeBoxId</Glossary>](/glossary#chargebox)).
+- An admin account with permission to access `/admin` (created via [<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary#betterauth) — see your deployment setup).
+- A [<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve) instance reachable from Polaris Express, with credentials configured.
+- At least one physical charge point ready to register (you'll need its [<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">chargeBoxId</Glossary>](/glossary#chargebox)).
 - One blank RFID/NFC card to use as your first [EV card](/glossary#ev-card).
 
 ## Procedure
@@ -42,7 +42,7 @@ This runbook is for the first operator setting up Polaris Express. Use it once, 
   <TutorialStep title="Confirm you see the first-run welcome">
     On a brand-new deployment, the dashboard shows a **Welcome to
     ExpressCharge** banner above the main card. This banner appears
-    only when no chargers have ever been seen and no [<Glossary term="Sync run">sync runs</Glossary>](/glossary#sync-run)
+    only when no chargers have ever been seen and no [<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">sync runs</Glossary>](/glossary#sync-run)
     have completed yet. If you see it, you're in the right place.
 
     If you don't see the welcome banner, the system already has fleet
@@ -54,7 +54,7 @@ This runbook is for the first operator setting up Polaris Express. Use it once, 
     Polaris Express does not register chargers directly. Open your
     SteVe instance and add a new charge point with the
     [chargeBoxId](/glossary#chargebox) printed on the unit. Configure
-    the charger to point its <Glossary term="OCPP">OCPP</Glossary> endpoint at SteVe.
+    the charger to point its <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> endpoint at SteVe.
 
     Once the charger boots and sends its first BootNotification,
     SteVe will record it. The next [sync run](/glossary#sync-run)
@@ -71,21 +71,21 @@ This runbook is for the first operator setting up Polaris Express. Use it once, 
     you to `/tags/new`. Tap or scan the blank card when prompted and
     give it a label you'll recognize.
 
-    The card is now an [<Glossary term="idTag">idTag</Glossary>](/glossary#idtag) in SteVe and an
+    The card is now an [<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>](/glossary#idtag) in SteVe and an
     [EV card](/glossary#ev-card) in Polaris Express.
 
     <Screenshot alt="New EV card registration form" />
   </TutorialStep>
 
-  <TutorialStep title="Link the EV card to a <Glossary term="Lago">Lago</Glossary> customer">
+  <TutorialStep title="Link the EV card to a <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> customer">
     Billing only flows once an EV card is mapped to a
-    [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer). From the EV card detail
+    [<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>](/glossary#lago-customer). From the EV card detail
     page, use the customer picker to attach the card to an existing
     Lago customer, or create one inline.
 
     <Aside type="caution">
       A card with no Lago customer can still authorize charging but
-      will not produce billable [<Glossary term="Meter value">meter values</Glossary>](/glossary#meter-value).
+      will not produce billable [<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">meter values</Glossary>](/glossary#meter-value).
       Always link a customer before handing the card to a driver.
     </Aside>
   </TutorialStep>
@@ -107,14 +107,14 @@ Return to `/admin` and confirm each section reports real data:
 - **Live now** lists active sessions. Empty is fine if no one is
   charging yet — it just means the dashboard is connected and waiting.
 - **Active sync run** or **Sync schedule** shows the current
-  [<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>](/glossary#adaptive-cadence) tier. If a sync is
-  in flight, the card shows a [<Glossary term="BorderBeam">BorderBeam</Glossary>](/glossary#borderbeam) and
+  [<Glossary term="<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>">Adaptive Cadence</Glossary>](/glossary#adaptive-cadence) tier. If a sync is
+  in flight, the card shows a [<Glossary term="<Glossary term="BorderBeam">BorderBeam</Glossary>">BorderBeam</Glossary>](/glossary#borderbeam) and
   live segment progress.
 - **Health** rolls up operational warnings. A green/empty Health card
   on a fresh deployment is expected. It auto-revalidates every 30
   seconds, so leave the page open to watch it.
 - **This week** shows kWh delivered, sync runs, EV cards activated,
-  and completed <Glossary term="Reservation">reservations</Glossary> over the last 7 days. On day one,
+  and completed <Glossary term="<Glossary term="Reservation">Reservation</Glossary>">reservations</Glossary> over the last 7 days. On day one,
   expect zeros or near-zeros — these tiles will populate as your
   fleet operates.
 
@@ -148,7 +148,7 @@ complete.
 
 <Aside type="caution">
   **Dashboard shows stale numbers.** The header strip and stat strip
-  hydrate from a single SSR fetch plus [<Glossary term="SSE">SSE</Glossary>](/glossary#sse) islands.
+  hydrate from a single SSR fetch plus [<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>](/glossary#sse) islands.
   If SSE is blocked by a proxy, you'll see correct numbers on reload
   but no live updates between polls. Confirm your reverse proxy
   passes through `text/event-stream` without buffering.
@@ -160,7 +160,7 @@ Operator onboarding itself is non-destructive — registering chargers
 and activating cards are additive operations.
 
 - **EV card activation** is recorded in the [audit log](/glossary#audit-log)
-  under the card's <Glossary term="Public ID">Public ID</Glossary>. To retire a card, disable it from the
+  under the card's <Glossary term="<Glossary term="Public ID">Public ID</Glossary>">Public ID</Glossary>. To retire a card, disable it from the
   EV card detail page; the card remains in history for billing
   reconciliation.
 - **Charger registration** lives in SteVe. To remove a charger,

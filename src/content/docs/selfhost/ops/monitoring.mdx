@@ -1,0 +1,330 @@
+---
+title: Monitoring — logs and sync health
+description: Tail device logs, watch sync health, and catch problems before users do.
+sidebar:
+  order: 40
+persona: Selfhoster
+surface: selfhost
+tier: P1
+code_refs:
+  - web/docs/logging/contract.md
+  - web/src/lib/utils/logger.ts
+  - web/src/routes/api/admin/devices/[id]/logs.ts
+last_authored: 2025-01-22
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
+import EnvVar from '../../../../components/EnvVar.astro';
+import Tutorial from '../../../../components/Tutorial.astro';
+import TutorialStep from '../../../../components/TutorialStep.astro';
+
+A healthy Polaris Express install has two log streams worth watching:
+the **server** stream (Pino on stdout from the `web` container) and
+the **device** stream (structured logs shipped from iOS through
+[Sync runs](/glossary#sync-run)). This runbook covers day-to-day
+inspection, what "healthy" looks like, and which signals matter.
+
+## When to run this
+
+- **Daily, briefly** — glance at error counts in the admin console.
+- **After a release** — tail logs for 10–15 minutes following a
+  `docker compose up -d`.
+- **On a user report** — pull the affected device's log timeline.
+- **Weekly** — check `device_logs` table size and retention.
+
+## What you're looking at
+
+Two producers, one wire format
+([OTelLogRecord](/reference/log-format)):
+
+<FileTree>
+- web (server)
+  - Pino → stdout → `docker logs`
+- iOS app (device)
+  - swift-log → JSONL ring buffer
+  - → `POST /api/devices/me/state/sync`
+  - → Postgres `device_logs`
+  - → <Glossary term="SSE">SSE</Glossary> `/api/admin/devices/{id}/logs-stream`
+</FileTree>
+
+Both sides scrub PII (emails, JWTs, bearer tokens, E.164 phone
+numbers, `Authorization` / `Cookie` / `card_*` keys) before anything
+hits disk or wire. You do not need to add a scrubber.
+
+## Server logs
+
+### Tail the web container
+
+```bash
+docker compose logs -f --tail=200 web
+```
+
+Pino emits JSON. For human-readable output, pipe through
+[`pino-pretty`](https://github.com/pinojs/pino-pretty):
+
+```bash
+docker compose logs -f --tail=200 web | docker run -i --rm node:20 \
+  npx -y pino-pretty
+```
+
+### Severity levels
+
+| `severity_text` | Pino name | When to care                                 |
+| --------------- | --------- | -------------------------------------------- |
+| TRACE / DEBUG   | trace/debug | Only with <EnvVar name="LOG_LEVEL" default="info" /> set lower. Noisy. |
+| INFO            | info      | Normal traffic. Sample, don't read.         |
+| WARN            | warn      | Worth a scan. Often recoverable.            |
+| ERROR           | error     | Page-worthy if sustained. Always investigate. |
+| FATAL           | fatal     | Process is dying. Restart loops likely.     |
+
+### Useful filters
+
+```bash
+# Errors and worse, last 1000 lines
+docker compose logs --tail=1000 web | jq 'select(.severity_number >= 17)'
+
+# Anything tagged with a specific request id
+docker compose logs --tail=5000 web | jq 'select(.attributes.req_id == "abc-123")'
+
+# Slow handlers
+docker compose logs --tail=5000 web | \
+  jq 'select(.attributes.duration_ms > 1000)'
+```
+
+<Aside type="tip">
+  If you set <EnvVar name="LOG_LEVEL" default="info" /> to `debug`,
+  restart the web container — Pino reads the level at boot. Set it
+  back to `info` once you've finished poking.
+</Aside>
+
+## Device logs
+
+iOS devices buffer logs locally in a 5 MB ring and flush up to 100
+records on each [<Glossary term="Sync run">Sync run</Glossary>](/glossary#sync-run). The server inserts
+them into `device_logs` keyed by `(device_id, seq)` and they
+appear in the admin console.
+
+### Find them in the admin console
+
+1. Sign in to the admin console.
+2. Open **Devices → \[device]**.
+3. Scroll to the **Logs** card.
+4. Use the severity, category, and time-range filters at the top.
+5. Click **Live tail** to open the SSE stream.
+
+The card paginates with keyset pagination (`beforeSeq` / `afterSeq`),
+so jumping deep into history is cheap.
+
+### Query the API directly
+
+For scripted checks:
+
+```bash
+# Most recent 100 errors+ for a device
+curl -s --cookie "$ADMIN_COOKIE" \
+  "https://admin.example.com/api/admin/devices/$DEVICE_ID/logs?severity=ERROR&limit=100" \
+  | jq '.logs[] | {ts: .observed_timestamp, msg: .body, cat: .attributes.category}'
+```
+
+```bash
+# Live tail with curl (Ctrl-C to stop)
+curl -N --cookie "$ADMIN_COOKIE" \
+  "https://admin.example.com/api/admin/devices/$DEVICE_ID/logs-stream"
+```
+
+<Aside type="caution">
+  The SSE endpoint is single-replica fan-out via an in-process
+  `LogBus`. If you run the `web` service with `deploy.replicas > 1`,
+  the live-tail will only show logs that landed on the same replica
+  the EventSource is connected to. Multi-replica live-tail needs a
+  Postgres `LISTEN/NOTIFY` shim — not shipped today.
+</Aside>
+
+## Sync health
+
+Device logs only arrive if devices are syncing. Watch these
+signals.
+
+### "Healthy" looks like
+
+- Each managed device produces at least one log batch per **15
+  minutes** during business hours.
+- `device_logs.observed_ts` for the latest row per device is within
+  the device's expected [<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>](/glossary#adaptive-cadence)
+  window (default ≤ 5 min for active devices).
+- Server-side `device_logs_size_alarm` cron has **not** fired in the
+  last 24 h.
+
+### Quiet-device query
+
+Find devices that haven't synced in an hour:
+
+```sql
+SELECT
+  d.id,
+  d.name,
+  COALESCE(MAX(dl.observed_ts), 'never'::text::timestamptz) AS last_log
+FROM devices d
+LEFT JOIN device_logs dl ON dl.device_id = d.id
+GROUP BY d.id, d.name
+HAVING COALESCE(MAX(dl.observed_ts), '1970-01-01'::timestamptz)
+       < now() - interval '1 hour'
+ORDER BY last_log NULLS FIRST;
+```
+
+Causes, in rough order of likelihood:
+
+1. Device is offline / app backgrounded for too long.
+2. App was force-quit; logs are queued but won't flush until next
+   foreground.
+3. Cert pinning or DNS broke after a hostname change.
+4. The device's auth token expired and the user hasn't signed back
+   in.
+
+### Server-side ingest errors
+
+Failed `POST /api/devices/me/state/sync` requests will show up in
+the server log stream:
+
+```bash
+docker compose logs --tail=10000 web | \
+  jq 'select(.req.url == "/api/devices/me/state/sync" and .res.statusCode >= 400)'
+```
+
+A spike of 401s usually means an auth-token rotation issue; 409s
+usually mean an idempotency-key collision (benign — the client
+should retry).
+
+## Configure environment variables
+
+| Variable | Default | Required | Source | Notes |
+| -------- | ------- | -------- | ------ | ----- |
+| `LOG_LEVEL` | `info` | no | `web/.env` | Pino level. `trace`, `debug`, `info`, `warn`, `error`, `fatal`. |
+| `LOG_FORMAT` | `json` | no | `web/.env` | Set to `pretty` only in dev; JSON is what shippers need. |
+| `DEVICE_LOG_RETENTION_DAYS` | `7` | no | `web/.env` | Pruned every 6 h by `device_logs_retention_prune`. |
+| `DEVICE_LOG_SIZE_ALARM_BYTES` | `1073741824` | no | `web/.env` | 1 GB. Alarms via the daily cron when `device_logs` exceeds this. |
+| `SSE_MAX_CONNECTIONS` | `100` | no | `web/.env` | Cap on concurrent `/logs-stream` subscribers. |
+
+<Aside type="note">
+  Defaults reflect the contract in `web/docs/logging/contract.md`.
+  <!-- TODO: confirm exact env-var names against `web/.env.example`. -->
+</Aside>
+
+## Verify
+
+After a fresh install or upgrade, run through this checklist.
+
+<Tutorial>
+  <TutorialStep title="Server is logging JSON">
+    ```bash
+    docker compose logs --tail=5 web | jq '.severity_text' | sort -u
+    ```
+    Expect a non-empty list (`"INFO"` at minimum). If `jq` complains
+    about parse errors, you have <EnvVar name="LOG_FORMAT" /> set to
+    `pretty` — fine in dev, wrong in prod.
+  </TutorialStep>
+
+  <TutorialStep title="Device logs are landing">
+    ```sql
+    SELECT count(*), max(observed_ts) FROM device_logs;
+    ```
+    Within 15 minutes of devices being online, `count` should be
+    nonzero and `max(observed_ts)` should be recent.
+  </TutorialStep>
+
+  <TutorialStep title="Admin console can read them">
+    Open **Devices → \[any device] → Logs**. You should see rows.
+    Click **Live tail**, watch for a heartbeat or any incoming
+    record.
+  </TutorialStep>
+
+  <TutorialStep title="Retention cron is registered">
+    ```bash
+    docker compose logs web | grep -i 'device_logs_retention_prune'
+    ```
+    You should see the cron register at boot and fire every 6 h.
+  </TutorialStep>
+</Tutorial>
+
+## If something goes wrong
+
+**No device logs are landing.**
+Check the sync endpoint for 4xx/5xx in the server log:
+
+```bash
+docker compose logs web | jq 'select(.req.url | test("state/sync"))'
+```
+
+If you see only successes but `device_logs` is empty, the client
+build may be older than the log-shipping change (pre-`logs?` in the
+sync envelope). Update the iOS app.
+
+**Live tail shows nothing despite new rows appearing.**
+You're probably behind a proxy that buffers responses. Disable
+buffering for `/api/admin/devices/*/logs-stream`:
+
+```nginx
+location ~ ^/api/admin/devices/.+/logs-stream$ {
+  proxy_buffering off;
+  proxy_cache off;
+  proxy_read_timeout 1h;
+  proxy_pass http://web;
+}
+```
+
+Also confirm you aren't running multiple `web` replicas (see the
+caution above).
+
+**`device_logs` table is enormous.**
+Two likely causes:
+
+1. Retention cron failed to run. Check
+   `docker compose logs web | grep device_logs_retention_prune`.
+2. A misbehaving device is spamming logs. Find it:
+
+   ```sql
+   SELECT device_id, count(*) FROM device_logs
+   WHERE observed_ts > now() - interval '1 day'
+   GROUP BY device_id ORDER BY count DESC LIMIT 10;
+   ```
+
+   If one device dominates, inspect its log stream for a tight
+   error loop and consider remote-disabling it via the admin
+   console until you can patch the app.
+
+<Aside type="danger">
+  Manually `TRUNCATE device_logs` only as a last resort, and only
+  after confirming the retention cron is fixed. Truncation drops
+  in-flight diagnostic data that may be needed for an ongoing
+  investigation.
+</Aside>
+
+**Pino is logging objects as `[Object]`.**
+You're piping through a `pretty` formatter that doesn't expand
+nested attributes. Use raw JSON + `jq` instead.
+
+## Audit and rollback
+
+This runbook only performs reads. The only mutation paths are:
+
+- Changing <EnvVar name="LOG_LEVEL" /> — restart `web` to revert.
+- Manual `TRUNCATE device_logs` — irreversible. Take a `pg_dump` of
+  the table first if you're not certain.
+
+## Migration path
+
+When `device_logs` exceeds ~5 GB sustained, or you want full-text
+search across iOS and server logs together, swap the sink to
+Grafana Loki (or VictoriaLogs) without changing the wire format.
+See the [log-format reference](/reference/log-format) for the
+migration outline.
+
+## Next
+
+- [Backups](/selfhost/ops/backups) — make sure `device_logs` and
+  the rest of Postgres are getting snapshotted.
+- [Upgrades](/selfhost/ops/upgrades) — what to watch in the log
+  stream during and after a deploy.

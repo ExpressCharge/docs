@@ -17,7 +17,7 @@ import Glossary from "@components/Glossary.astro";
 import { Aside } from "@astrojs/starlight/components";
 
 Polaris Express does not bill anyone itself. Every customer record,
-plan, usage counter, coupon, and invoice lives in [<Glossary term="Lago">Lago</Glossary>](/glossary#lago) —
+plan, usage counter, coupon, and invoice lives in [<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>](/glossary#lago) —
 an open-source billing platform we treat as the system of record for
 money. This page explains how the pieces fit together so that when you
 read `lago-client.ts` or chase a missing invoice line, you know which
@@ -26,7 +26,7 @@ entity owns what.
 ## The model
 
 Lago's domain is small but layered. The four entities you'll touch
-daily are **customer**, **subscription**, **<Glossary term="Lago metric">billable metric</Glossary>**, and
+daily are **customer**, **subscription**, **<Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">billable metric</Glossary>**, and
 **invoice**. Wallets, coupons, and alerts hang off the customer or
 subscription as modifiers.
 
@@ -47,7 +47,7 @@ erDiagram
 
 ### Customer
 
-The [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer) is identified by an
+The [<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>](/glossary#lago-customer) is identified by an
 `external_id` we choose — for Polaris that's the user's
 [public ID](/glossary#public-id). Lago's `POST /customers` is
 upsert-by-`external_id`, which is why `createCustomer` and
@@ -57,7 +57,7 @@ and the link to a wallet if the customer prepays.
 
 ### Subscription
 
-A [<Glossary term="Lago subscription">Lago subscription</Glossary>](/glossary#lago-subscription) attaches a customer
+A [<Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary>](/glossary#lago-subscription) attaches a customer
 to a plan. The subscription — not the customer — is the unit of
 billing: usage is reported against a subscription, invoices are issued
 per subscription, and alerts fire per subscription.
@@ -172,7 +172,7 @@ UI can re-price draft invoices without any Polaris involvement —
 useful, and occasionally dangerous, which is why the billable-metric
 safety gate exists.
 
-**Idempotency via `transaction_id`.** Webhooks retry. <Glossary term="OCPP">OCPP</Glossary> messages
+**Idempotency via `transaction_id`.** Webhooks retry. <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> messages
 arrive twice. Network calls time out mid-flight. Lago's dedupe on
 `transaction_id` lets us send the same event repeatedly without
 inflating usage — provided we generate that ID deterministically from

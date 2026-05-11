@@ -32,8 +32,8 @@ you control:
 
 <FileTree>
 - expresscharge/
-  - web/ Deno + Fresh fullstack app (admin + customer UI, API, [<Glossary term="SSE">SSE</Glossary>](/reference/glossary/#sse))
-  - steve/ [<Glossary term="SteVe">SteVe</Glossary>](/reference/glossary/#steve) [<Glossary term="OCPP">OCPP</Glossary>](/reference/glossary/#ocpp) backend — your [ChargeBoxes](/reference/glossary/#chargebox) connect here
+  - web/ Deno + Fresh fullstack app (admin + customer UI, API, [<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>](/reference/glossary/#sse))
+  - steve/ [<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/reference/glossary/#steve) [<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>](/reference/glossary/#ocpp) backend — your [ChargeBoxes](/reference/glossary/#chargebox) connect here
   - email-worker/ Cloudflare Worker for transactional email
   - ios/ Native iOS app (you do not host this)
   - docs/ This site (you do not host this)
@@ -53,7 +53,7 @@ The root `docker-compose.yml` brings up four services:
 | `postgres` | Postgres 17, holds all application state                           |
 | `migrate`  | One-shot — runs `deno task db:migrate` then exits                  |
 | `app`      | The Fresh web app, exposes port `8000`                             |
-| `sync`     | Background worker that reconciles SteVe ↔ web ↔ [<Glossary term="Lago">Lago</Glossary>](/reference/glossary/#lago) |
+| `sync`     | Background worker that reconciles SteVe ↔ web ↔ [<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>](/reference/glossary/#lago) |
 
 Once it is up, you `curl localhost:8000/healthz` and you are looking
 at your own copy of Polaris Express.
@@ -77,7 +77,7 @@ The `--recursive` flag pulls all five submodules. If you forget it,
 <TutorialStep title="Fill in web/.env">
 
 The whole stack reads `web/.env`. You will set database credentials,
-the SteVe WebSocket URL, [<Glossary term="BetterAuth">BetterAuth</Glossary>](/reference/glossary/#betterauth)
+the SteVe WebSocket URL, [<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>](/reference/glossary/#betterauth)
 secrets, and (optionally) Lago and Cloudflare email-worker URLs. The
 full reference is on the [environment variables](/selfhost/reference/env/)
 page.
@@ -108,7 +108,7 @@ WebSocket endpoint; the web app will point at SteVe's REST API.
 
 From `email-worker/`, run `npx wrangler deploy`. Then set
 <EnvVar name="CF_EMAIL_WORKER_URL" /> in `web/.env` to the deployed
-worker URL. Without this, [magic link](/reference/glossary/#<Glossary term="Magic link">magic-link</Glossary>)
+worker URL. Without this, [magic link](/reference/glossary/#<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">magic-link</Glossary>)
 emails will not send.
 
 </TutorialStep>

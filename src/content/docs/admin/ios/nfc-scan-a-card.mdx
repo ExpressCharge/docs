@@ -16,7 +16,7 @@ prompt_template: admin-runbook
 import Glossary from "@components/Glossary.astro";
 
 You're an operator with the ExpresScan iPhone in hand and you need to
-capture a customer's <Glossary term="EV card">EV card</Glossary> so an admin in the web console can finish
+capture a customer's <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary> so an admin in the web console can finish
 pairing it. This runbook walks the device side of that flow — what the
 phone should look like before the admin presses **Tap to add**, what
 happens when the scan request lands, and how to recover when the read
@@ -51,7 +51,7 @@ Open ExpresScan and look at the Ready screen. If you see a status pill
 above the "How this works" disclosure, the device isn't fully linked
 yet:
 
-- **Connecting** — the <Glossary term="SSE">SSE</Glossary> link is being established. Wait a few
+- **Connecting** — the <Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary> link is being established. Wait a few
   seconds.
 - **Reconnecting** — the link dropped and is retrying. Wait, or tap
   the pill to open diagnostics.

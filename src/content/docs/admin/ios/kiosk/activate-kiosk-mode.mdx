@@ -15,9 +15,9 @@ prompt_template: admin-runbook
 
 import Glossary from "@components/Glossary.astro";
 
-Use this runbook when you want a wall-mounted or counter-mounted iPad or iPhone to present only its single assigned capability — no navigation bar, no status bar, no system overlays. Typical case: an iPad at a service desk that should only show <Glossary term="expreScan">expreScan</Glossary> and never let staff wander off into Settings or sign out.
+Use this runbook when you want a wall-mounted or counter-mounted iPad or iPhone to present only its single assigned capability — no navigation bar, no status bar, no system overlays. Typical case: an iPad at a service desk that should only show <Glossary term="<Glossary term="expreScan">expreScan</Glossary>">expreScan</Glossary> and never let staff wander off into Settings or sign out.
 
-[<Glossary term="Kiosk mode">Kiosk mode</Glossary>](/reference/glossary/#kiosk-mode) is a UX simplification, **not** a security lockdown. There is an on-device escape gesture (documented below) so a device whose admin console becomes unreachable is never bricked.
+[<Glossary term="<Glossary term="Kiosk mode">Kiosk mode</Glossary>">Kiosk mode</Glossary>](/reference/glossary/#kiosk-mode) is a UX simplification, **not** a security lockdown. There is an on-device escape gesture (documented below) so a device whose admin console becomes unreachable is never bricked.
 
 ## Prerequisites
 
@@ -51,7 +51,7 @@ Kiosk mode activates when `kiosk` is present in the device's capability set. Und
 Click **Save**. The console issues a <Endpoint method="PATCH" path="/api/admin/devices/{deviceId}/settings" /> with your change. On success, the server:
 
 - UPSERTs the change into `device_settings` with `updated_by = admin:{your user id}`.
-- Emits a `device.settings.changed` [<Glossary term="SSE">SSE</Glossary>](/reference/glossary/#sse) event so the device reconciles within roughly one second.
+- Emits a `device.settings.changed` [<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>](/reference/glossary/#sse) event so the device reconciles within roughly one second.
 - Writes a `device.settings.updated` entry to the [audit log](/reference/glossary/#audit-log) with the changed keys and values.
 
 </TutorialStep>
@@ -68,7 +68,7 @@ If the device is offline, it will pick up the change on its next sync.
 
 ## Verify
 
-- **<Glossary term="Audit log">Audit log</Glossary>.** Filter by `device.settings.updated` for the device's ID. You should see your save with `changedKeys` including the capability change and `changedByUserId` set to your admin user.
+- **<Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary>.** Filter by `device.settings.updated` for the device's ID. You should see your save with `changedKeys` including the capability change and `changedByUserId` set to your admin user.
 - **Device screen.** The device shows only the capability content. There is no visible toolbar, gear icon, status bar, or volume HUD. Sign-out is not reachable from the device UI.
 - **SSE event log.** A `device.settings.changed` event was published for the device's ID.<!-- TODO: confirm admin-surfaced SSE event log exists -->
 
@@ -114,6 +114,6 @@ Every save writes a `device.settings.updated` audit record with:
 ## Related
 
 - [Glossary: Kiosk mode](/reference/glossary/#kiosk-mode)
-- [Glossary: <Glossary term="Capability">Capability</Glossary>](/reference/glossary/#capability)
-- [Glossary: <Glossary term="Sync run">Sync run</Glossary>](/reference/glossary/#sync-run)
+- [Glossary: <Glossary term="<Glossary term="Capability">Capability</Glossary>">Capability</Glossary>](/reference/glossary/#capability)
+- [Glossary: <Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>](/reference/glossary/#sync-run)
 - [Glossary: Audit log](/reference/glossary/#audit-log)

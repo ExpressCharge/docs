@@ -24,7 +24,7 @@ This phase builds the `web/` submodule into a container, brings up
 Postgres, runs migrations, and starts the long-running app and sync
 worker. After this phase you have a running Polaris Express stack that
 serves both the customer portal and the admin console, even if it
-isn't yet wired to a real <Glossary term="SteVe">SteVe</Glossary> or <Glossary term="Lago">Lago</Glossary>. Those integrations are
+isn't yet wired to a real <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary> or <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>. Those integrations are
 verified in later phases.
 
 ## Prerequisites
@@ -173,7 +173,7 @@ covered in their own phases.
 | `DENO_ENV` | `development` | yes | Set to `production` for deployed environments. |
 | `DEBUG_LEVEL` | `ERROR` | no | `INFO` is recommended while bringing a new site online. |
 | `AUTH_SECRET` | _(none)_ | yes | 32+ chars. Rotating invalidates all sessions. |
-| `AUTH_URL` | `http://localhost:8000` | yes | The customer-facing public URL. Used by <Glossary term="BetterAuth">BetterAuth</Glossary> for redirect validation. |
+| `AUTH_URL` | `http://localhost:8000` | yes | The customer-facing public URL. Used by <Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary> for redirect validation. |
 | `ADMIN_BASE_URL` | `https://manage.example.com` | yes | The admin console hostname. |
 | `CUSTOMER_BASE_URL` | `https://example.com` | yes | The customer portal hostname. |
 | `COOKIE_DOMAIN` | `.example.com` | yes | Leading dot — must cover both subdomains. |
@@ -184,10 +184,10 @@ covered in their own phases.
 | `LAGO_API_URL` | `https://api.getlago.com` | yes | API base; `/api/v1` is appended. |
 | `LAGO_API_KEY` | _(none)_ | yes | From the Lago admin UI. |
 | `LAGO_DASHBOARD_URL` | `https://app.getlago.com` | yes | Used only for external links. |
-| `LAGO_METRIC_CODE` | `ev_charging_kwh` | yes | Must match the <Glossary term="Lago metric">Lago metric</Glossary> created in Phase 4. |
+| `LAGO_METRIC_CODE` | `ev_charging_kwh` | yes | Must match the <Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">Lago metric</Glossary> created in Phase 4. |
 | `SYNC_ON_STARTUP` | `false` | no | Set to `true` once when verifying; revert after. |
 | `SYNC_LOOKBACK_MINUTES` | `10080` | no | 7 days. The example file's literal default; the in-code fallback referenced in the comment is 24h. |
-| `SYNC_CRON_SCHEDULE` | _(unset)_ | no | When unset, the <Glossary term="Adaptive Cadence">adaptive scheduler</Glossary> runs. Set only as an escape hatch. |
+| `SYNC_CRON_SCHEDULE` | _(unset)_ | no | When unset, the <Glossary term="<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>">adaptive scheduler</Glossary> runs. Set only as an escape hatch. |
 | `SYNC_DORMANT_THRESHOLD_DAYS` | `30` | no | Days of inactivity before demotion to dormant. |
 | `SYNC_IDLE_HYSTERESIS_TICKS` | `2` | no | Idle evaluations required before demoting a tier. |
 | `DOCKER_SOCKET_PATH` | `/var/run/docker.sock` | no | Mounted into the `app` container by Compose. |
@@ -250,7 +250,7 @@ volume, and start over:
 
 <Aside type="danger">
 `docker compose down -v` **deletes the Postgres volume**, wiping all
-charging history, <Glossary term="EV card">EV cards</Glossary>, tag mappings, and sessions. Only run this
+charging history, <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV cards</Glossary>, tag mappings, and sessions. Only run this
 on a brand-new install before any real data has been written.
 </Aside>
 
@@ -287,5 +287,5 @@ that tag-detection from container logs will be disabled.
 ## Next phase
 
 Phase 6 deploys the [Cloudflare email worker](/selfhost/phase-6-email-worker/)
-and wires `CF_EMAIL_WORKER_URL` so that [magic link](/glossary#<Glossary term="Magic link">magic-link</Glossary>)
+and wires `CF_EMAIL_WORKER_URL` so that [magic link](/glossary#<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">magic-link</Glossary>)
 emails leave the host instead of being logged to stdout.

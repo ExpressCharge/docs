@@ -21,7 +21,7 @@ If you are bringing an existing CPO operation onto Polaris Express,
 your customers, their [idTags](/glossary#idtag), and their billing
 state already exist somewhere — a spreadsheet, a legacy CRM, a former
 billing provider. Phase 7 brings those records into Polaris Express
-and reconciles them with [<Glossary term="Lago">Lago</Glossary>](/glossary#lago) so that the first
+and reconciles them with [<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>](/glossary#lago) so that the first
 charging session after cutover bills correctly.
 
 This phase runs after the platform is healthy (Phases 1–6) and before
@@ -29,21 +29,21 @@ you point real [ChargeBoxes](/glossary#chargebox) at production.
 
 <Aside type="caution">
   Backfill is not idempotent at the Lago layer. A duplicate
-  [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer) create will fail; a duplicate
-  [<Glossary term="Lago subscription">Lago subscription</Glossary>](/glossary#lago-subscription) on the same plan
+  [<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>](/glossary#lago-customer) create will fail; a duplicate
+  [<Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary>](/glossary#lago-subscription) on the same plan
   will produce a second active subscription. Run the dry-run first.
 </Aside>
 
 ## Prerequisites
 
-- Phases 1–6 complete: database, web, [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve), email
+- Phases 1–6 complete: database, web, [<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve), email
   worker, and Lago are all up and reachable from the `web` container.
 - Lago has at least one plan configured that matches the
   [tariff](/glossary#tariff) you intend to bill on.
 - A CSV export of your existing customers with, at minimum: email,
   display name, external customer ID (your prior system's stable key),
-  and the [<Glossary term="idTag">idTag</Glossary>](/glossary#idtag) string they use at the
-  [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox).
+  and the [<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>](/glossary#idtag) string they use at the
+  [<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox).
 - Admin console access with the `superadmin` role.
 
 ## Steps
@@ -62,8 +62,8 @@ bob@example.com,Bob Example,LEGACY-002,E5F6G7H8,standard,2024-03-15
 ```
 
 - `email` becomes the login identity (used by
-  [<Glossary term="BetterAuth">BetterAuth</Glossary>](/glossary#betterauth) and the
-  [magic link](/glossary#<Glossary term="Magic link">magic-link</Glossary>) flow).
+  [<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary#betterauth) and the
+  [magic link](/glossary#<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">magic-link</Glossary>) flow).
 - `external_id` is preserved as the Lago `external_customer_id`. Keep
   it stable — it is the join key for everything downstream.
 - `plan_code` must match an existing Lago plan code exactly.

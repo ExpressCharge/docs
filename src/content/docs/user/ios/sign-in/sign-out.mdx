@@ -1,0 +1,72 @@
+---
+title: Sign out
+description: Sign out of ExpressCharge on your iPhone from the Settings screen.
+sidebar:
+  order: 30
+persona: Driver
+surface: ios
+tier: P1
+code_refs:
+  - ios/App/Features/Settings/SettingsView.swift
+last_authored: 2025-01-15
+prompt_template: customer-tutorial
+---
+
+When you're done using ExpressCharge on an iPhone — or you're handing the phone to someone else — sign out from the Settings screen. This page walks you through it. You'll need your iPhone unlocked and the ExpressCharge app installed and signed in.
+
+## Before you start
+
+- You're currently signed in to ExpressCharge on your iPhone.
+- You know the email or magic link you'll use to sign back in. Once you sign out, you'll need to sign in again to use ExpressCharge on this iPhone.
+
+<Tutorial goal="Sign out of ExpressCharge on iPhone" estimatedMinutes={1}>
+
+<TutorialStep title="Open Settings inside ExpressCharge">
+
+Open the ExpressCharge app and go to the Settings screen. The screen title at the top reads **Settings**.
+
+<Screenshot alt="ExpressCharge Settings screen showing the Account card at the top" caption="The Settings screen lists your account, connectivity, permissions, device info, and the Sign Out button." />
+
+</TutorialStep>
+
+<TutorialStep title="Scroll to the Sign Out button">
+
+Scroll to the bottom of the Settings screen. Below the About card you'll see a red **Sign Out** button.
+
+</TutorialStep>
+
+<TutorialStep title="Tap Sign Out">
+
+Tap **Sign Out**. A confirmation sheet appears titled **Sign Out of ExpressCharge?** with the message: "You'll need to sign in again to use ExpressCharge on this iPhone."
+
+</TutorialStep>
+
+<TutorialStep title="Confirm">
+
+Tap the red **Sign Out** button on the confirmation sheet to finish. If you change your mind, tap **Cancel** instead and you'll stay signed in.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+While ExpressCharge signs you out, the button label changes to **Signing Out…**. When it finishes, the app returns you to the sign-in screen. If you see the sign-in screen, you're signed out.
+
+## Troubleshooting
+
+**The button stays on "Signing Out…" and a red message appears under it.**
+Sign-out failed. The red text under the button describes what went wrong. Check that your iPhone has a working internet connection, then tap **Sign Out** again.
+
+:::caution
+Signing out clears your session on this iPhone only. If you're also signed in on the web or on another device, those sessions stay active. Sign out separately on each device you want to clear.
+:::
+
+:::danger
+If you're handing your iPhone to someone else, sign out before you do. Anyone with access to the unlocked phone can start charging sessions on your account until you sign out.
+:::
+
+## Related
+
+- [Sign in to ExpressCharge on iPhone](/user/ios/sign-in/)
+- [Manage your account](/user/account/)

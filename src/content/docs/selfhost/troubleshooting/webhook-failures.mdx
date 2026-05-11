@@ -17,16 +17,16 @@ import Glossary from "@components/Glossary.astro";
 
 import { Aside, Tabs, TabItem, FileTree } from "@astrojs/starlight/components";
 
-The [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve) fork calls two HMAC-signed hooks on ExpresSync
-during normal [<Glossary term="OCPP">OCPP</Glossary>](/glossary#ocpp) traffic: `POST /api/ocpp/pre-authorize`
+The [<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve) fork calls two HMAC-signed hooks on ExpresSync
+during normal [<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>](/glossary#ocpp) traffic: `POST /api/ocpp/pre-authorize`
 on every `Authorize.req` and `StartTransaction.req`, and
 `POST /api/ocpp/meter-values` on every `MeterValues.req`. Both verify a hex
 HMAC-SHA256 in the `X-Signature` header against the raw request body. When
 the keys disagree, ExpresSync returns `401 unauthorized`, SteVe logs a
 warning, and the system fails open — chargers keep charging, but
 [scan-arm](/glossary#scan-arm) interception breaks and live
-[<Glossary term="Meter value">meter values</Glossary>](/glossary#meter-value) stop flowing into the customer <Glossary term="SSE">SSE</Glossary>
-stream and <Glossary term="Lago">Lago</Glossary>.
+[<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">meter values</Glossary>](/glossary#meter-value) stop flowing into the customer <Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>
+stream and <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>.
 
 This runbook covers diagnosing and fixing those 401s.
 
@@ -55,7 +55,7 @@ The two hooks have the same auth path, so the same symptoms apply to both.
 | `401 unauthorized` with `hasSig: false` | Fails open | SteVe didn't send `X-Signature` — either the SteVe hook is disabled or its key is unset. |
 | `401 unauthorized` with both present | Fails open | Keys are set on both sides but don't match. |
 | `500 internal` from `PreAuthorize` | Fails open | DB outage or HMAC subtle-crypto threw. |
-| `503` from `PreAuthorize` | Fails open | <Glossary term="Pre-authorize">Pre-authorize</Glossary> [feature flag](/glossary#feature-flag) is off. |
+| `503` from `PreAuthorize` | Fails open | <Glossary term="<Glossary term="Pre-authorize">Pre-authorize</Glossary>">Pre-authorize</Glossary> [feature flag](/glossary#feature-flag) is off. |
 
 <Aside type="note">
   Charging is never blocked by webhook failures. SteVe's hook timeout is
@@ -194,13 +194,13 @@ Once the keys agree, confirm end-to-end:
    readings should advance.
 5. Stop the transaction. The final `MeterValues` call carries
    `context: "Transaction.End"`; the `transaction.meter` event publishes
-   with `endedAt` set and the [<Glossary term="Lago metric">Lago metric</Glossary>](/glossary#lago-metric) flush
+   with `endedAt` set and the [<Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">Lago metric</Glossary>](/glossary#lago-metric) flush
    reconciles within the next billing cycle.
 
 ## Audit and rollback
 
 HMAC key rotation has no destructive effect on stored data. Past
-transactions, [<Glossary term="User mapping">user mappings</Glossary>](/glossary#user-mapping), and Lago state are
+transactions, [<Glossary term="<Glossary term="User mapping">User mapping</Glossary>">user mappings</Glossary>](/glossary#user-mapping), and Lago state are
 unaffected — the hooks only mutate transient `verifications` rows
 (scan-pair) and publish event-bus messages.
 
@@ -213,6 +213,6 @@ If a rotation goes wrong:
 
 The post-transaction reconciliation sweep in the sync service backfills any
 kWh deltas dropped during the 401 window, so billing remains correct even
-across an extended outage of the meter-values hook. <Glossary term="Scan-arm">Scan-arm</Glossary> interceptions
+across an extended outage of the meter-values hook. <Glossary term="<Glossary term="Scan-arm">Scan-arm</Glossary>">Scan-arm</Glossary> interceptions
 that didn't fire during the window are simply lost — the customer will have
 re-tapped or given up.

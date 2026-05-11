@@ -1,0 +1,114 @@
+---
+title: Share diagnostics with support
+description: Open the Diagnostics sheet in the Polaris Express iOS app to copy your device details and connection info when you contact support.
+sidebar:
+  order: 50
+persona: Driver
+surface: ios
+tier: P1
+code_refs:
+  - ios/App/Features/Scan/DiagnosticsSheet.swift
+last_authored: 2026-06-01
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Aside } from '@astrojs/starlight/components';
+
+When support asks "what does your app say?", the Diagnostics sheet is where you find the answer. This tutorial walks you through opening it, copying the values support needs, and running a test sync to confirm your phone is talking to the server.
+
+<Persona for="Driver">
+The Diagnostics sheet is an admin-only surface. If you don't see a way to open it from your Settings page, you're on a standard customer account — contact support through the in-app help link instead, and they'll guide you from there.
+</Persona>
+
+## Before you start
+
+- You're signed in to the Polaris Express iOS app on an admin-enabled device.
+- You have a way to paste text into your support conversation (email, chat, etc.).
+
+<Tutorial goal="Send your device's diagnostic details to support" estimatedMinutes={3}>
+
+<TutorialStep title="Open the Diagnostics sheet">
+
+From the Settings page, tap the Diagnostics row. The sheet slides up with the title **Diagnostics** and a **Done** button in the top-right corner.
+
+<Screenshot alt="The Diagnostics sheet open, showing the Connection, Device, Account, and Test cards stacked vertically." caption="The Diagnostics sheet groups everything support needs into four cards." />
+
+</TutorialStep>
+
+<TutorialStep title="Check the Connection card">
+
+The top card is **Connection**. Look at the status pill in the header — it reads **Online**, **Connecting**, **Reconnecting**, or **Offline**.
+
+Below the pill, you'll see three values:
+
+- **Reconnects** — how many times the app has reconnected this session.
+- **Last sync** — when the device last checked in (for example, "2 min ago").
+- **Pending uploads** — scans waiting to be sent.
+
+Tell support what each value says. If the status is **Offline** or **Reconnecting**, mention that first.
+
+</TutorialStep>
+
+<TutorialStep title="Copy your Device ID and Server URL">
+
+Scroll to the **Device** card. Two rows have a copy button on the right:
+
+- **Server** — the API URL the app is pointing at.
+- **Device ID** — your device's unique identifier (truncated in the middle; the copy button gives you the full value).
+
+Tap the copy button next to **Device ID**. A toast appears at the bottom reading **Device ID copied**. Paste it into your support conversation. Repeat for **Server** if support asks.
+
+The same card also shows your **Push permission** state, **APNs environment**, and **Build** number. Include these if support requests them.
+
+</TutorialStep>
+
+<TutorialStep title="Note your account details">
+
+The **Account** card shows who you're signed in as. It pulls the name, email, and User ID from your account.
+
+If the card shows **Couldn't load account.**, tap **Retry**. If retry keeps failing, that's useful information on its own — tell support the account card won't load.
+
+</TutorialStep>
+
+<TutorialStep title="Run a test sync">
+
+Scroll to the **Test** card at the bottom and tap **Run test sync**. The button shows a loading spinner while the app forces an immediate <Glossary term="<Glossary term="Sync run">Sync run</Glossary>">sync run</Glossary> with the server.
+
+When it finishes, a toast appears reading either **Sync OK** or **Sync failed**. Tell support which one you saw.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+You know the steps worked when:
+
+- A toast confirmed each copy action (**Device ID copied**, **Server URL copied**).
+- The test sync finished with either **Sync OK** or **Sync failed** — both are useful answers for support.
+- Your support conversation has the Device ID, Server URL, and connection status pasted in.
+
+## Troubleshooting
+
+**The test sync says "No active session."**
+The app doesn't have an active scanning session to sync. Close the sheet, make sure you're on the main scan screen, and try again.
+
+**The Account card shows "Couldn't load account."**
+Tap **Retry**. If it still fails, your device may be offline or your session may have expired. Check the **Connection** card — if it reads **Offline**, fix your network connection first.
+
+**I can't find the Diagnostics row in Settings.**
+
+<Aside type="caution">
+The Diagnostics sheet is only available on admin-enabled devices. On a standard customer account, the row is hidden by design. Contact support through the normal in-app help channel.
+</Aside>
+
+**The Device ID is cut off in the middle.**
+That's intentional — the row truncates long IDs so they don't dominate the screen. Tap the copy button next to **Device ID** to get the full value on your clipboard.
+
+## Related
+
+- [Check your connection status](/user/ios/troubleshooting/connection-status/)
+- [Contact support](/user/support/)
+- [Glossary: Sync run](/glossary/#sync-run)

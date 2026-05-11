@@ -14,10 +14,10 @@ prompt_template: admin-runbook
 
 import Glossary from "@components/Glossary.astro";
 
-Use this runbook when a customer hands back an <Glossary term="EV card">EV card</Glossary>, when a card was
-linked to the wrong [<Glossary term="Lago">Lago</Glossary> customer](/glossary#lago-customer), or when
+Use this runbook when a customer hands back an <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>, when a card was
+linked to the wrong [<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> customer](/glossary#lago-customer), or when
 you need to move a card under a different [parent tag](/glossary#idtag)
-in the hierarchy. The card itself stays in [<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve);
+in the hierarchy. The card itself stays in [<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve);
 only its [user mapping](/glossary#user-mapping) and parent relationship
 change.
 
@@ -49,7 +49,7 @@ name and click into it. You should land on `/tags/[pk]`.
 Click **Edit**. You'll be taken to `/admin/tags/[tagPk]/edit`, titled
 **Edit EV Card**.
 
-The `idTag` field is read-only — the <Glossary term="OCPP">OCPP</Glossary> identifier can't be renamed.
+The `idTag` field is read-only — the <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> identifier can't be renamed.
 Everything else (display name, notes, tag type, parent, active flag)
 is editable.
 
@@ -67,7 +67,7 @@ To move the card under a different customer or group:
 3. To detach the card from any parent, clear the selection.
 
 <Aside type="caution">
-  Changing the parent changes which [<Glossary term="Lago customer">Lago customer</Glossary>](/glossary#lago-customer)
+  Changing the parent changes which [<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>](/glossary#lago-customer)
   the card's sessions roll up to on the next [sync run](/glossary#sync-run).
   Sessions that already closed under the previous parent are not
   retroactively re-billed.

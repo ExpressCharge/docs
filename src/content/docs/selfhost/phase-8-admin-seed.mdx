@@ -24,14 +24,14 @@ configuring the deployment from inside the UI.
 
 After this phase you'll have a working operator account that can
 manage [ChargeBoxes](/glossary/#chargebox), [tariffs](/glossary/#tariff),
-[<Glossary term="User mapping">user mappings</Glossary>](/glossary/#user-mapping), and <Glossary term="Feature flag">feature flags</Glossary>.
+[<Glossary term="<Glossary term="User mapping">User mapping</Glossary>">user mappings</Glossary>](/glossary/#user-mapping), and <Glossary term="<Glossary term="Feature flag">Feature flag</Glossary>">feature flags</Glossary>.
 
 ## Prerequisites
 
 - [Phase 6 — Bring up the web app](/selfhost/phases/phase-6-web-app/)
   completed; the app is reachable.
 - [Phase 7 — Configure email delivery](/selfhost/phases/phase-7-email/)
-  completed; [magic link](/glossary/#<Glossary term="Magic link">magic-link</Glossary>) sign-in works
+  completed; [magic link](/glossary/#<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">magic-link</Glossary>) sign-in works
   end-to-end.
 - You have shell access to the host running the `db` container (or
   direct `psql` access to the Postgres instance).
@@ -44,7 +44,7 @@ manage [ChargeBoxes](/glossary/#chargebox), [tariffs](/glossary/#tariff),
 <TutorialStep title="Sign up as the first user">
 
 Open the web app in a browser and sign in with the email you want to
-promote. [<Glossary term="BetterAuth">BetterAuth</Glossary>](/glossary/#betterauth) will send a
+promote. [<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary/#betterauth) will send a
 [magic link](/glossary/#magic-link); click it to complete sign-in.
 
 This creates a row in the `user` table with `role = 'user'`. The user
@@ -189,7 +189,7 @@ this phase. There is no "recover admin" flow in the UI.
 ## Next phase
 
 Continue to
-[Phase 9 — Register your first <Glossary term="ChargeBox">ChargeBox</Glossary>](/selfhost/phases/phase-9-first-chargebox/)
-to connect a [<Glossary term="SteVe">SteVe</Glossary>](/glossary/#steve)-managed
+[Phase 9 — Register your first <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>](/selfhost/phases/phase-9-first-chargebox/)
+to connect a [<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/glossary/#steve)-managed
 [ChargeBox](/glossary/#chargebox) and run an end-to-end charging
 session.

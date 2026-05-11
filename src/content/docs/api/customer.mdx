@@ -16,7 +16,7 @@ import Glossary from "@components/Glossary.astro";
 
 <!-- TODO: handler source files for web/routes/api/customer/ were not provided in the code references. The endpoint list below cannot be authored without walking the actual route handlers to determine path params, request shape, response shape, and error cases. -->
 
-The `/api/customer/*` namespace exposes customer-facing actions: managing [<Glossary term="EV card">EV cards</Glossary>](/glossary#ev-card), starting and stopping charging sessions, viewing history, and updating account settings. All endpoints require an authenticated customer session.
+The `/api/customer/*` namespace exposes customer-facing actions: managing [<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV cards</Glossary>](/glossary#ev-card), starting and stopping charging sessions, viewing history, and updating account settings. All endpoints require an authenticated customer session.
 
 ## Base URL
 
@@ -28,13 +28,13 @@ The customer API is served from the customer host, not the admin host. Requests 
 
 ## Authentication
 
-Every request must include a valid [<Glossary term="BetterAuth">BetterAuth</Glossary>](/glossary#betterauth) session cookie. Unauthenticated requests return `401`.
+Every request must include a valid [<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary#betterauth) session cookie. Unauthenticated requests return `401`.
 
 ```http
 Cookie: better-auth.session_token=<token>
 ```
 
-Session tokens are issued by the auth flow (email/password or [magic link](/glossary#<Glossary term="Magic link">magic-link</Glossary>)) and are scoped to a single customer identity. The session subject determines which [EV cards](/glossary#ev-card), sessions, and account data are visible — customers cannot read or mutate resources they do not own.
+Session tokens are issued by the auth flow (email/password or [magic link](/glossary#<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">magic-link</Glossary>)) and are scoped to a single customer identity. The session subject determines which [EV cards](/glossary#ev-card), sessions, and account data are visible — customers cannot read or mutate resources they do not own.
 
 ## Endpoints
 

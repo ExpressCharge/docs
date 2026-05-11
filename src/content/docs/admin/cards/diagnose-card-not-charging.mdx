@@ -15,7 +15,7 @@ prompt_template: admin-runbook
 
 import Glossary from "@components/Glossary.astro";
 
-A customer taps their <Glossary term="EV card">EV card</Glossary> at a charger and nothing happens — or they get a "card rejected" message at the charger. Use this runbook when you need to figure out whether the card is blocked in <Glossary term="SteVe">SteVe</Glossary>, intentionally intercepted by the scan-to-login flow, or failing for some other reason. It assumes you have the card's `idTag` or the customer's name in front of you.
+A customer taps their <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary> at a charger and nothing happens — or they get a "card rejected" message at the charger. Use this runbook when you need to figure out whether the card is blocked in <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>, intentionally intercepted by the scan-to-login flow, or failing for some other reason. It assumes you have the card's `idTag` or the customer's name in front of you.
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ A customer taps their <Glossary term="EV card">EV card</Glossary> at a charger a
 
 From the admin sidebar, open **Tags**, find the card by `idTag` or display name, and click into it. The detail page is titled either "EV Card details" or "Meta-EV Card details" depending on whether this row groups child cards.
 
-<Screenshot alt="EV Card details page header with <Glossary term="idTag">idTag</Glossary> and link status" />
+<Screenshot alt="EV Card details page header with <Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary> and link status" />
 
 If the page banner says **"SteVe is unreachable right now — charging history and hierarchy may be stale,"** stop and treat this as a SteVe outage first — every card will appear broken until SteVe is back.
 
@@ -41,12 +41,12 @@ If the page banner says **"SteVe is unreachable right now — charging history a
 
 The header strip across the top tells you four things at a glance:
 
-- **`idTag`** — the literal <Glossary term="OCPP">OCPP</Glossary> identifier the charger sees.
+- **`idTag`** — the literal <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> identifier the charger sees.
 - **Tag type** — operator-assigned classification.
 - **Active flag** — whether the local mapping has marked this card active.
-- **Linked** — whether the card resolves to a <Glossary term="Lago">Lago</Glossary> customer.
+- **Linked** — whether the card resolves to a <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> customer.
 
-If the card is **not active** or **not linked** to a <Glossary term="Lago customer">Lago customer</Glossary>, that alone won't block charging in SteVe — but it does mean any session won't bill correctly. Note it for later and continue.
+If the card is **not active** or **not linked** to a <Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>, that alone won't block charging in SteVe — but it does mean any session won't bill correctly. Note it for later and continue.
 
 </TutorialStep>
 
@@ -82,7 +82,7 @@ What to look for:
 
 <TutorialStep title="Rule out the scan-to-login interceptor">
 
-If the customer was tapping their card to *log in* on the <Glossary term="Kiosk mode">kiosk</Glossary> or web flow at the time, the <a href="/glossary#pre-authorize"><Glossary term="Pre-authorize">Pre-authorize</Glossary></a> hook will deliberately tell SteVe to return `BLOCKED` so the charger does not start a session. This is by design.
+If the customer was tapping their card to *log in* on the <Glossary term="<Glossary term="Kiosk mode">Kiosk mode</Glossary>">kiosk</Glossary> or web flow at the time, the <a href="/glossary#pre-authorize"><Glossary term="<Glossary term="Pre-authorize">Pre-authorize</Glossary>">Pre-authorize</Glossary></a> hook will deliberately tell SteVe to return `BLOCKED` so the charger does not start a session. This is by design.
 
 To confirm this is what happened:
 
@@ -133,7 +133,7 @@ If Lago is unreachable, the **Linking** card will show a fetch-failed state. The
 Common dead-ends:
 
 - **"The card works on charger A but not charger B."** This is almost never the card. Check whether charger B is online, whether its connector is in `Available`, and whether it's running the SteVe build that honors pre-authorize overrides.
-- **"The card was working yesterday."** Check the <a href="/glossary#audit-log"><Glossary term="Audit log">Audit log</Glossary></a> for edits to this card, its parent meta-card, or the linked <Glossary term="Lago subscription">Lago subscription</Glossary> in the last 24 hours.
+- **"The card was working yesterday."** Check the <a href="/glossary#audit-log"><Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary></a> for edits to this card, its parent meta-card, or the linked <Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary> in the last 24 hours.
 - **"Transactions exist but none are synced."** That's an ExpresSync problem, not a card problem. The card is charging fine.
 
 ## Audit and reversibility

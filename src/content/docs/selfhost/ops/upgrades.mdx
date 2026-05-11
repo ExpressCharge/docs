@@ -1,0 +1,239 @@
+---
+title: Upgrades — bumping submodule pointers
+description: Bring your self-hosted Polaris Express up to date by advancing the submodule pointers and rebuilding the stack.
+sidebar:
+  order: 50
+persona: Selfhoster
+surface: selfhost
+tier: P1
+code_refs:
+  - Makefile
+  - .github/workflows/bump-submodules.yml
+last_authored: 2025-01-15
+prompt_template: selfhost-phase
+---
+
+import Glossary from "@components/Glossary.astro";
+
+import { Tabs, TabItem, Aside, FileTree, Steps } from '@astrojs/starlight/components';
+
+Polaris Express is composed as a superproject of git submodules — `web`,
+`email-worker`, `ios`, `steve`, and `docs`. Upgrading a self-hosted
+deployment means advancing those submodule pointers to a newer commit on
+their respective `main` branches, rebuilding the affected images, and
+restarting the stack.
+
+This runbook covers the manual upgrade path. If you mirror our
+automation, you can also drive it from the `Bump submodules` GitHub
+Action shipped with the superproject.
+
+## When to run this
+
+- **Routine cadence.** Weekly or biweekly. The reference automation runs
+  every Monday at 09:00 UTC.
+- **Security fixes.** When an advisory affects any component.
+- **Feature pulls.** When you want a specific change from upstream.
+
+<Aside type="caution">
+Each upgrade can include a database migration (most commonly in `web`
+or `steve`). Always take a backup before bumping. See
+[Backups](/selfhost/ops/backups/).
+</Aside>
+
+## Procedure
+
+<Steps>
+
+1. **Take a backup.**
+
+   Snapshot the Postgres volume used by `web` and the MariaDB volume
+   used by `steve` before doing anything else. If a migration fails, this
+   is your only easy way back.
+
+2. **Update the working tree.**
+
+   From the superproject root:
+
+   ```sh
+   git fetch origin
+   git checkout main
+   git pull --ff-only
+   ```
+
+3. **Pull the latest commit on each submodule's tracking branch.**
+
+   The `update` target wraps the two commands you want:
+
+   ```sh
+   make update
+   ```
+
+   Which expands to:
+
+   ```sh
+   git submodule update --remote --merge
+   git diff --submodule=log
+   ```
+
+   The `--submodule=log` diff shows you the per-submodule commit log
+   between the old and new pointers. Read it. This is your changelog.
+
+4. **Review the diff.**
+
+   Look specifically for:
+
+   - **Migration files** under `web/drizzle/` (Postgres schema for the
+     web app).
+   - **Migration files** under `steve/src/main/resources/db/migration/`
+     (MariaDB schema for <Glossary term="SteVe">SteVe</Glossary>).
+   - **Env-var additions** in `web/.env.example`. New required vars must
+     be added to your deployment's env file before you restart.
+   - **Compose changes** in any submodule's `docker-compose.yml`.
+
+   <Aside type="tip">
+   `git log -p` against a submodule path will not work from the
+   superproject — `cd` into the submodule directory and run `git log`
+   there if you want full per-file context.
+   </Aside>
+
+5. **Commit the pointer bumps.**
+
+   ```sh
+   git add web email-worker steve docs ios
+   git commit -m "chore: bump submodules $(date -u +%Y-%m-%d)"
+   ```
+
+6. **Rebuild and restart.**
+
+   ```sh
+   make compose-build
+   make down
+   make up
+   ```
+
+   On first start after the bump, the `web` container will run any
+   pending Drizzle migrations against Postgres, and SteVe will run any
+   pending Flyway migrations against MariaDB.
+
+7. **Tail the logs and watch for errors.**
+
+   ```sh
+   docker compose logs -f web steve
+   ```
+
+   Wait until both services log a steady-state ready message before
+   moving on. Migration failures appear here and will keep the affected
+   container in a restart loop.
+
+</Steps>
+
+## Using the GitHub Action
+
+If your superproject lives on GitHub, the shipped
+`.github/workflows/bump-submodules.yml` workflow does steps 1–5
+automatically. It runs weekly (Monday 09:00 UTC) and on manual dispatch.
+
+- It checks out the superproject with submodules.
+- It runs `git checkout main && git pull origin main` inside every
+  submodule.
+- If anything changed, it opens a PR titled `chore: bump submodules`
+  on a branch named `bump-submodules/<run-id>`.
+
+You still review the PR (especially the per-submodule diffs) and merge
+manually. Rebuild and restart are still your job — the workflow does not
+touch your deployment.
+
+To run it on demand: **Actions → Bump submodules → Run workflow**.
+
+## Verify
+
+After restart, confirm each surface independently.
+
+<Tabs>
+<TabItem label="Web">
+
+```sh
+curl -fsS https://<your-web-host>/api/health
+```
+
+Should return `200 OK`. Then log into the admin console and check that
+the build SHA in the footer matches the commit you just bumped to.
+
+</TabItem>
+<TabItem label="SteVe">
+
+```sh
+curl -fsS https://<your-steve-host>/manager/home
+```
+
+Should return the SteVe manager page (auth-gated). Then confirm at
+least one <Glossary term="ChargeBox">ChargeBox</Glossary> is `Online` in **SteVe → Charge Points**.
+
+</TabItem>
+<TabItem label="Email worker">
+
+If you redeployed the email worker (it lives in `email-worker/`),
+trigger a magic link send from the web app and confirm the email
+arrives.
+
+</TabItem>
+</Tabs>
+
+## Audit and rollback
+
+The whole upgrade is one commit on the superproject. To roll back:
+
+```sh
+git revert <bump-commit-sha>
+git submodule update --init --recursive
+make compose-build
+make down
+make up
+```
+
+<Aside type="danger">
+**Rolling back across a migration is not safe.** Drizzle and Flyway
+both apply migrations forward-only. If the new version added or
+altered tables, reverting the code will leave the database
+schema-newer-than-the-app. You will need to restore from the backup you
+took in step 1, then start the previous version against the restored
+volume.
+</Aside>
+
+For destructive rollbacks:
+
+<Steps>
+
+1. Stop the stack: `make down`.
+2. Restore the Postgres and MariaDB volumes from the pre-upgrade
+   snapshot.
+3. `git revert` the bump commit and `git submodule update --init
+   --recursive`.
+4. `make compose-build && make up`.
+5. Confirm health endpoints as above.
+
+</Steps>
+
+## If something goes wrong
+
+- **A submodule didn't advance.** `make update` uses `--merge`, which
+  will fail noisily if your submodule working tree has local commits or
+  uncommitted changes. `cd` into the submodule, clean it (`git status`,
+  then `git reset --hard origin/main` if you have no local work), and
+  re-run.
+- **`web` container restart loop after upgrade.** Almost always a
+  Drizzle migration error. Check `docker compose logs web` for the
+  failing SQL. If the migration is recoverable, fix the data and let it
+  retry; if not, restore from backup.
+- **`steve` container restart loop.** Same pattern with Flyway against
+  MariaDB. Logs will name the failing migration file.
+- **New required env var.** `web` will exit on boot with a clear
+  message naming the missing variable. Add it to your env file and
+  `make up` again. See the per-phase pages for which file owns which
+  variable.
+
+## Next
+
+- [Backups](/selfhost/ops/backups/) — take these before every upgrade.
+- [Monitoring](/selfhost/ops/monitoring/) — set this up so you find
+  out about a failed migration before your users do.

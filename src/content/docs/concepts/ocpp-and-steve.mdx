@@ -20,7 +20,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 Polaris Express does not talk to chargers directly. Every command,
 every meter reading, every authorization decision flows through
-[<Glossary term="SteVe">SteVe</Glossary>](/glossary#steve) — an open-source <Glossary term="OCPP">OCPP</Glossary> central system the
+[<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve) — an open-source <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> central system the
 fork of which is vendored into this repo. Understanding the boundary
 between Polaris and SteVe is the difference between a five-minute bug
 fix and a five-hour wild goose chase.
@@ -32,7 +32,7 @@ protocol every supported charger speaks. Polaris Express targets
 **OCPP 1.6J** (JSON over WebSocket) in practice — SteVe also supports
 1.2 and 1.5, plus the SOAP variants, but our fleet runs 1.6J.
 
-In OCPP, the [<Glossary term="ChargeBox">ChargeBox</Glossary>](/glossary#chargebox) is the client. It opens
+In OCPP, the [<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) is the client. It opens
 a persistent WebSocket to the central system and exchanges messages
 like `BootNotification`, `Heartbeat`, `StatusNotification`,
 `StartTransaction`, `MeterValues`, and `StopTransaction`. The central
@@ -74,7 +74,7 @@ these:
 
 1. **SteVe REST API → Polaris (pull).** Polaris polls SteVe for
    transactions, [idTags](/glossary#idtag), charge boxes, and
-   <Glossary term="Reservation">reservations</Glossary>. This is the read path. See `web/src/lib/steve-client.ts`.
+   <Glossary term="<Glossary term="Reservation">Reservation</Glossary>">reservations</Glossary>. This is the read path. See `web/src/lib/steve-client.ts`.
 2. **SteVe REST `/v1/operations/*` → ChargeBox (push).** Polaris
    issues remote commands by POSTing to SteVe, which queues a task
    and forwards the OCPP message to the charger over its WebSocket.
@@ -84,7 +84,7 @@ these:
    so Polaris doesn't have to poll for live data:
    - `HttpMeterValueHook` fires on every `MeterValues` frame.
    - The [pre-authorize](/glossary#pre-authorize) hook fires on
-     `Authorize` (and on `StartTransaction` when an <Glossary term="idTag">idTag</Glossary> is present)
+     `Authorize` (and on `StartTransaction` when an <Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary> is present)
      so Polaris can decide whether to accept the swipe.
 
 ### The fork
@@ -120,7 +120,7 @@ outbound webhook means adding a Java class to the message hook chain
 and recompiling. The fork is the supported extension mechanism — and
 it stays small enough to rebase against upstream without drama.
 
-**Why webhooks for <Glossary term="Meter value">meter values</Glossary>, REST polling for everything else?**
+**Why webhooks for <Glossary term="<Glossary term="Meter value">Meter value</Glossary>">meter values</Glossary>, REST polling for everything else?**
 Meter values are high-frequency (every 10–60 seconds per active
 transaction) and only matter while the transaction is live. Polling
 SteVe at that cadence would be wasteful and would still lag the

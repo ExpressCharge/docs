@@ -12,7 +12,6 @@ last_authored: 2025-01-15
 prompt_template: customer-tutorial
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 This guide is for drivers who want to review past charging sessions on the Polaris Express web app. You'll open the Charging Sessions page, read the summary stats at the top, and filter the list down to the sessions you care about. You need an account with at least one charging session synced to it.
 
@@ -61,7 +60,7 @@ The filters write to the URL, so you can bookmark or share a filtered view.
 
 Each row in the table represents one charging session. You'll see:
 
-- The session's <Glossary term="<Glossary term="<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>">idTag</Glossary>">idTag</Glossary> (the <Glossary term="<Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV card</Glossary>">EV card</Glossary> or token used to start it).
+- The session's idTag (the EV card or token used to start it).
 - kWh delivered for that session.
 - Whether the session is still active or has finished.
 - The sync timestamp.
@@ -82,7 +81,7 @@ You've reviewed your history when:
 ## Troubleshooting
 
 **The page is empty and says "No sessions yet."**
-Your account hasn't received any session events yet. Start a charging session, then come back. The list updates after the next <Glossary term="<Glossary term="<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>">Sync run</Glossary>">sync run</Glossary>.
+Your account hasn't received any session events yet. Start a charging session, then come back. The list updates after the next sync run.
 
 **The page is empty and says "No matching sessions."**
 Your filters are hiding everything. Use **Clear filters** in the empty state, or widen the date range.
@@ -91,11 +90,11 @@ Your filters are hiding everything. Use **Clear filters** in the empty state, or
 Cost estimates need a tariff on your account. For sessions outside the current billing period, only flat (non-tiered) tariffs produce an estimate — older tiered sessions can't be priced retroactively.
 
 <Aside type="caution">
-The numbers on this page are estimates based on synced meter readings and your current tariff. Your invoice from <Glossary term="<Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> is the source of truth for what you owe.
+The numbers on this page are estimates based on synced meter readings and your current tariff. Your invoice from Lago is the source of truth for what you owe.
 </Aside>
 
 ## Related
 
 - [Start a charging session](/user/web/sessions/start-a-session)
-- [Reserve a charger](/user/web/<Glossary term="<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">Reservation</Glossary>">reservations</Glossary>/create-a-reservation)
+- [Reserve a charger](/user/web/reservations/create-a-reservation)
 - [Understand your invoice](/user/web/billing/read-your-invoice)

@@ -12,9 +12,8 @@ last_authored: 2025-01-15
 prompt_template: customer-tutorial
 ---
 
-import Glossary from "@components/Glossary.astro";
 
-If you have more than one <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary> — say, one for the car and one for the spare set of keys — a name like "Model Y daily" reads better than a string of hex digits. This page shows you how to open a card's detail page and what you'll find there.
+If you have more than one EV card — say, one for the car and one for the spare set of keys — a name like "Model Y daily" reads better than a string of hex digits. This page shows you how to open a card's detail page and what you'll find there.
 
 <!-- TODO: confirm rename + color-pick UI in code_refs. The current /cards/[id].tsx route renders display name and card ID but does not expose an editable rename control or a color picker. Color scheme on the page is fixed to cyan. -->
 
@@ -46,7 +45,7 @@ Select the card by name. The detail page opens with a **Summary** section, a **S
 The Summary section shows four tiles:
 
 - **Display name** — what the card is called on your dashboard. If you've never set one, this falls back to the card ID.
-- **Card ID** — the underlying <Glossary term="<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>">idTag</Glossary>. You can't change this; it's printed on the card itself.
+- **Card ID** — the underlying idTag. You can't change this; it's printed on the card itself.
 - **Issued** — the date the card was added to your account.
 - **Last used** — the date of the most recent session, or "Never" if the card hasn't been used yet.
 

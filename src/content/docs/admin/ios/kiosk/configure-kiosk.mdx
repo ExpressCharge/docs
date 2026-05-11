@@ -12,14 +12,13 @@ last_authored: 2025-01-15
 prompt_template: admin-runbook
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 import Tutorial from '@components/Tutorial.astro';
 import TutorialStep from '@components/TutorialStep.astro';
 import Screenshot from '@components/Screenshot.astro';
 
-You want to dedicate an iPad or iPhone to a single task — a wall-mounted [<Glossary term="<Glossary term="<Glossary term="expreScan">expreScan</Glossary>">expreScan</Glossary>">expreScan</Glossary>](/glossary#expre-scan) terminal at a parking entrance, a check-in tablet at a service desk, a customer-facing display. This runbook covers placing a device into [<Glossary term="<Glossary term="<Glossary term="Kiosk mode">Kiosk mode</Glossary>">Kiosk mode</Glossary>">Kiosk mode</Glossary>](/glossary#kiosk-mode) so it shows only the capability you assign and hides all navigation chrome.
+You want to dedicate an iPad or iPhone to a single task — a wall-mounted [expreScan](/glossary#expre-scan) terminal at a parking entrance, a check-in tablet at a service desk, a customer-facing display. This runbook covers placing a device into [Kiosk mode](/glossary#kiosk-mode) so it shows only the capability you assign and hides all navigation chrome.
 
 [Kiosk mode](/glossary#kiosk-mode) is a UX simplification, not a security lockdown. The device still has an on-device escape gesture for recovery, and only web-admin can remove the kiosk binding remotely.
 
@@ -117,7 +116,7 @@ From web admin, open the device record, remove `kiosk` from its capability set, 
 
 ## Audit and reversibility
 
-- <Glossary term="<Glossary term="<Glossary term="Capability">Capability</Glossary>">Capability</Glossary>">Capability</Glossary> set changes are recorded in the [audit log](/glossary#audit-log) against the device. {/* <!-- TODO: confirm audit log coverage of capability mutations --> */}
+- Capability set changes are recorded in the [audit log](/glossary#audit-log) against the device. {/* <!-- TODO: confirm audit log coverage of capability mutations --> */}
 - Removing `kiosk` from the capability set is fully reversible — the device returns to its normal shell with no data loss.
 - Kiosk mode does not alter the device's session, [user mapping](/glossary#user-mapping), or any local data; it is purely a rendering mode.
 

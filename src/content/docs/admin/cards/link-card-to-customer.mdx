@@ -13,18 +13,17 @@ last_authored: 2025-02-14
 prompt_template: admin-runbook
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside, Tutorial, TutorialStep, Screenshot, Endpoint } from "~/components";
 
-Run this when a customer needs an <Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV card</Glossary> attached to their billing identity — typically right after issuing a new card, after a card swap, or when a card arrived in the fleet unlinked. The link is what tells Polaris Express which <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> customer to charge when a session starts on that card.
+Run this when a customer needs an EV card attached to their billing identity — typically right after issuing a new card, after a card swap, or when a card arrived in the fleet unlinked. The link is what tells Polaris Express which Lago customer to charge when a session starts on that card.
 
 ## Prerequisites
 
 - Operator access to the admin console.
-- The EV card already exists in <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> (it appears in `/tags`). If it doesn't, create it first via the tag wizard — this surface will auto-create a missing tag, but you should know which <Glossary term="<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>">idTag</Glossary> you're working with.
-- The target customer already exists in Lago. If they don't, create the <Glossary term="<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>">Lago customer</Glossary> first; this flow will auto-provision the local user account from the Lago customer, but it won't create the Lago customer for you.
-- You know whether the customer has an active <Glossary term="<Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary>">Lago subscription</Glossary>. Subscription is optional at link time — if you skip it, the next [sync run](/glossary#sync-run) will pick one if available.
+- The EV card already exists in SteVe (it appears in `/tags`). If it doesn't, create it first via the tag wizard — this surface will auto-create a missing tag, but you should know which idTag you're working with.
+- The target customer already exists in Lago. If they don't, create the Lago customer first; this flow will auto-provision the local user account from the Lago customer, but it won't create the Lago customer for you.
+- You know whether the customer has an active Lago subscription. Subscription is optional at link time — if you skip it, the next [sync run](/glossary#sync-run) will pick one if available.
 
 ## Procedure
 
@@ -117,7 +116,7 @@ The SteVe-side tag creation is **not** rolled back if the DB transaction fails a
 Reassigning a linked card moves historical session visibility from the old customer to the new one. The old customer's account will no longer see sessions that happened on this card. There is no automatic undo — to reverse, run the same flow again with the original customer and `?confirm_reassign=true`. The audit log retains both transitions.
 </Aside>
 
-**Unlinking (deactivation).** The DELETE path flips `is_active=false` on the mapping and on every descendant tag in the [parentIdTag](/glossary#chargebox) hierarchy, then inline-syncs each one to SteVe so the card stops authorizing immediately. If the customer has no other active mappings left, their future-dated <Glossary term="<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">Reservation</Glossary>">reservations</Glossary> get bulk-cancelled. The mapping row is preserved (not deleted) so historical session joins still resolve.
+**Unlinking (deactivation).** The DELETE path flips `is_active=false` on the mapping and on every descendant tag in the [parentIdTag](/glossary#chargebox) hierarchy, then inline-syncs each one to SteVe so the card stops authorizing immediately. If the customer has no other active mappings left, their future-dated reservations get bulk-cancelled. The mapping row is preserved (not deleted) so historical session joins still resolve.
 
 **Child tags cascade.** Whenever you change the Lago customer, the subscription, or the active state on a parent tag, the change cascades to all descendant tags inside the same DB transaction. Grandchildren are included. You don't need to update children manually.
 
@@ -127,4 +126,4 @@ Reassigning a linked card moves historical session visibility from the old custo
 - [Unlink an EV card](/admin/cards/unlink)
 - [Reassign a card to a different customer](/admin/cards/reassign)
 - [Sync runs](/admin/sync/runs)
-- [<Glossary term="<Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary>">Audit log</Glossary>](/glossary#audit-log)
+- [Audit log](/glossary#audit-log)

@@ -12,11 +12,10 @@ last_authored: 2025-02-14
 prompt_template: concept
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 Polaris Express does not run its own billing engine. Every customer,
 subscription, plan, coupon, wallet, and invoice you see in the admin UI
-is a thin projection of state held in [<Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary>](/glossary#lago) — an
+is a thin projection of state held in [Lago](/glossary#lago) — an
 open-source billing platform we deploy alongside the rest of the stack.
 Understanding that boundary is the difference between fixing a billing
 issue in five minutes and chasing ghosts in our database.
@@ -41,9 +40,9 @@ erDiagram
 
 ### Customers
 
-A [<Glossary term="<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>">Lago customer</Glossary>](/glossary#lago-customer) is the billing identity for
+A [Lago customer](/glossary#lago-customer) is the billing identity for
 one Polaris account. We address customers by their `external_id`, which
-is always the Polaris user's [<Glossary term="<Glossary term="<Glossary term="Public ID">Public ID</Glossary>">Public ID</Glossary>">Public ID</Glossary>](/glossary#public-id) — never
+is always the Polaris user's [Public ID](/glossary#public-id) — never
 Lago's internal `lago_id`. This means we can recreate the Lago side
 deterministically if the billing database is ever rebuilt: the same
 Polaris user always maps to the same Lago customer.
@@ -55,11 +54,11 @@ only to signal intent at the call site.
 ### Plans and subscriptions
 
 A **plan** is the price sheet: a base fee, a currency, and a list of
-*charges*, each pointing at a [<Glossary term="<Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">Lago metric</Glossary>">Lago metric</Glossary>](/glossary#lago-metric) with
+*charges*, each pointing at a [Lago metric](/glossary#lago-metric) with
 a pricing model (flat, package, tiered, volume). Plans are managed in
 the Lago admin UI, not in Polaris — we read them but never write them.
 
-A [<Glossary term="<Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary>">Lago subscription</Glossary>](/glossary#lago-subscription) attaches one customer
+A [Lago subscription](/glossary#lago-subscription) attaches one customer
 to one plan. Subscriptions, like customers, are keyed by an external ID
 we control. A single customer can hold several subscriptions
 simultaneously (e.g. a base plan plus a top-up).
@@ -165,4 +164,4 @@ As an operator working with billing:
 - [Replaying lost usage events](/runbooks/lago-event-replay/)
 - [Issuing a one-off invoice](/admin/billing/one-off-invoice/)
 - [Webhook signature verification](/concepts/lago-webhooks/)
-- [<Glossary term="<Glossary term="<Glossary term="Charging profile">Charging profile</Glossary>">Charging profile</Glossary>">Charging profile</Glossary> metadata mirror](/concepts/charging-profile-mirror/)
+- [Charging profile metadata mirror](/concepts/charging-profile-mirror/)

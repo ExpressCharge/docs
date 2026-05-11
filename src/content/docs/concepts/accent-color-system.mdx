@@ -13,7 +13,6 @@ last_authored: 2025-01-15
 prompt_template: concept
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 The admin UI uses a single, enumerated palette of accent colors — eighteen hues
 plus a `muted` neutral — to give every page a coherent identity. The accent
@@ -137,14 +136,14 @@ When you build a new admin route:
 If you're touching an older page that hand-rolls
 `rounded-md border bg-background p-4` boxes or per-page bespoke stat tiles,
 replace them with `SectionCard` and `StatStrip` rather than patching around
-them. The <Glossary term="<Glossary term="Accent color system">Accent color system</Glossary>">accent system</Glossary> only works if every page funnels through the same
+them. The accent system only works if every page funnels through the same
 primitives.
 
 ## Related
 
 - [The admin UI layout primitives](/concepts/admin-ui-primitives) — `PageCard`,
   `SectionCard`, `StatStrip`, `MetricTile`.
-- [<Glossary term="<Glossary term="BorderBeam">BorderBeam</Glossary>">BorderBeam</Glossary>](/glossary#borderbeam) — the live-state animation.
+- [BorderBeam](/glossary#borderbeam) — the live-state animation.
 - [How to add a new accent or wash](/runbooks/add-accent-wash) — when to
   extend `stripToneClasses`.
 - [Listing vs detail page conventions](/tutorials/build-admin-page) — where

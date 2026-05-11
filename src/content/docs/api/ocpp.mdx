@@ -12,11 +12,10 @@ last_authored: 2025-01-15
 prompt_template: api-reference
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 <!-- TODO: handler not found -->
 
-The `/api/ocpp/*` namespace receives webhook callbacks from [<Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve) when [<Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary>](/glossary#ocpp) events occur on a [<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) — session lifecycle, [<Glossary term="<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">Meter value</Glossary>">meter values</Glossary>](/glossary#meter-value), status notifications, and authorization checks. Polaris Express consumes these events to drive session state, billing, and live UI updates.
+The `/api/ocpp/*` namespace receives webhook callbacks from [SteVe](/glossary#steve) when [OCPP](/glossary#ocpp) events occur on a [ChargeBox](/glossary#chargebox) — session lifecycle, [meter values](/glossary#meter-value), status notifications, and authorization checks. Polaris Express consumes these events to drive session state, billing, and live UI updates.
 
 These endpoints are server-to-server. They are not part of the customer or admin API surface.
 

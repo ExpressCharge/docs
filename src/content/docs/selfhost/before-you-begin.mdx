@@ -13,13 +13,12 @@ last_authored: 2025-01-21
 prompt_template: selfhost-phase
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside, FileTree, Tabs, TabItem } from '@astrojs/starlight/components';
 import { PackageManagers } from 'starlight-package-managers';
 
 Polaris Express is a multi-service stack: a Deno/Fresh web app, a
-Postgres database, a sync worker, the <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> backend, and a
+Postgres database, a sync worker, the SteVe OCPP backend, and a
 Cloudflare Worker for transactional email. Before you provision
 anything, read this page end-to-end. It tells you what to install
 locally, what accounts to open, what DNS to plan for, and what the
@@ -111,7 +110,7 @@ in containers.
 Open these now. Each takes anywhere from 5 minutes to a business day
 to provision, and you cannot finish installation without them.
 
-### <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> (billing)
+### Lago (billing)
 
 Polaris Express does not do billing itself — it pushes metered
 kWh into [Lago](https://www.getlago.com/) and Lago does the rest
@@ -131,7 +130,7 @@ Either way you will need:
   settings.
 - <EnvVar name="LAGO_DASHBOARD_URL" default="https://app.getlago.com" /> —
   where admin "open in Lago" links point.
-- A <Glossary term="<Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">Lago metric</Glossary>">billable metric</Glossary> in Lago with code <EnvVar name="LAGO_METRIC_CODE"
+- A billable metric in Lago with code <EnvVar name="LAGO_METRIC_CODE"
   default="ev_charging_kwh" />. Create this before the first sync
   run.
 
@@ -190,7 +189,7 @@ Only if you are shipping the native iOS app. You need:
 These become <EnvVar name="APNS_KEY_ID" />,
 <EnvVar name="APNS_TEAM_ID" />, <EnvVar name="APNS_KEY_BASE64" />,
 and <EnvVar name="APNS_TOPIC" />. Missing values do not block boot
-— push sends just fail soft and the <Glossary term="<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>">SSE</Glossary> fallback handles
+— push sends just fail soft and the SSE fallback handles
 real-time updates.
 
 ## DNS and TLS — plan now
@@ -305,7 +304,7 @@ Write these down. You will reference them in every subsequent phase.
 5. **Lago Cloud or self-hosted Lago?**
 6. **Admin auth: password, OIDC, or both?**
 7. **Adaptive cadence or fixed cron?** The sync worker defaults to
-   [<Glossary term="<Glossary term="<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>">Adaptive Cadence</Glossary>">Adaptive Cadence</Glossary>](#) (Active 15m / Idle 1h / Dormant 1w). To
+   [Adaptive Cadence](#) (Active 15m / Idle 1h / Dormant 1w). To
    force a fixed schedule, set <EnvVar name="SYNC_CRON_SCHEDULE" />.
    Default is fine for most operators.
 8. **iOS app: yes or no?** Determines whether you need an Apple

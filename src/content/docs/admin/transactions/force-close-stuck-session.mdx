@@ -12,7 +12,6 @@ last_authored: 2025-02-14
 prompt_template: admin-runbook
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside, Steps } from "@astrojs/starlight/components";
 
@@ -20,16 +19,16 @@ A customer calls: their car has been unplugged for ten minutes but the
 session is still "Charging" in the app and the meter is still ticking
 on their statement. The charger never sent a `StopTransaction`. This
 runbook walks you through ending that session from the admin console
-without touching <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> directly.
+without touching SteVe directly.
 
 ## Prerequisites
 
 - You are signed in as an `admin` role on the admin host.
-- You have the customer's [<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) ID or
+- You have the customer's [ChargeBox](/glossary#chargebox) ID or
   enough context (account email, connector address) to find it.
 - You've confirmed the session is actually stuck — not just slow to
   refresh. Check the charger's live status panel and the most recent
-  [meter value](/glossary#meter-value) timestamp. If <Glossary term="<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">Meter value</Glossary>">meter values</Glossary> are
+  [meter value](/glossary#meter-value) timestamp. If meter values are
   still advancing, the session isn't stuck; the car is still drawing.
 - You have a way to reach the customer (chat, phone) in case the
   charger doesn't acknowledge the stop and you need to escalate to a
@@ -55,8 +54,8 @@ without touching <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</G
 
 2. **Confirm the active transaction.** In the **Current session**
    panel, note the transaction ID, connector number, and the
-   `idTag` ([<Glossary term="<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>"><Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> tag</Glossary>](/glossary#idtag)) that started it. Cross-check
-   the `idTag` against the customer's [<Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV card</Glossary>](/glossary#ev-card)
+   `idTag` ([OCPP tag](/glossary#idtag)) that started it. Cross-check
+   the `idTag` against the customer's [EV card](/glossary#ev-card)
    on their account page in another tab. If they don't match, stop
    and investigate before issuing any operation — you may be looking
    at the wrong charger.
@@ -153,7 +152,7 @@ prematurely-closed one.
 
 ## Related
 
-- [Cancel a stuck reservation](/admin/<Glossary term="<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">Reservation</Glossary>">reservations</Glossary>/cancel-stuck)
+- [Cancel a stuck reservation](/admin/reservations/cancel-stuck)
   <!-- TODO: confirm -->
 - [Unlock a connector](/admin/chargers/unlock-connector)
   <!-- TODO: confirm -->

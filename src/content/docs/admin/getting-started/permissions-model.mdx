@@ -13,7 +13,6 @@ last_authored: 2025-02-14
 prompt_template: concept
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 Polaris Express runs two distinct UI surfaces — the operator console
 at `manage.example.com` and the customer portal at `example.com` —
@@ -61,7 +60,7 @@ than re-parsing the hostname.
 ### Role (who the user is)
 
 Every row in `users` carries a `role` of either `admin` or `customer`.
-Role is declared as an additional <Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary> field so it survives the
+Role is declared as an additional BetterAuth field so it survives the
 adapter's input-stripping. Three independent code paths set it, and
 all three converge on the same defense-in-depth rule: **the surface
 that signed you up decides your role.**
@@ -70,7 +69,7 @@ that signed you up decides your role.**
 | ---------------------------- | -------- | ----------- |
 | Email + password             | Admin    | (existing)  |
 | Pocket ID OIDC callback      | Admin    | `admin`     |
-| <Glossary term="<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">Magic link</Glossary>">Magic link</Glossary>                   | Customer | `customer`  |
+| Magic link                   | Customer | `customer`  |
 | Seed script / admin endpoint | Admin    | `admin`     |
 
 The `databaseHooks.user.create.before` hook re-stamps role based on
@@ -97,7 +96,7 @@ is soft-unlinked — capability checks for start, stop, and reserve
 read this flag to gate the action without deleting the historical
 mappings.
 
-### <Glossary term="<Glossary term="<Glossary term="Impersonation">Impersonation</Glossary>">Impersonation</Glossary>">Impersonation</Glossary> (`?as=<userId>`)
+### Impersonation (`?as=<userId>`)
 
 An admin browsing the customer surface can append `?as=<customerUserId>`
 to view the portal as that customer. The middleware sets
@@ -153,7 +152,7 @@ As an operator, the practical consequences:
   magic-link plugin runs with `disableSignUp: true`, so a magic-link
   request for an unknown email returns success-shaped output but
   creates no account. New customers are auto-provisioned when you link
-  an <Glossary term="<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>"><Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> tag</Glossary> to their email on the admin side.
+  an OCPP tag to their email on the admin side.
 - **Impersonation is for support, not for action.** Use `?as=` to
   reproduce what a customer sees. If you need to start, stop, or refund
   on their behalf, do it from the admin surface against their record —
@@ -174,5 +173,5 @@ As an operator, the practical consequences:
   — the flow that creates a customer account.
 - [Configure Pocket ID OIDC for admins](/admin/runbooks/configure-pocket-id/)
   — group-gated admin sign-in.
-- [<Glossary term="<Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary>">Audit log</Glossary> reference](/admin/reference/audit-log/) — what's recorded
+- [Audit log reference](/admin/reference/audit-log/) — what's recorded
   for sign-ins, magic-link requests, and impersonation.

@@ -12,16 +12,15 @@ last_authored: 2025-01-21
 prompt_template: api-reference
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 <!-- TODO: handler not found — no source files were provided for web/routes/api/webhook/. This page is a stub and must be regenerated once the handler sources are available. -->
 
 Inbound webhook receivers. Polaris Express exposes endpoints under
-`/api/webhook/` for third-party services (notably [<Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary>](/glossary#lago))
+`/api/webhook/` for third-party services (notably [Lago](/glossary#lago))
 to push events back into the platform — subscription changes, invoice
 state transitions, and similar.
 
-These endpoints are unauthenticated in the <Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary> sense; they are
+These endpoints are unauthenticated in the BetterAuth sense; they are
 authenticated by the sending service via a shared secret or signature
 header. They are not intended to be called by end users or admins.
 
@@ -47,7 +46,7 @@ only the provider's own signature scheme.
 
 ## Endpoints
 
-<!-- TODO: handler not found — endpoint inventory pending. Expected handlers under web/routes/api/webhook/lago/ for <Glossary term="<Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary>">Lago subscription</Glossary>/invoice events. -->
+<!-- TODO: handler not found — endpoint inventory pending. Expected handlers under web/routes/api/webhook/lago/ for Lago subscription/invoice events. -->
 
 ## Examples
 

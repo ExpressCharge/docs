@@ -12,9 +12,8 @@ last_authored: 2025-02-14
 prompt_template: admin-runbook
 ---
 
-import Glossary from "@components/Glossary.astro";
 
-Use this runbook when you need a fleet-wide snapshot of every charger and NFC scanner Polaris Express is tracking — for a morning health check, when a customer reports a charger offline, or when you're triaging a scanner that won't arm. The `/admin/devices` page is the single surface that merges <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> [ChargeBoxes](/glossary#chargebox) and iOS/macOS NFC scanners into one grid.
+Use this runbook when you need a fleet-wide snapshot of every charger and NFC scanner Polaris Express is tracking — for a morning health check, when a customer reports a charger offline, or when you're triaging a scanner that won't arm. The `/admin/devices` page is the single surface that merges OCPP [ChargeBoxes](/glossary#chargebox) and iOS/macOS NFC scanners into one grid.
 
 ## Prerequisites
 
@@ -45,7 +44,7 @@ The strip at the top of the page reports six aggregates over the **currently fil
 - **Offline** — the complement of Online.
 - **Chargers** — entries from the `chargers` table.
 - **Scanners** — entries from the `devices` table.
-- **Unmanaged** — chargers whose `managementMode` is `unmanaged` (i.e. not connected over [OCPP](/glossary#ocpp) via [<Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve)).
+- **Unmanaged** — chargers whose `managementMode` is `unmanaged` (i.e. not connected over [OCPP](/glossary#ocpp) via [SteVe](/glossary#steve)).
 
 The totals reflect filters, so if you narrow to scanners only, the **Chargers** count drops to zero. This is intentional — the strip and grid always agree.
 
@@ -108,7 +107,7 @@ To see every scanner registered to a single user, paste their user ID into the *
 
 Click any card to drill into the device detail page. Cards are sorted by **last-seen descending** across both data sources, so the freshest device — charger or scanner — floats to the top.
 
-Each charger card shows the [<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) ID, friendly name, last status, form factor, and capability pills. Each scanner card shows the device label, platform, model, app version, and owner.
+Each charger card shows the [ChargeBox](/glossary#chargebox) ID, friendly name, last status, form factor, and capability pills. Each scanner card shows the device label, platform, model, app version, and owner.
 
 </TutorialStep>
 
@@ -141,7 +140,7 @@ If the page renders with a yellow banner reading *"Couldn't reach one of the dev
 
 **Scanner missing.** Soft-deleted devices (`deleted_at IS NOT NULL`) are hidden from this listing by design. If a user reports their phone is gone, it may have been removed via the device management flow.
 
-**<Glossary term="<Glossary term="<Glossary term="Capability">Capability</Glossary>">Capability</Glossary>">Capability</Glossary> pill missing on a charger.** The `'charger'` capability is force-added in the loader even if the database row is misconfigured, so this should never happen. If it does, file a bug with the `chargeBoxId`.
+**Capability pill missing on a charger.** The `'charger'` capability is force-added in the loader even if the database row is misconfigured, so this should never happen. If it does, file a bug with the `chargeBoxId`.
 
 <Aside type="note">
 The grid is capped at 200 rows per source. If your fleet has grown past this, narrow with filters before assuming a device is missing.

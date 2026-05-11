@@ -12,9 +12,8 @@ last_authored: 2025-02-14
 prompt_template: api-reference
 ---
 
-import Glossary from "@components/Glossary.astro";
 
-The `devices` namespace covers admin operations against [<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) records: listing devices, inspecting [capabilities](/glossary#capability), and reading or mutating [<Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary>](/glossary#ocpp) configuration. All endpoints are admin-only.
+The `devices` namespace covers admin operations against [ChargeBox](/glossary#chargebox) records: listing devices, inspecting [capabilities](/glossary#capability), and reading or mutating [OCPP](/glossary#ocpp) configuration. All endpoints are admin-only.
 
 <!-- TODO: handler not found — no source files were provided for web/routes/api/devices/. The endpoint contracts below cannot be authored without walking the route handlers to confirm path params, body schemas, response shapes, and error cases. -->
 
@@ -26,7 +25,7 @@ https://admin.polaris.express
 
 ## Authentication
 
-Every request must carry an admin [<Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary#betterauth) session cookie. Unauthenticated or non-admin callers receive `401` or `403`.
+Every request must carry an admin [BetterAuth](/glossary#betterauth) session cookie. Unauthenticated or non-admin callers receive `401` or `403`.
 
 ## Endpoints
 

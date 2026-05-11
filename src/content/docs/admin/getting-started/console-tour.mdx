@@ -13,18 +13,17 @@ last_authored: 2026-05-12
 prompt_template: admin-runbook
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside } from "@astrojs/starlight/components";
 import { Tutorial, TutorialStep } from "@/components/Tutorial";
 import { Screenshot } from "@/components/Screenshot";
 
-The admin console is your war-room for the ExpressCharge fleet. This runbook walks a new operator through the dashboard and the sidebar so you know where to look when something needs attention — live sessions, an in-flight [sync run](/glossary#sync-run), or a [<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) that's gone offline.
+The admin console is your war-room for the ExpressCharge fleet. This runbook walks a new operator through the dashboard and the sidebar so you know where to look when something needs attention — live sessions, an in-flight [sync run](/glossary#sync-run), or a [ChargeBox](/glossary#chargebox) that's gone offline.
 
 ## Prerequisites
 
 - An admin account on `manage.polaris.express`. Non-admins see a reduced sidebar (the System section and a few admin-only items are hidden).
-- At least one [ChargeBox](/glossary#chargebox) registered in [<Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve), or you'll land on the first-run welcome banner instead of the dashboard.
+- At least one [ChargeBox](/glossary#chargebox) registered in [SteVe](/glossary#steve), or you'll land on the first-run welcome banner instead of the dashboard.
 
 ## Procedure
 
@@ -36,7 +35,7 @@ Sign in at `manage.polaris.express`. The root path renders the ExpressCharge das
 
 <Screenshot alt="ExpressCharge dashboard with header strip, KPI tiles, and 2×2 section grid" />
 
-If you've never registered a charger and have no [<Glossary term="<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>">sync runs</Glossary>](/glossary#sync-run) yet, you'll see a welcome banner instead of the dashboard tiles. Follow its **Register an <Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV card</Glossary>** link to start the onboarding flow.
+If you've never registered a charger and have no [sync runs](/glossary#sync-run) yet, you'll see a welcome banner instead of the dashboard tiles. Follow its **Register an EV card** link to start the onboarding flow.
 
 </TutorialStep>
 
@@ -60,7 +59,7 @@ Below the header is the interactive stat strip. Each cell is a navigational shor
 - **kWh today** — total energy delivered since midnight.
 - **Active sessions** — count of currently charging sessions.
 - **Chargers online / offline**.
-- **Pending <Glossary term="<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">Reservation</Glossary>">reservations</Glossary>**.
+- **Pending reservations**.
 - **Sync success (7d)** — percent of [sync runs](/glossary#sync-run) that completed cleanly in the last seven days.
 
 Click any cell to drill into its source surface.
@@ -71,7 +70,7 @@ Click any cell to drill into its source surface.
 
 The 2×2 grid below the KPI strip is the operator's main view:
 
-- **Live now** (top-left, emerald) — currently active charging sessions, kept fresh over [<Glossary term="<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>">SSE</Glossary>](/glossary#sse). The card glows while sessions are present.
+- **Live now** (top-left, emerald) — currently active charging sessions, kept fresh over [SSE](/glossary#sse). The card glows while sessions are present.
 - **Active sync run / Sync schedule** (top-right, blue) — when a [sync run](/glossary#sync-run) is in flight, this card shows live segment progress and glows. Otherwise it shows the current tier and next run.
 - **Health** (bottom-left, cyan) — operational warning rollups. Auto-revalidates every 30 seconds.
 - **This week** (bottom-right, cyan) — last 7-day rollups for kWh delivered, [sync runs](/glossary#sync-run), [EV cards](/glossary#ev-card) activated, and reservations completed. Each tile carries the accent of its destination page.
@@ -137,5 +136,5 @@ The console tour itself is read-only — viewing the dashboard logs nothing dest
 
 - [Register a ChargeBox in SteVe](/admin/devices/register-chargebox)
 - [Trigger a manual sync run](/admin/sync/manual-run)
-- [Link an EV card to a <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> customer](/admin/tags/link-customer)
+- [Link an EV card to a Lago customer](/admin/tags/link-customer)
 - [Glossary](/glossary)

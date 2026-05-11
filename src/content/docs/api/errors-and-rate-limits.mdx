@@ -12,7 +12,6 @@ last_authored: 2025-01-21
 prompt_template: api-reference
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 How the Polaris Express API reports failures and what limits to expect on a hot loop.
 
@@ -55,10 +54,10 @@ Some endpoints add an `issues` array for field-level validation errors:
 | `403` | Authenticated, but the caller lacks the required role or does not own the resource. |
 | `404` | Resource does not exist, or is scoped to a different caller. |
 | `409` | Conflict — duplicate resource, stale write, or state-machine violation. |
-| `422` | Request was well-formed but semantically invalid (e.g. referenced a <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> customer that is not active). |
+| `422` | Request was well-formed but semantically invalid (e.g. referenced a Lago customer that is not active). |
 | `429` | Rate limit exceeded. See below. |
 | `500` | Unhandled server error. Safe to retry with backoff. |
-| `502` / `503` / `504` | Upstream dependency (<Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>, Lago, mail provider) failed or timed out. Retry with backoff. |
+| `502` / `503` / `504` | Upstream dependency (SteVe, Lago, mail provider) failed or timed out. Retry with backoff. |
 
 ## 401 vs 403
 
@@ -90,12 +89,12 @@ unauthenticated routes).
 
 | Route family | Limit | Window |
 | --- | --- | --- |
-| Auth (`/api/auth/*`, <Glossary term="<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">Magic link</Glossary>">magic-link</Glossary> send, password reset) | 10 requests | 1 minute |
+| Auth (`/api/auth/*`, magic-link send, password reset) | 10 requests | 1 minute |
 | Customer reads (`GET /api/customer/*`) | 120 requests | 1 minute |
 | Customer writes (`POST`/`PATCH`/`DELETE /api/customer/*`) | 30 requests | 1 minute |
 | Admin reads | 300 requests | 1 minute |
 | Admin writes | 60 requests | 1 minute |
-| <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> webhook receiver | unbounded (gated by shared secret) | — |
+| OCPP webhook receiver | unbounded (gated by shared secret) | — |
 
 <Aside type="caution">
 The numbers above are the conservative defaults. Production limits may

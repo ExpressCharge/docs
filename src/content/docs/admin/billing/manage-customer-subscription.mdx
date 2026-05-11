@@ -12,14 +12,13 @@ last_authored: 2025-01-15
 prompt_template: admin-runbook
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside } from "@astrojs/starlight/components";
 
 Use this runbook when a customer asks you to change how their subscription
 charges — for example, restricting charging to off-peak hours, capping
 power to protect a shared circuit, or switching to solar-following mode.
-The <a href="/glossary/#charging-profile"><Glossary term="<Glossary term="<Glossary term="Charging profile">Charging profile</Glossary>">Charging profile</Glossary>">Charging profile</Glossary></a> editor is
+The <a href="/glossary/#charging-profile">Charging profile</a> editor is
 where every schedule and power-cap decision lives for a single
 subscription.
 
@@ -39,7 +38,7 @@ sibling chip on either the Tag detail page or the Link detail page.
 <Tutorial>
   <TutorialStep title="Open the customer's tag or link">
     Navigate to **Tags** in the sidebar and find the customer's
-    <a href="/glossary/#ev-card"><Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV card</Glossary></a>. Open the tag detail page.
+    <a href="/glossary/#ev-card">EV card</a>. Open the tag detail page.
     <Screenshot alt="Tag detail page with the Charging Profile chip visible" />
   </TutorialStep>
 
@@ -83,9 +82,9 @@ sibling chip on either the Tag detail page or the Link detail page.
 
   <TutorialStep title="Save">
     Click **Save**. The profile is written and pushed downstream to
-    <a href="/glossary/#steve"><Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary></a> as a
+    <a href="/glossary/#steve">SteVe</a> as a
     <a href="/glossary/#charging-profile">Charging profile</a> and to
-    <a href="/glossary/#lago"><Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary></a> for billing alignment.
+    <a href="/glossary/#lago">Lago</a> for billing alignment.
   </TutorialStep>
 </Tutorial>
 
@@ -96,7 +95,7 @@ sibling chip on either the Tag detail page or the Link detail page.
 - Check that the **lagoSyncError** banner is not present. If it is,
   see the recovery section below.
 - For an active session, confirm the new cap is honored by watching
-  the next <a href="/glossary/#meter-value"><Glossary term="<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">Meter value</Glossary>">Meter value</Glossary></a> tick on
+  the next <a href="/glossary/#meter-value">Meter value</a> tick on
   the session detail page.
 {/* TODO: confirm exact admin surface for live session power readout */}
 
@@ -129,7 +128,7 @@ must take effect immediately.
 ## Audit and reversibility
 
 Every profile save is recorded in the
-<a href="/glossary/#audit-log"><Glossary term="<Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary>">Audit log</Glossary></a> with the operator
+<a href="/glossary/#audit-log">Audit log</a> with the operator
 identity, the `externalId`, and the new profile contents.
 {/* TODO: confirm audit log entry shape for profile saves */}
 
@@ -146,6 +145,6 @@ record the prior values before changing if a revert is likely.
 
 - [Manage EV cards](/admin/tags/)
 {/* TODO: confirm slug */}
-- [Reconcile a <Glossary term="<Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary>">Lago subscription</Glossary>](/admin/billing/reconcile-lago-subscription/)
+- [Reconcile a Lago subscription](/admin/billing/reconcile-lago-subscription/)
 {/* TODO: confirm slug */}
 - [Glossary: Charging profile](/glossary/#charging-profile)

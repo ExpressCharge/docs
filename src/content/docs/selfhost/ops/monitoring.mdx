@@ -14,7 +14,6 @@ last_authored: 2025-01-22
 prompt_template: selfhost-phase
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
 import EnvVar from '../../../../components/EnvVar.astro';
@@ -47,7 +46,7 @@ Two producers, one wire format
   - swift-log → JSONL ring buffer
   - → `POST /api/devices/me/state/sync`
   - → Postgres `device_logs`
-  - → <Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary> `/api/admin/devices/{id}/logs-stream`
+  - → SSE `/api/admin/devices/{id}/logs-stream`
 </FileTree>
 
 Both sides scrub PII (emails, JWTs, bearer tokens, E.164 phone
@@ -103,7 +102,7 @@ docker compose logs --tail=5000 web | \
 ## Device logs
 
 iOS devices buffer logs locally in a 5 MB ring and flush up to 100
-records on each [<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>](/glossary#sync-run). The server inserts
+records on each [Sync run](/glossary#sync-run). The server inserts
 them into `device_logs` keyed by `(device_id, seq)` and they
 appear in the admin console.
 
@@ -153,7 +152,7 @@ signals.
 - Each managed device produces at least one log batch per **15
   minutes** during business hours.
 - `device_logs.observed_ts` for the latest row per device is within
-  the device's expected [<Glossary term="<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>">Adaptive Cadence</Glossary>](/glossary#adaptive-cadence)
+  the device's expected [Adaptive Cadence](/glossary#adaptive-cadence)
   window (default ≤ 5 min for active devices).
 - Server-side `device_logs_size_alarm` cron has **not** fired in the
   last 24 h.

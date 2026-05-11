@@ -73,10 +73,9 @@ jobs:
           if [ -n "$CONCURRENCY" ]; then ARGS="$ARGS --concurrency $CONCURRENCY"; fi
           npx tsx scripts/author-article.ts $ARGS
 
-      - name: Run autolinker on new articles
-        if: inputs.dry_run != true
-        working-directory: monorepo/docs
-        run: npm run autolink
+      # Autolinker disabled in CI for v1 — it re-wraps already-wrapped
+      # terms when run repeatedly. Hand-run locally once it's idempotent.
+      # See https://github.com/ExpressCharge/docs/issues for the fix.
 
       - name: Commit straight to main
         if: inputs.dry_run != true

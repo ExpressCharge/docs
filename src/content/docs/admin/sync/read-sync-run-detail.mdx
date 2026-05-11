@@ -12,16 +12,15 @@ last_authored: 2025-02-14
 prompt_template: admin-runbook
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside } from "@astrojs/starlight/components";
 
-When a sync run finishes — or fails — you open its detail page to understand what changed and what broke. This runbook walks through every panel on the sync-run detail page so you can read it fluently when a customer complaint or a <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> discrepancy lands on your desk.
+When a sync run finishes — or fails — you open its detail page to understand what changed and what broke. This runbook walks through every panel on the sync-run detail page so you can read it fluently when a customer complaint or a Lago discrepancy lands on your desk.
 
 ## Prerequisites
 
 - You are signed in to the admin console.
-- You have the sync run's numeric ID, or you can reach it from the <Glossary term="<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>">sync runs</Glossary> list at `/sync`.
+- You have the sync run's numeric ID, or you can reach it from the sync runs list at `/sync`.
 - For retrying failed runs, you need the `admin` role. Other roles can read the page but cannot trigger retries.
 
 ## Procedure
@@ -45,7 +44,7 @@ When a sync run finishes — or fails — you open its detail page to understand
   <TutorialStep title="Read the Statistics tile">
     The **Statistics** section rolls up counters across the run. It has two groups:
 
-    - **EV Card linking** — counts of <Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV cards</Glossary> activated, deactivated, and unchanged during the run.
+    - **EV Card linking** — counts of EV cards activated, deactivated, and unchanged during the run.
     - **Charging sessions** — count of charging sessions processed and the number of events created downstream.
 
     A value of `0` means the segment ran but had nothing to do — not that the segment was skipped. To confirm a segment actually executed, switch to its tab in **Segment details**.
@@ -54,7 +53,7 @@ When a sync run finishes — or fails — you open its detail page to understand
   <TutorialStep title="Inspect segment logs">
     The **Segment details** section is a tab strip. Each tab corresponds to one segment of the sync pipeline:
 
-    - **Tag linking** — reconciling EV cards between Polaris and <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>.
+    - **Tag linking** — reconciling EV cards between Polaris and SteVe.
     - **Transaction sync** — pulling charging sessions from SteVe.
     - **Scheduling** — adaptive cadence decisions.
     - **Lago customers**, **Lago subscriptions**, **Lago plans**, **Lago invoices**, **Lago wallets**, **Lago billable metrics** — Lago-side reconciliation, one tab per resource.

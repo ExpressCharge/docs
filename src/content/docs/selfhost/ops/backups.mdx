@@ -13,11 +13,10 @@ last_authored: 2025-01-21
 prompt_template: selfhost-phase
 ---
 
-import Glossary from "@components/Glossary.astro";
 
 import { Aside, FileTree, Tabs, TabItem } from '@astrojs/starlight/components';
 
-Polaris Express keeps state in two databases: a Postgres instance (the web app, billing sync, audit log, <Glossary term="<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>">sync runs</Glossary>) and a MariaDB instance (<Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> — <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> <Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">charge box</Glossary> registry, transactions, idTags). Both must be backed up. Losing either one breaks the platform; losing them together is unrecoverable.
+Polaris Express keeps state in two databases: a Postgres instance (the web app, billing sync, audit log, sync runs) and a MariaDB instance (SteVe — OCPP charge box registry, transactions, idTags). Both must be backed up. Losing either one breaks the platform; losing them together is unrecoverable.
 
 This runbook covers daily logical dumps that you can ship off-box, plus how to verify them and how to restore.
 
@@ -25,14 +24,14 @@ This runbook covers daily logical dumps that you can ship off-box, plus how to v
 
 - **Nightly**, automated, off-box. The procedure below is designed to run from cron on the host or from a sidecar container.
 - **Before any upgrade** of `web/`, SteVe, Postgres, or MariaDB. Take a manual dump and confirm it restores into a throwaway container before you touch production.
-- **Before destructive ops** — migrations that drop columns, manual data fixes, large <Glossary term="<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>">idTag</Glossary> re-imports.
+- **Before destructive ops** — migrations that drop columns, manual data fixes, large idTag re-imports.
 
 ## What gets backed up
 
 | Database | Container | Volume | Contents |
 |---|---|---|---|
-| Postgres 17 | `postgres` (from `docker-compose.yml`) | `postgres_data` | Users, [ChargeBoxes](/glossary#chargebox), [tariffs](/glossary#tariff), [sync runs](/glossary#sync-run), [audit log](/glossary#audit-log), [<Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary>](/glossary#lago) mappings, [<Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV cards</Glossary>](/glossary#ev-card), [<Glossary term="<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">Reservation</Glossary>">reservations</Glossary>](/glossary#reservation) |
-| MariaDB 10.4 | `mariadb` (from `steve/docker-compose.yml`) | `/data/ocpp/mariadb` (host bind mount) | [SteVe](/glossary#steve) charge boxes, OCPP transactions, [idTags](/glossary#idtag), [<Glossary term="<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">Meter value</Glossary>">meter values</Glossary>](/glossary#meter-value), connector status |
+| Postgres 17 | `postgres` (from `docker-compose.yml`) | `postgres_data` | Users, [ChargeBoxes](/glossary#chargebox), [tariffs](/glossary#tariff), [sync runs](/glossary#sync-run), [audit log](/glossary#audit-log), [Lago](/glossary#lago) mappings, [EV cards](/glossary#ev-card), [reservations](/glossary#reservation) |
+| MariaDB 10.4 | `mariadb` (from `steve/docker-compose.yml`) | `/data/ocpp/mariadb` (host bind mount) | [SteVe](/glossary#steve) charge boxes, OCPP transactions, [idTags](/glossary#idtag), [meter values](/glossary#meter-value), connector status |
 
 <Aside type="caution">
 Volume snapshots alone are not enough. Both databases need to be quiesced or dumped with the appropriate tool — `pg_dump` for Postgres, `mysqldump` for MariaDB — to guarantee a consistent backup. Copying `/var/lib/postgresql/data` while the database is running will produce a corrupt archive.

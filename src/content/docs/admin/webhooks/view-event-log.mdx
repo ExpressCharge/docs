@@ -12,9 +12,8 @@ last_authored: 2025-01-15
 prompt_template: admin-runbook
 ---
 
-import Glossary from "@components/Glossary.astro";
 
-Use this runbook when you need to confirm that [<Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary>](/glossary#lago)
+Use this runbook when you need to confirm that [Lago](/glossary#lago)
 sent us a webhook, why it succeeded or failed, and whether a customer
 or subscription event was acted on. Common triggers: a customer
 reports a missing invoice notification, billing reconciliation shows
@@ -94,7 +93,7 @@ events at a time.
 For a `processed` event with `notificationFired = true`, check the
 relevant customer's notification feed to confirm the in-app message
 landed. For billing-affecting events (`invoice.*`,
-`subscription.*`), cross-reference the [<Glossary term="<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>">Lago customer</Glossary>](/glossary#lago-customer)
+`subscription.*`), cross-reference the [Lago customer](/glossary#lago-customer)
 record in Lago itself.
 
 </TutorialStep>
@@ -156,4 +155,4 @@ destructive path and its reversal options.
 - [Replay a failed Lago webhook event](/admin/webhooks/replay-event)
 - [Resolve an open webhook circuit breaker](/admin/webhooks/circuit-breaker)
 - [Glossary: Lago](/glossary#lago)
-- [Glossary: <Glossary term="<Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary>">Audit log</Glossary>](/glossary#audit-log)
+- [Glossary: Audit log](/glossary#audit-log)

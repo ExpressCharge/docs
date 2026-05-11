@@ -12,9 +12,8 @@ last_authored: 2025-01-22
 prompt_template: concept
 ---
 
-import Glossary from "@components/Glossary.astro";
 
-The Chargers tab in [<Glossary term="<Glossary term="expreScan">expreScan</Glossary>">expreScan</Glossary>](/glossary#expre-scan) is the driver's
+The Chargers tab in [expreScan](/glossary#expre-scan) is the driver's
 at-a-glance view of every unit they can use. Before you tap into a
 specific charger, the list itself tells you which ones are reachable,
 which one is closest to you, and which are filtered out of view. This
@@ -40,8 +39,8 @@ flowchart TD
 
 ### Reachability
 
-Each entry carries an online state derived from its [<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>](/glossary#ocpp)
-connection to [<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve). A charger is *online* when SteVe
+Each entry carries an online state derived from its [OCPP](/glossary#ocpp)
+connection to [SteVe](/glossary#steve). A charger is *online* when SteVe
 has an active websocket from it; otherwise it's *offline*. The list row
 shows this as a status dot and label. Offline chargers can still be
 opened — the detail screen will show their last known state — but they

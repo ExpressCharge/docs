@@ -17,7 +17,7 @@ import Glossary from "@components/Glossary.astro";
 Use this runbook when a customer has been issued an invoice in error,
 when a billing dispute is resolved in the customer's favor, or when an
 invoice must be cancelled before payment. Voiding is performed against
-[<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>](/glossary#lago) and removes the invoice from collection while
+[<Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary>](/glossary#lago) and removes the invoice from collection while
 preserving an auditable record.
 
 <Aside type="danger">
@@ -60,7 +60,7 @@ are forwarded to Lago as the request body:
 
 - `generate_credit_note` — issue a credit note for the voided amount.
   Use this when the customer should retain credit on their
-  [<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>](/glossary#lago-customer) account for future invoices.
+  [<Glossary term="<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>">Lago customer</Glossary>](/glossary#lago-customer) account for future invoices.
 - `refund_amount` — amount (in the invoice's currency, in cents) to
   refund to the original payment method. Use this when the customer
   paid and is owed money back.

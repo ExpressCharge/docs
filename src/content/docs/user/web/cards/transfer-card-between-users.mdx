@@ -1,0 +1,118 @@
+---
+title: Transfer an EV card to another user
+description: What the card detail page supports today, and how to get a card reassigned to someone else.
+sidebar:
+  order: 90
+persona: Driver
+surface: web
+tier: P2
+code_refs:
+  - web/routes/cards/[id].tsx
+last_authored: 2025-02-14
+prompt_template: customer-tutorial
+---
+
+import Glossary from "@components/Glossary.astro";
+
+This article is for drivers who want to hand an <Glossary term="EV card">EV card</Glossary> off to another person — a family member who is taking over the vehicle, a colleague inheriting a fleet car, or a tenant moving in. The card detail page does not have a self-serve transfer control, so you'll need to contact your operator. Before you start, sign in and open the card you want to transfer.
+
+## Before you start
+
+- You can sign in to the web app and reach `/cards/<id>` for the card in question.
+- You know who the card should belong to next (their name and the email they use, or will use, with the operator).
+- You have your operator's contact email. It appears on the card detail page when you report a card lost; if you don't have it yet, ask your operator directly.
+
+## What the card page can and cannot do
+
+The card detail page shows the card's display name, card ID, when it was issued, when it was last used, lifetime stats, and recent sessions. The only action in the header is **Report lost**, which opens a dialog for active cards.
+
+There is no "Transfer" button. Ownership of a card is held in the operator's records, and only the operator can move a card from one user to another.
+
+<Aside type="note">
+  Reporting the card lost is not the same as transferring it. Reporting lost
+  is meant for cards that are gone or compromised. Use the email flow below
+  for a planned handover.
+</Aside>
+
+## Steps
+
+<Tutorial goal="Hand an EV card off to another user" estimatedMinutes={10}>
+
+<TutorialStep title="Open the card you want to transfer">
+
+From the sidebar, go to **Cards**, then click the card you want to transfer. You'll land on the card detail page.
+
+<Screenshot alt="The card detail page for a single EV card, showing the Summary section and Report lost button in the header." caption="The card detail page is where you confirm the card ID before contacting your operator." />
+
+</TutorialStep>
+
+<TutorialStep title="Note the card's display name and card ID">
+
+In the **Summary** section, copy two values:
+
+- **Display name** — the friendly name shown at the top of the page.
+- **Card ID** — the monospaced identifier under the Card ID tile.
+
+Your operator uses the card ID to find the exact card in their system. The display name helps you and the operator stay aligned in the email thread.
+
+</TutorialStep>
+
+<TutorialStep title="Email your operator with the transfer request">
+
+Send an email to your operator's contact address. Include:
+
+- The card's display name and card ID from the previous step.
+- The name and email of the person who should own the card next.
+- The date you want the change to take effect, if it isn't immediate.
+
+A short template:
+
+> Hi — please transfer card "Garage spare" (ID `ABC123DEF`) from my account
+> to Jordan Lee (jordan@example.com), effective immediately. Thanks.
+
+<!-- TODO: confirm whether the card detail page surfaces operatorEmail anywhere visible to the user outside the Report lost dialog -->
+
+</TutorialStep>
+
+<TutorialStep title="Stop using the card until the operator confirms">
+
+Once you've sent the request, don't start any more sessions with the card. Sessions you start before the transfer completes will be billed to your account, not the new owner's.
+
+</TutorialStep>
+
+</Tutorial>
+
+## Verify
+
+The transfer is complete when:
+
+- Your operator replies confirming the change.
+- The card no longer appears in your **Cards** list when you reload the page.
+- New sessions started by the new owner do not appear under your **Recent sessions**.
+
+If the card still shows up on your account after the operator confirms, sign out and back in to refresh your session, then reload `/cards`.
+
+## Troubleshooting
+
+**The card still shows on my Cards page after the operator confirmed.**
+Sign out, sign back in, and reload. If it persists, reply to the operator's confirmation email with a screenshot.
+
+**I started a session before the transfer went through.**
+That session is billed to you. The operator cannot move a single session between accounts after the fact.
+
+**I lost the card before I could transfer it.**
+Don't send a transfer email. Open the card detail page and use **Report lost** in the header instead. The new owner should be issued a fresh card.
+
+:::caution
+Once you ask for a transfer, treat the card as if it isn't yours anymore. The next session on that card may belong to someone else's bill.
+:::
+
+:::danger
+Never give your account password or sign-in link to the new owner as a shortcut. Account sharing exposes your sessions, payment details, and other cards. Always go through the operator.
+:::
+
+## Related
+
+- [Report a lost or stolen EV card](/user/web/cards/report-lost/)
+- [View your card's sessions and stats](/user/web/cards/card-details/)
+- [Contact your operator](/user/web/account/contact-operator/)

@@ -56,7 +56,7 @@ internet-reachable deployment. The `DATABASE_URL` user/password must
 match `POSTGRES_USER` / `POSTGRES_PASSWORD`.
 </Aside>
 
-## <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary> (<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>)
+## <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> (<Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary>)
 
 | Name | Default | Required | Notes |
 | --- | --- | --- | --- |
@@ -76,14 +76,14 @@ are generated on the SteVe side.
 | `STEVE_PREAUTH_HMAC_KEY` | _(empty)_ | Yes (Wave 1+) | HMAC shared secret for pre-authorize webhook. Generate with `openssl rand -hex 32`. |
 | `STEVE_METERVALUE_HMAC_KEY` | _(empty)_ | Yes (Wave 1+) | HMAC shared secret for `MeterValues` webhook. |
 
-## <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> (billing)
+## <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> (billing)
 
 | Name | Default | Required | Notes |
 | --- | --- | --- | --- |
 | `LAGO_API_URL` | `https://api.getlago.com` | Yes | API base. The client appends `/api/v1`. |
 | `LAGO_API_KEY` | _(empty)_ | Yes | Lago API key with org scope. |
 | `LAGO_DASHBOARD_URL` | `https://app.getlago.com` | Yes | Used for "Open in Lago" links from the admin console. |
-| `LAGO_METRIC_CODE` | `ev_charging_kwh` | Yes | Code of the Lago <Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">billable metric</Glossary> for kWh consumption. Must exist in Lago before first sync. |
+| `LAGO_METRIC_CODE` | `ev_charging_kwh` | Yes | Code of the Lago <Glossary term="<Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">Lago metric</Glossary>">billable metric</Glossary> for kWh consumption. Must exist in Lago before first sync. |
 
 ## Application
 
@@ -93,7 +93,7 @@ are generated on the SteVe side.
 | `DENO_ENV` | `development` | No | Set to `production` for production deploys. Enables stricter error handling and disables verbose tracebacks. |
 | `DEBUG_LEVEL` | `ERROR` | No | One of `ERROR`, `WARN`, `INFO`, `DEBUG`. Use `INFO` when debugging a live incident. |
 
-## Sync worker (<Glossary term="<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>">Adaptive Cadence</Glossary>)
+## Sync worker (<Glossary term="<Glossary term="<Glossary term="Adaptive Cadence">Adaptive Cadence</Glossary>">Adaptive Cadence</Glossary>">Adaptive Cadence</Glossary>)
 
 The sync worker runs on adaptive cadence by default: Active charge
 boxes poll every 15 minutes, Idle every hour, Dormant once a week.
@@ -103,7 +103,7 @@ boxes poll every 15 minutes, Idle every hour, Dormant once a week.
 | `SYNC_CRON_SCHEDULE` | _(unset)_ | No | **Escape hatch.** If set to a cron pattern, all tiers use that pattern and adaptive behavior is disabled. Leave unset in normal operation. |
 | `SYNC_ON_STARTUP` | `false` | No | If `true`, runs a sync tick immediately on worker boot. Useful for testing; leave `false` in production to avoid thundering-herd on restart. |
 | `SYNC_LOOKBACK_MINUTES` | `10080` | No | How far back to scan SteVe transactions each tick. Default is 7 days. Reduce to `1440` (24h) only if you're certain the worker cannot lag. |
-| `SYNC_DORMANT_THRESHOLD_DAYS` | `30` | No | Days of no activity before a <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">charge box</Glossary> is demoted from Idle to Dormant. |
+| `SYNC_DORMANT_THRESHOLD_DAYS` | `30` | No | Days of no activity before a <Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">charge box</Glossary> is demoted from Idle to Dormant. |
 | `SYNC_IDLE_HYSTERESIS_TICKS` | `2` | No | Consecutive idle evaluations required to demote a tier. Higher = more conservative. |
 
 <Aside type="tip">
@@ -113,12 +113,12 @@ actually doing the wrong thing. The override exists for emergencies
 and forensic testing, not as a tuning knob.
 </Aside>
 
-## <Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary> (sessions)
+## <Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary> (sessions)
 
 | Name | Default | Required | Notes |
 | --- | --- | --- | --- |
 | `AUTH_SECRET` | _(empty)_ | Yes | Minimum 32 characters. Generate with `openssl rand -hex 32`. Rotating this invalidates every active session. |
-| `AUTH_URL` | `http://localhost:8000` | Yes | Canonical customer-portal URL. Used as session issuer and for <Glossary term="<Glossary term="Magic link">Magic link</Glossary>">magic-link</Glossary> composition. |
+| `AUTH_URL` | `http://localhost:8000` | Yes | Canonical customer-portal URL. Used as session issuer and for <Glossary term="<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">Magic link</Glossary>">magic-link</Glossary> composition. |
 
 ## Customer portal & email
 
@@ -177,7 +177,7 @@ itself (Pocket ID's per-client allow-list), **not** in Polaris.
 
 Token-based JWT (ES256) auth. Missing values do **not** block boot —
 push sends return `{ok:false,reason:"JwtSignFailed"}` and the app
-falls back to <Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>.
+falls back to <Glossary term="<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>">SSE</Glossary>.
 
 | Name | Default | Required | Notes |
 | --- | --- | --- | --- |

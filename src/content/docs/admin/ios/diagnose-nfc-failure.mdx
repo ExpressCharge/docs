@@ -15,7 +15,7 @@ prompt_template: admin-runbook
 
 import Glossary from "@components/Glossary.astro";
 
-When an operator-staffed iPhone running <Glossary term="<Glossary term="expreScan">expreScan</Glossary>">expreScan</Glossary> shows a red-x error
+When an operator-staffed iPhone running <Glossary term="<Glossary term="<Glossary term="expreScan">expreScan</Glossary>">expreScan</Glossary>">expreScan</Glossary> shows a red-x error
 after an NFC tap, you need to identify which of the five error
 variants the device hit and decide whether the fix is at the device,
 the card, or the backend. This runbook walks you through reading the
@@ -29,8 +29,8 @@ connectivity before you ask the customer to try again.
 - The device is signed in to an admin account. The Diagnostics sheet
   is only reachable from Settings when the signed-in account is an
   admin — the link card is hidden in customer mode.
-- You know the <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary> the device was scanning for. You'll need it
-  to cross-check <Glossary term="<Glossary term="Sync run">Sync run</Glossary>">sync runs</Glossary> in the web console.
+- You know the <Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary> the device was scanning for. You'll need it
+  to cross-check <Glossary term="<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>">sync runs</Glossary> in the web console.
 
 ## Procedure
 
@@ -50,7 +50,7 @@ identify which one:
 - **Scan timed out** — no card was seen. Card was not held close
   enough, or not long enough.
 - **Card not supported** — the card was read but isn't a recognized
-  <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>.
+  <Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV card</Glossary>.
 - **Couldn't reach ExpressCharge** — the device is offline or the
   API is unreachable.
 - **Scan expired** — the scan-arm window closed before the tap. No
@@ -130,9 +130,9 @@ then a toast reports `Sync OK` or `Sync failed`.
 | Error variant | Likely cause | Operator action |
 |---|---|---|
 | Scan timed out | Card not close enough | Ask customer to hold card to the top of the iPhone and re-arm. |
-| Card not supported | Wrong card type, or <Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary> not provisioned | Verify the EV card is registered in the web console. |
+| Card not supported | Wrong card type, or <Glossary term="<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>">idTag</Glossary> not provisioned | Verify the EV card is registered in the web console. |
 | Couldn't reach ExpressCharge | Device offline or backend unreachable | Confirm via Connection card; if Online, escalate. |
-| Scan expired | <Glossary term="<Glossary term="Scan-arm">Scan-arm</Glossary>">Scan-arm</Glossary> window elapsed | Re-arm scan from the web console. |
+| Scan expired | <Glossary term="<Glossary term="<Glossary term="Scan-arm">Scan-arm</Glossary>">Scan-arm</Glossary>">Scan-arm</Glossary> window elapsed | Re-arm scan from the web console. |
 | Signed out | Device token revoked by admin | Sign in again from the error screen's primary button. |
 
 </TutorialStep>

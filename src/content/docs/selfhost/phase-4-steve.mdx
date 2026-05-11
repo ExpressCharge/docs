@@ -20,7 +20,7 @@ import { Tutorial, TutorialStep } from "@astrojs/starlight/components";
 import { Aside, FileTree } from "@astrojs/starlight/components";
 import EnvVar from "~/components/EnvVar.astro";
 
-<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary> is the <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> central system: it terminates the WebSocket from each
+<Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> is the <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> central system: it terminates the WebSocket from each
 physical charge point, persists transactions and meter readings to
 MariaDB, and exposes a REST API plus an admin web UI. ExpresSync uses
 SteVe's REST API for remote-start and pre-authorization, and receives
@@ -47,7 +47,7 @@ verifies that the admin UI and REST API are reachable.
 
 <Aside type="note">
 SteVe is a friendly fork of [steve-community/steve](https://github.com/steve-community/steve)
-with three ExpressCharge-specific changes: an outbound <Glossary term="<Glossary term="Meter value">Meter value</Glossary>">MeterValues</Glossary>
+with three ExpressCharge-specific changes: an outbound <Glossary term="<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">Meter value</Glossary>">MeterValues</Glossary>
 webhook, a clean 404 on the task-resolver endpoint, and JVM-property
 overrides so secrets live in env files instead of the committed
 `application-docker.properties`. Nothing real is committed to the repo.
@@ -208,7 +208,7 @@ wss://ocpp.example.com/steve/websocket/CentralSystemService/<chargeBoxId>
 ```
 
 You won't be able to test this end-to-end until you've registered a
-<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary> in the admin UI (Phase 6 covers that). For now, confirm the
+<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary> in the admin UI (Phase 6 covers that). For now, confirm the
 WebSocket upgrade path is reachable:
 
 ```bash

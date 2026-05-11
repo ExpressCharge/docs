@@ -202,8 +202,9 @@
   code_refs:
     - web/routes/cards/[id].tsx
   screenshots: []
-  status: backlog
-  last_authored: null
+  status: review
+  last_authored: 2026-05-11
+  code_refs_sha: {}
 - slug: user.web.sessions.start-a-charge
   title: Start a charging session
   tier: P0

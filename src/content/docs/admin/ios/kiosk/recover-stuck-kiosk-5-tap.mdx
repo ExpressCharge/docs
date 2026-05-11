@@ -14,12 +14,12 @@ prompt_template: admin-runbook
 
 import Glossary from "@components/Glossary.astro";
 
-When a kiosked iPad or iPhone is wedged — frozen on a screen, showing a stale connectivity error, or pointing at the wrong <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary> — your usual remedy is to remote-deregister it from web admin. This runbook covers the fallback for when web admin can't reach the device: a hidden on-device gesture that surfaces Settings so you can reconfigure or sign out by hand.
+When a kiosked iPad or iPhone is wedged — frozen on a screen, showing a stale connectivity error, or pointing at the wrong <Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary> — your usual remedy is to remote-deregister it from web admin. This runbook covers the fallback for when web admin can't reach the device: a hidden on-device gesture that surfaces Settings so you can reconfigure or sign out by hand.
 
 ## Prerequisites
 
 - Physical access to the kiosked device.
-- The device is in [<Glossary term="<Glossary term="Kiosk mode">Kiosk mode</Glossary>">Kiosk mode</Glossary>](/glossary#kiosk-mode) (chrome stripped, no toolbar, status bar hidden). If you can see the Settings gear in the toolbar, you are not in kiosk mode and should follow the normal Settings flow instead.
+- The device is in [<Glossary term="<Glossary term="<Glossary term="Kiosk mode">Kiosk mode</Glossary>">Kiosk mode</Glossary>">Kiosk mode</Glossary>](/glossary#kiosk-mode) (chrome stripped, no toolbar, status bar hidden). If you can see the Settings gear in the toolbar, you are not in kiosk mode and should follow the normal Settings flow instead.
 - You know the device's expected ChargeBox and connector assignment, in case you need to re-pair after sign-out.
 
 <Aside type="note">
@@ -56,7 +56,7 @@ When a kiosked iPad or iPhone is wedged — frozen on a screen, showing a stale 
     - Sign out of the device (Settings → Account).
     - Re-pair to a different ChargeBox or connector.
     - Open **Connectivity → Diagnostics** to inspect the WebSocket state, last [sync run](/glossary#sync-run), and recent errors.
-    - Toggle [<Glossary term="<Glossary term="Feature flag">Feature flag</Glossary>">feature flags</Glossary>](/glossary#feature-flag) if you're chasing a known issue.
+    - Toggle [<Glossary term="<Glossary term="<Glossary term="Feature flag">Feature flag</Glossary>">Feature flag</Glossary>">feature flags</Glossary>](/glossary#feature-flag) if you're chasing a known issue.
 
     When you're done, swipe the sheet down to dismiss it. The device returns to kiosk chrome with no other state changed.
   </TutorialStep>
@@ -102,7 +102,7 @@ When a kiosked iPad or iPhone is wedged — frozen on a screen, showing a stale 
 ## Audit and reversibility
 
 - The gesture itself is not audited — it only opens a local sheet and changes no server state.
-- Any action you take inside Settings (sign-out, re-pair, flag toggles) is audited the same way it would be from a non-kiosked device. Check the audit log for the device's [<Glossary term="<Glossary term="Public ID">Public ID</Glossary>">Public ID</Glossary>](/glossary#public-id) to confirm.
+- Any action you take inside Settings (sign-out, re-pair, flag toggles) is audited the same way it would be from a non-kiosked device. Check the audit log for the device's [<Glossary term="<Glossary term="<Glossary term="Public ID">Public ID</Glossary>">Public ID</Glossary>">Public ID</Glossary>](/glossary#public-id) to confirm.
 - The gesture leaves no persistent state on the device. Dismissing the sheet returns the device to its previous kiosked screen.
 
 ## Related

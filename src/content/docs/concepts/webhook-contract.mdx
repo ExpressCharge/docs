@@ -17,8 +17,8 @@ prompt_template: concept
 import Glossary from "@components/Glossary.astro";
 
 Polaris Express receives high-trust callbacks from systems that sit on
-the wire between a customer's tap and a charger starting: <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>'s
-Pre-Authorize hook, SteVe's <Glossary term="<Glossary term="Meter value">Meter value</Glossary>">MeterValues</Glossary> hook, and the Cloudflare email
+the wire between a customer's tap and a charger starting: <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>'s
+Pre-Authorize hook, SteVe's <Glossary term="<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">Meter value</Glossary>">MeterValues</Glossary> hook, and the Cloudflare email
 worker that the Fresh app drives. None of these callers can carry a
 session cookie, and all of them must be cheap to verify under a tight
 budget. We use a single shared contract — **a hex HMAC-SHA256 over the
@@ -66,7 +66,7 @@ sequenceDiagram
 
 ### The verification pipeline
 
-Both <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> hook handlers run the same five steps in order:
+Both <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> hook handlers run the same five steps in order:
 
 1. **Read the raw body as text.** A failure here is `400 invalid_body`.
 2. **Read the signature header.** Missing header or missing server-side

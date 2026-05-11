@@ -16,7 +16,7 @@ import Glossary from "@components/Glossary.astro";
 
 The Polaris Express HTTP API is split into namespaces under
 `/api/...`. Each namespace targets a distinct caller: the customer
-web app, the admin console, the <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> webhook receiver, or
+web app, the admin console, the <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> webhook receiver, or
 unauthenticated infrastructure (health, auth).
 
 This page documents the conventions shared by all namespaces and the
@@ -37,10 +37,10 @@ they belong to.
 
 | Prefix | Audience | Auth |
 |---|---|---|
-| `/api/auth/...` | Anyone | <Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary> session bootstrap |
+| `/api/auth/...` | Anyone | <Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary> session bootstrap |
 | `/api/customer/...` | Authenticated customer | Customer session cookie |
 | `/api/admin/...` | Authenticated operator | Admin session cookie |
-| `/api/ocpp/...` | <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary> / charge points | Shared-secret header |
+| `/api/ocpp/...` | <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> / charge points | Shared-secret header |
 | `/api/health` | Anyone (infra) | None |
 
 ## Authentication
@@ -86,7 +86,7 @@ field-level errors.
 
 Public health check used by Docker, load balancers, and uptime
 monitors. Reports per-dependency status for the database, SteVe API
-configuration, <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> API configuration, and the [sync run](/glossary#sync-run)
+configuration, <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> API configuration, and the [sync run](/glossary#sync-run)
 worker.
 
 **Authentication** — none.

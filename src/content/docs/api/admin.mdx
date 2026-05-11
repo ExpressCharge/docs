@@ -20,8 +20,8 @@ customer integrations — they assume an authenticated admin session and
 operate across tenant boundaries.
 
 <Aside type="caution">
-  Admin endpoints can mutate billing state, [<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox)
-  configuration, and [<Glossary term="<Glossary term="User mapping">User mapping</Glossary>">user mappings</Glossary>](/glossary#user-mapping). Treat them as
+  Admin endpoints can mutate billing state, [<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox)
+  configuration, and [<Glossary term="<Glossary term="<Glossary term="User mapping">User mapping</Glossary>">User mapping</Glossary>">user mappings</Glossary>](/glossary#user-mapping). Treat them as
   privileged. Do not expose admin session cookies to untrusted clients.
 </Aside>
 
@@ -36,7 +36,7 @@ Admin endpoints are served only from the admin host. Requests to
 
 ## Authentication
 
-Every request must carry a valid [<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary#betterauth)
+Every request must carry a valid [<Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary#betterauth)
 session cookie belonging to a principal with the `admin` role. The
 session is established via the admin sign-in flow (out of scope for
 this reference).

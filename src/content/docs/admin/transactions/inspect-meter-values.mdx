@@ -16,7 +16,7 @@ prompt_template: admin-runbook
 import Glossary from "@components/Glossary.astro";
 
 When a customer disputes a charging session — or you're reconciling a
-<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> invoice against what actually happened on the charger — you need
+<Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> invoice against what actually happened on the charger — you need
 to see exactly which meter readings produced which billable events.
 This runbook walks you through opening a transaction's detail page,
 reading its billing events table, and tracing each event back to the
@@ -26,8 +26,8 @@ sync run that emitted it.
 
 - You have an operator account that can reach `/transactions` in the
   admin console.
-- You know either the transaction ID (the <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary> `transactionPk`) or
-  enough context — charger, time window, <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary> — to find it from
+- You know either the transaction ID (the <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> `transactionPk`) or
+  enough context — charger, time window, <Glossary term="<Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary>">EV card</Glossary> — to find it from
   the transactions list.
 - The session has either started or finished. Live sessions render a
   live card; finalized sessions show a complete billing events table.
@@ -52,7 +52,7 @@ transaction primary key.
 The **Charging Session Overview** card at the top shows four tiles:
 
 - **Session ID** — the SteVe `transactionPk`.
-- **<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> EV Card** — the <Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary> used to start the session. If a
+- **<Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> EV Card** — the <Glossary term="<Glossary term="<Glossary term="idTag">idTag</Glossary>">idTag</Glossary>">idTag</Glossary> used to start the session. If a
   user mapping exists, this links to `/tags/{ocppTagPk}`.
 - **Total kWh Billed** — the running total from
   `transactionSyncState.totalKwhBilled`. This is what Lago has been
@@ -159,7 +159,7 @@ before billing reconciliation.
 <Aside type="caution">
 
 **Live card missing the charger name.** The page tried to fetch the
-SteVe transaction and failed, or the <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">chargeBoxId</Glossary> is not in the
+SteVe transaction and failed, or the <Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">chargeBoxId</Glossary> is not in the
 `chargers` cache. The session ID, kWh, and status will still render
 correctly — this is a display-only degradation.
 
@@ -169,7 +169,7 @@ correctly — this is a display-only degradation.
 
 **Meter From doesn't match the previous Meter To.** A sync run
 either skipped an event or the meter was reset mid-session. Pull the
-raw <Glossary term="<Glossary term="Meter value">Meter value</Glossary>">MeterValues</Glossary> from SteVe for the transaction window and compare
+raw <Glossary term="<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">Meter value</Glossary>">MeterValues</Glossary> from SteVe for the transaction window and compare
 against the events table to identify the gap.
 
 </Aside>
@@ -184,7 +184,7 @@ block the page.
 
 ## Related
 
-- Sync runs — see `/sync` for the list of all <Glossary term="<Glossary term="Sync run">Sync run</Glossary>">sync runs</Glossary>.
+- Sync runs — see `/sync` for the list of all <Glossary term="<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>">sync runs</Glossary>.
 - EV cards — `/tags/{ocppTagPk}` for the idTag this session used.
 - Chargers — `/chargers/{chargeBoxId}` for the device that ran the
   session.

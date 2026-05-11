@@ -16,9 +16,9 @@ import Glossary from "@components/Glossary.astro";
 
 import { Aside, Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
 
-You have a running stack: <abbr title="Polaris Express web app">web</abbr>, <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>, the database, and the email Worker. Now you need to register at least one <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary> in SteVe and point a real (or simulated) charge point at it. Until you do, the Polaris Express dashboard has nothing to display and no transactions to authorize.
+You have a running stack: <abbr title="Polaris Express web app">web</abbr>, <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>, the database, and the email Worker. Now you need to register at least one <Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary> in SteVe and point a real (or simulated) charge point at it. Until you do, the Polaris Express dashboard has nothing to display and no transactions to authorize.
 
-This phase wires up the <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> side of your installation. After it, you have a charge point sending heartbeats and a row in SteVe's `charge_box` table that Polaris Express can join against.
+This phase wires up the <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> side of your installation. After it, you have a charge point sending heartbeats and a row in SteVe's `charge_box` table that Polaris Express can join against.
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ Open `https://<your-steve-host>/steve/manager` and sign in with the SteVe web cr
 You should see the SteVe dashboard with **Home**, **Data Management**, **Operations**, **Events and Certificates**, and **Settings** in the navigation.
 
 <Aside type="caution">
-  These credentials are SteVe's, not Polaris Express's. Polaris Express has its own admin login via <Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary> (set up in an earlier phase). Do not reuse the same password.
+  These credentials are SteVe's, not Polaris Express's. Polaris Express has its own admin login via <Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary> (set up in an earlier phase). Do not reuse the same password.
 </Aside>
 
 ### 2. Add the ChargeBox in SteVe
@@ -110,7 +110,7 @@ No new env vars are introduced in this phase, but the following — set in earli
 | `webapp.userName` | `admin` | yes | `application-docker.properties` |
 | `webapp.password` | _(unset)_ | yes | `application-docker.properties` |
 
-Polaris Express reads <EnvVar name="STEVE_DATABASE_URL" /> to query the SteVe schema directly for ChargeBox, <Glossary term="<Glossary term="Connector">Connector</Glossary>">Connector</Glossary>, and transaction data. If you change SteVe's database credentials, also update the web `.env` and restart the web container.
+Polaris Express reads <EnvVar name="STEVE_DATABASE_URL" /> to query the SteVe schema directly for ChargeBox, <Glossary term="<Glossary term="<Glossary term="Connector">Connector</Glossary>">Connector</Glossary>">Connector</Glossary>, and transaction data. If you change SteVe's database credentials, also update the web `.env` and restart the web container.
 
 <!-- TODO: confirm exact env var names against web/.env.example -->
 
@@ -166,7 +166,7 @@ You should see incoming `BootNotification` and periodic `Heartbeat` messages.
 - If you are behind a proxy with a short idle timeout, increase the timeout for the `/steve/websocket/` path to at least 2× your heartbeat interval.
 
 <Aside type="danger">
-  Do **not** delete a ChargeBox from SteVe to "reset" it. Deleting cascades to transactions, <Glossary term="<Glossary term="Meter value">Meter value</Glossary>">meter values</Glossary>, and <Glossary term="<Glossary term="Reservation">Reservation</Glossary>">reservations</Glossary> referencing it, which will leave the Polaris Express dashboard with broken references. To re-register a charge point, edit the existing row or contact your operator.
+  Do **not** delete a ChargeBox from SteVe to "reset" it. Deleting cascades to transactions, <Glossary term="<Glossary term="<Glossary term="Meter value">Meter value</Glossary>">Meter value</Glossary>">meter values</Glossary>, and <Glossary term="<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">Reservation</Glossary>">reservations</Glossary> referencing it, which will leave the Polaris Express dashboard with broken references. To re-register a charge point, edit the existing row or contact your operator.
 </Aside>
 
 ## Next phase

@@ -24,8 +24,8 @@ attention.
 
 ## The model
 
-A session in Polaris Express is anchored to a <Glossary term="SteVe">SteVe</Glossary> transaction. As you
-charge, SteVe emits <Glossary term="Meter value">MeterValues</Glossary>, Polaris syncs them as
+A session in Polaris Express is anchored to a <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary> transaction. As you
+charge, SteVe emits <Glossary term="<Glossary term="Meter value">Meter value</Glossary>">MeterValues</Glossary>, Polaris syncs them as
 `syncedTransactionEvents`, and a sibling `transactionSyncState` row
 tracks whether SteVe has marked the transaction as closed.
 
@@ -72,7 +72,7 @@ flowchart LR
 ```
 
 For live sessions, Polaris also makes a best-effort call to SteVe to
-fetch the <Glossary term="ChargeBox">ChargeBox</Glossary>, connector, and start timestamp so the LiveSessionCard can render. If
+fetch the <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>, connector, and start timestamp so the LiveSessionCard can render. If
 that call fails, the rest of the page still renders — you just won't
 see the live charger strip.
 
@@ -115,7 +115,7 @@ falls into, then summed. The result carries a `coverage` flag:
 - Cost shown on a live session is an estimate based on kWh synced so
   far. The number on your invoice is the source of truth.
 - If you opened a session URL and got a "Not Found" page, the session
-  either doesn't exist or isn't linked to one of your <Glossary term="EV card">EV cards</Glossary>.
+  either doesn't exist or isn't linked to one of your <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV cards</Glossary>.
 
 ## Related
 

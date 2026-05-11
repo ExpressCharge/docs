@@ -22,12 +22,12 @@ You have a running stack. Before you hand it to operators or wire up
 DNS for real charge points, prove it works. This phase walks through
 the smoke tests that catch the failure modes we have actually seen in
 the field: a database that responds but is missing migrations, a
-<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary> instance the web app cannot reach, a <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> tenant that rejects
+<Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary> instance the web app cannot reach, a <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> tenant that rejects
 the API key, and sync jobs that hang.
 
 By the end of this phase you will have a green health endpoint, a
-working admin login, and confirmation that <Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> traffic flows from a
-real or simulated <Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary> through to the web UI.
+working admin login, and confirmation that <Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> traffic flows from a
+real or simulated <Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary> through to the web UI.
 
 ## Prerequisites
 
@@ -84,7 +84,7 @@ maps to a specific subsystem.
 | `database` | `SELECT 1` against the configured Postgres                    | Query succeeds              | —                                           | Connection refused, auth failure  |
 | `steve`    | <EnvVar name="STEVE_API_URL" /> and <EnvVar name="STEVE_API_KEY" /> both set | Both configured             | One or both missing                         | —                                 |
 | `lago`     | <EnvVar name="LAGO_API_URL" /> and <EnvVar name="LAGO_API_KEY" /> both set   | Both configured             | One or both missing                         | —                                 |
-| `sync`     | No sync run has been in `running` state for more than 30 min  | Last run completed cleanly  | One or more <Glossary term="<Glossary term="Sync run">Sync run</Glossary>">sync runs</Glossary> stuck > 30 min        | Query against `sync_runs` failed  |
+| `sync`     | No sync run has been in `running` state for more than 30 min  | Last run completed cleanly  | One or more <Glossary term="<Glossary term="<Glossary term="Sync run">Sync run</Glossary>">Sync run</Glossary>">sync runs</Glossary> stuck > 30 min        | Query against `sync_runs` failed  |
 
 <Aside type="note">
   The `steve` and `lago` checks are configuration checks only. They
@@ -264,7 +264,7 @@ state older than 30 minutes.
   procedure in the [sync runbook](/selfhost/ops/sync-runs/).
 </Aside>
 
-**<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">Magic link</Glossary> email never arrives.** Check `email-worker` logs. The
+**<Glossary term="<Glossary term="<Glossary term="Magic link">Magic link</Glossary>">Magic link</Glossary>">Magic link</Glossary> email never arrives.** Check `email-worker` logs. The
 two common causes are an unverified sender address with your
 transactional email provider, or the worker not having credentials to
 pull from the outbound queue.

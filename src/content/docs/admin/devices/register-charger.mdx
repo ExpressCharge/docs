@@ -17,8 +17,8 @@ import Glossary from "@components/Glossary.astro";
 
 You're standing up a new charger and need it to appear in the Devices
 listing so customers can start sessions on it. There are two paths:
-the charger speaks [<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>](/glossary#ocpp) and announces itself through
-[<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve), or the unit can't speak OCPP and you need a
+the charger speaks [<Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary>](/glossary#ocpp) and announces itself through
+[<Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>](/glossary#steve), or the unit can't speak OCPP and you need a
 placeholder record so the rest of Polaris Express (billing, tariffs,
 location metadata) has something to attach to.
 
@@ -31,7 +31,7 @@ location metadata) has something to attach to.
 - SteVe reachable from the console host. The Devices page fetches
   charger rows from a cache populated by SteVe; if SteVe is down
   you'll see a "Couldn't reach one of the device sources" banner.
-- A [<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) ID agreed with whoever provisions
+- A [<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox) ID agreed with whoever provisions
   the hardware. This is the identifier the charger sends in its
   OCPP `BootNotification`.
 
@@ -177,7 +177,7 @@ You're not signed in as an admin. The header action only renders when
 
 <Aside type="danger">
   Deleting a charger record while it has open transactions or active
-  [<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">reservations</Glossary>](/glossary#reservation) will orphan those records.
+  [<Glossary term="<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">Reservation</Glossary>">reservations</Glossary>](/glossary#reservation) will orphan those records.
   Confirm there are no in-flight sessions before removing a charger,
   managed or unmanaged.
 </Aside>

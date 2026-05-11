@@ -11,9 +11,9 @@ import Glossary from "@components/Glossary.astro";
 import { LinkCard, CardGrid } from "@astrojs/starlight/components";
 
 The Polaris Express API is split into ten namespaces. Customer and
-admin endpoints live behind authenticated sessions (<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>); the
-<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> namespace receives HMAC-signed webhooks from <Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>; the webhook
-namespace receives signed callbacks from <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>.
+admin endpoints live behind authenticated sessions (<Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary>); the
+<Glossary term="<Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary>">OCPP</Glossary> namespace receives HMAC-signed webhooks from <Glossary term="<Glossary term="<Glossary term="SteVe">SteVe</Glossary>">SteVe</Glossary>">SteVe</Glossary>; the webhook
+namespace receives signed callbacks from <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary>.
 
 <CardGrid>
   <LinkCard title="Overview — auth, base URL, errors" href="/api/overview/" />
@@ -22,7 +22,7 @@ namespace receives signed callbacks from <Glossary term="<Glossary term="Lago">L
   <LinkCard title="Admin" href="/api/admin/" />
   <LinkCard title="Devices" href="/api/devices/" />
   <LinkCard title="OCPP webhooks" href="/api/ocpp/" />
-  <LinkCard title="<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary> streams" href="/api/stream/" />
+  <LinkCard title="<Glossary term="<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>">SSE</Glossary> streams" href="/api/stream/" />
   <LinkCard title="Inbound webhooks (Lago)" href="/api/webhook/" />
   <LinkCard title="Errors and rate limits" href="/api/errors-and-rate-limits/" />
 </CardGrid>

@@ -24,7 +24,7 @@ signed in at all).
 
 ## The model
 
-A <Glossary term="Deep link">Deep link</Glossary> is a URL that iOS recognises as belonging to ExpresScan.
+A <Glossary term="<Glossary term="Deep link">Deep link</Glossary>">Deep link</Glossary> is a URL that iOS recognises as belonging to ExpresScan.
 The app advertises two ways of receiving these URLs:
 
 - **Universal Links** — `https://` URLs declared in the app's
@@ -53,8 +53,8 @@ Each prefix corresponds to a specific surface:
 | Prefix | Purpose | Audience |
 | --- | --- | --- |
 | `/c/<id>` | Open a charger from its physical sticker | Anyone with the app |
-| `/u/<publicId>` | Sign in via the QR code on an <Glossary term="EV card">EV card</Glossary> | Customers |
-| `/m/<token>` | Sign in via a <Glossary term="Magic link">Magic link</Glossary> emailed to a customer | Customers |
+| `/u/<publicId>` | Sign in via the QR code on an <Glossary term="<Glossary term="EV card">EV card</Glossary>">EV card</Glossary> | Customers |
+| `/m/<token>` | Sign in via a <Glossary term="<Glossary term="Magic link">Magic link</Glossary>">Magic link</Glossary> emailed to a customer | Customers |
 | `/auth/callback` | Complete operator/developer registration (PKCE) | Operators |
 
 ### Delivery paths
@@ -112,7 +112,7 @@ contexts where `https` would be redirected by an in-app browser
 before iOS gets a chance to claim it.
 
 **Route-aware consumption.** Sign-in URLs are powerful — they mint a
-new session and rebind the device's <Glossary term="idTag"><Glossary term="OCPP">OCPP</Glossary> tag</Glossary>. Letting one fire while
+new session and rebind the device's <Glossary term="<Glossary term="idTag">idTag</Glossary>"><Glossary term="<Glossary term="OCPP">OCPP</Glossary>">OCPP</Glossary> tag</Glossary>. Letting one fire while
 a user is signed in would silently swap the active account. Gating on
 `RootRoute` is the cheapest correctness guarantee.
 

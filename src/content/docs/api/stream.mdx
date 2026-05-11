@@ -18,8 +18,8 @@ import Glossary from "@components/Glossary.astro";
 
 <!-- TODO: handler not found -->
 
-The `/api/stream/*` namespace exposes [<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>](/glossary#sse) endpoints
-for real-time updates (session state, [<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox)
+The `/api/stream/*` namespace exposes [<Glossary term="<Glossary term="<Glossary term="SSE">SSE</Glossary>">SSE</Glossary>">SSE</Glossary>](/glossary#sse) endpoints
+for real-time updates (session state, [<Glossary term="<Glossary term="<Glossary term="ChargeBox">ChargeBox</Glossary>">ChargeBox</Glossary>">ChargeBox</Glossary>](/glossary#chargebox)
 status, [meter value](/glossary#meter-value) ticks). Each stream is a
 long-lived `text/event-stream` response — clients reconnect on close
 and resume via `Last-Event-ID` where supported.
@@ -32,7 +32,7 @@ from the admin host. Both paths share the `/api/stream/` prefix.
 ## Authentication
 
 All stream endpoints require an authenticated session cookie
-([<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary#betterauth)). Anonymous connections are
+([<Glossary term="<Glossary term="<Glossary term="BetterAuth">BetterAuth</Glossary>">BetterAuth</Glossary>">BetterAuth</Glossary>](/glossary#betterauth)). Anonymous connections are
 rejected with `401` before the stream opens. EventSource in the
 browser sends cookies automatically when the stream is same-origin;
 cross-origin consumers must use a fetch-based SSE client with

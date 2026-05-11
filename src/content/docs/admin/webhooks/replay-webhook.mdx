@@ -14,7 +14,7 @@ prompt_template: admin-runbook
 
 import Glossary from "@components/Glossary.astro";
 
-When a <Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary> webhook arrives but the downstream dispatch fails — a <Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary> didn't update, a subscription change didn't propagate, an invoice event didn't reconcile — you can replay the persisted event from the admin console. Replay clones the original event row, attributes the replay to your operator account, and runs the clone through the same dispatch pipeline as the original. Use this runbook when triaging billing discrepancies reported by support, or when a known dispatch bug has been patched and you need to re-process events received during the outage window.
+When a <Glossary term="<Glossary term="<Glossary term="Lago">Lago</Glossary>">Lago</Glossary>">Lago</Glossary> webhook arrives but the downstream dispatch fails — a <Glossary term="<Glossary term="<Glossary term="Lago customer">Lago customer</Glossary>">Lago customer</Glossary>">Lago customer</Glossary> didn't update, a subscription change didn't propagate, an invoice event didn't reconcile — you can replay the persisted event from the admin console. Replay clones the original event row, attributes the replay to your operator account, and runs the clone through the same dispatch pipeline as the original. Use this runbook when triaging billing discrepancies reported by support, or when a known dispatch bug has been patched and you need to re-process events received during the outage window.
 
 ## Prerequisites
 
@@ -74,9 +74,9 @@ From the success toast, click **View replayed event**, or navigate to the event 
 
 - The replayed event row exists in **Billing → Webhook events** with `status = success` and the `replayed_from_id` / `replayed_by_user_id` / `replayed_at` fields populated.
 - The downstream effect landed. Depending on `event_type`, check:
-  - **Lago customer / subscription events** — the relevant Lago customer or <Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary> record in the Polaris admin reflects the change.
+  - **Lago customer / subscription events** — the relevant Lago customer or <Glossary term="<Glossary term="<Glossary term="Lago subscription">Lago subscription</Glossary>">Lago subscription</Glossary>">Lago subscription</Glossary> record in the Polaris admin reflects the change.
   - **Invoice events** — the invoice appears (or updates) under the customer's billing tab.
-  - **Metric events** — the relevant <Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">Lago metric</Glossary> counters move on the next sync run.
+  - **Metric events** — the relevant <Glossary term="<Glossary term="<Glossary term="Lago metric">Lago metric</Glossary>">Lago metric</Glossary>">Lago metric</Glossary> counters move on the next sync run.
 - The original event row is unchanged. Replay never mutates the source row — it only writes a new clone. <!-- TODO: confirm the source row's status field is left untouched -->
 
 ## If something goes wrong
@@ -110,4 +110,4 @@ If a replay produced an incorrect side effect, you will need to correct it throu
 
 - [Webhook event log overview](/admin/webhooks/event-log/)
 - [Reconciling Lago billing discrepancies](/admin/billing/reconciliation/)
-- [<Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary>](/glossary/#audit-log)
+- [<Glossary term="<Glossary term="<Glossary term="Audit log">Audit log</Glossary>">Audit log</Glossary>">Audit log</Glossary>](/glossary/#audit-log)

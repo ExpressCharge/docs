@@ -20,10 +20,10 @@ A registered iOS device declares a set of [capabilities](/glossary#capability) �
 
 A capability is a single tag attached to a device record. A device's capability set is a `Set<DeviceCapability>`. The full universe of capabilities is small and fixed:
 
-| <Glossary term="Capability">Capability</Glossary> | Meaning |
+| <Glossary term="<Glossary term="Capability">Capability</Glossary>">Capability</Glossary> | Meaning |
 |---|---|
 | `.scanner` | Device can read NFC chargecards. Gates the scan surface. |
-| `.user` | Device can list chargers, start/stop sessions, manage [<Glossary term="Reservation">reservations</Glossary>](/glossary#reservation). Gates the Chargers tab. |
+| `.user` | Device can list chargers, start/stop sessions, manage [<Glossary term="<Glossary term="Reservation">Reservation</Glossary>">reservations</Glossary>](/glossary#reservation). Gates the Chargers tab. |
 | `.kiosk` | Device runs as a single-purpose appliance — no chrome, no settings. |
 | `.managed` | Admin-fleet posture; admins may read this device's location. |
 | `.charger` | Device *is* a charging station. Never set on an iOS app. |
@@ -52,7 +52,7 @@ Three capabilities are *canonical* — they each gate the app's one main screen 
 
 - `.scanner` → scan surface
 - `.user` → Chargers tab
-- `.kiosk` → <Glossary term="Kiosk mode">kiosk</Glossary> shell wrapping one of the above
+- `.kiosk` → <Glossary term="<Glossary term="Kiosk mode">Kiosk mode</Glossary>">kiosk</Glossary> shell wrapping one of the above
 
 `.managed` and `.charger` are not canonical. They never, by themselves, produce a screen.
 

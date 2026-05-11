@@ -4,67 +4,20 @@ import starlight from "@astrojs/starlight";
 import sitemap from "@astrojs/sitemap";
 import robotsTxt from "astro-robots-txt";
 import icon from "astro-icon";
-import tailwindcss from "@tailwindcss/vite";
 import starlightImageZoom from "starlight-image-zoom";
-import starlightLinksValidator from "starlight-links-validator";
 import starlightLlmsTxt from "starlight-llms-txt";
 import starlightSidebarTopics from "starlight-sidebar-topics";
 import starlightHeadingBadges from "starlight-heading-badges";
-import starlightPackageManagers from "starlight-package-managers";
 import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
 import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
-import { rehypeMermaid } from "@beoe/rehype-mermaid";
 
-// Brand-themed Mermaid palette — mirrors web/src/lib/colors.ts so diagrams
-// inherit the same Volt-green / Electric-cyan / Amber language.
-const mermaidThemeVariables = {
-  primaryColor: "#0082bb",
-  primaryTextColor: "#f6f9fb",
-  primaryBorderColor: "#0082bb",
-  secondaryColor: "#349c29",
-  tertiaryColor: "#d8a400",
-  lineColor: "#5b6772",
-  fontFamily:
-    "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
-  fontSize: "14px",
-  background: "#f6f9fb",
-};
-
-const mermaidDarkThemeVariables = {
-  primaryColor: "#3ec6d1",
-  primaryTextColor: "#02060c",
-  primaryBorderColor: "#3ec6d1",
-  secondaryColor: "#66cd5b",
-  tertiaryColor: "#f9c53b",
-  lineColor: "#94a3b8",
-  background: "#02060c",
-};
+// Brand palette mirrored from web/src/lib/colors.ts. Mermaid diagrams
+// (v1.1) will theme against these values once we add a build-time
+// renderer with Playwright.
 
 export default defineConfig({
   site: "https://docs.polaris.express",
   trailingSlash: "ignore",
-
-  markdown: {
-    rehypePlugins: [
-      [
-        rehypeMermaid,
-        {
-          strategy: "img-svg",
-          mermaidConfig: {
-            theme: "base",
-            themeVariables: mermaidThemeVariables,
-            darkMode: false,
-          },
-          darkMermaidConfig: {
-            theme: "base",
-            themeVariables: mermaidDarkThemeVariables,
-            darkMode: true,
-          },
-          cache: ".cache/mermaid",
-        },
-      ],
-    ],
-  },
 
   integrations: [
     icon({ include: { lucide: ["*"] } }),
@@ -101,15 +54,11 @@ export default defineConfig({
         plugins: [pluginLineNumbers(), pluginCollapsibleSections()],
         styleOverrides: {
           borderRadius: "0.625rem",
-          frames: {
-            shadowColor: "transparent",
-          },
         },
       },
       plugins: [
         starlightImageZoom(),
         starlightHeadingBadges(),
-        starlightPackageManagers(),
         starlightSidebarTopics([
           {
             label: "User Guide",
@@ -141,9 +90,16 @@ export default defineConfig({
             icon: "open-book",
             items: [
               { slug: "reference" },
-              { label: "Concepts", autogenerate: { directory: "concepts" } },
-              { label: "API", autogenerate: { directory: "api" } },
+              {
+                label: "Concepts",
+                items: [{ autogenerate: { directory: "concepts" } }],
+              },
+              {
+                label: "API",
+                items: [{ autogenerate: { directory: "api" } }],
+              },
               { slug: "glossary" },
+              { slug: "changelog" },
             ],
           },
         ]),
@@ -152,12 +108,7 @@ export default defineConfig({
           description:
             "EV charging platform — user, admin, and self-hosting documentation.",
         }),
-        starlightLinksValidator({ errorOnLocalLinks: false }),
       ],
     }),
   ],
-
-  vite: {
-    plugins: [tailwindcss()],
-  },
 });

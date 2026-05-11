@@ -85,7 +85,10 @@ async function main() {
     console.error("ANTHROPIC_API_KEY not set");
     process.exit(1);
   }
-  const client = new Anthropic({ apiKey });
+  // maxRetries handles 408/429/5xx + overloaded_error with exponential
+  // backoff. Default is 2; bump it because tier P0 dispatches ~95
+  // requests and a transient overload is common.
+  const client = new Anthropic({ apiKey, maxRetries: 6 });
 
   const glossaryText = await readFile(GLOSSARY_PATH, "utf-8");
 
@@ -96,13 +99,37 @@ async function main() {
     chunks.push(targets.slice(i, i + concurrency));
   }
 
+  let succeeded = 0;
+  let failed = 0;
+  const failures: { slug: string; error: string }[] = [];
   for (const chunk of chunks) {
-    await Promise.all(
+    const results = await Promise.allSettled(
       chunk.map((entry) => authorOne(client, entry, glossaryText, backlog))
     );
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      if (r.status === "fulfilled") {
+        succeeded++;
+      } else {
+        failed++;
+        const slug = chunk[i].slug;
+        const msg = r.reason instanceof Error ? r.reason.message : String(r.reason);
+        failures.push({ slug, error: msg });
+        console.error(`[${slug}] FAILED: ${msg}`);
+      }
+    }
   }
 
   await writeFile(BACKLOG_PATH, stringifyYaml(backlog, { lineWidth: 0 }), "utf-8");
+
+  console.log(
+    `Done. ${succeeded} succeeded, ${failed} failed (out of ${targets.length}).`
+  );
+  if (failures.length > 0) {
+    console.log("Failures:");
+    for (const f of failures) console.log(`  - ${f.slug}: ${f.error}`);
+    // Exit 0: failures are advisory. PR opens with whatever succeeded.
+  }
 }
 
 async function authorOne(

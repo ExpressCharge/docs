@@ -25,17 +25,40 @@ jobs:
   author:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Clone the aggregator with all sibling submodules so the writer
+      # agent can read code_refs from web/, ios/, email-worker/, steve/.
+      # We then work inside monorepo/docs/.
+      - name: Checkout aggregator (recursive submodules)
+        uses: actions/checkout@v4
         with:
-          submodules: false
+          repository: expresscharge/monorepo
+          submodules: recursive
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: monorepo
+
+      - name: Sync docs submodule to latest main
+        working-directory: monorepo/docs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin main
+          git checkout origin/main
+          # Re-attach a writable branch for the PR push later.
+          git checkout -B main
+
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version-file: monorepo/docs/.nvmrc
           cache: npm
-      - run: npm ci
+          cache-dependency-path: monorepo/docs/package-lock.json
+
+      - name: Install
+        working-directory: monorepo/docs
+        run: npm ci
 
       - name: Author
+        working-directory: monorepo/docs
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SLUG: ${{ inputs.slug }}
@@ -52,10 +75,12 @@ jobs:
 
       - name: Run autolinker on new articles
         if: inputs.dry_run != true
+        working-directory: monorepo/docs
         run: npm run autolink
 
       - name: Open PR
         if: inputs.dry_run != true
+        working-directory: monorepo/docs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_TAG: ${{ inputs.slug != '' && inputs.slug || inputs.tier }}
@@ -63,23 +88,26 @@ jobs:
           BRANCH="agent/author/${BRANCH_TAG}"
           git config user.name "polaris-docs-bot"
           git config user.email "docs-bot@users.noreply.github.com"
-          git checkout -b "$BRANCH"
+          git checkout -B "$BRANCH"
           git add -A
           if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 0
           fi
           git commit -m "agent: author ${BRANCH_TAG}"
-          git push -u origin "$BRANCH"
+          git push -fu origin "$BRANCH"
           gh pr create \
+            --repo ExpressCharge/docs \
             --title "agent: author ${BRANCH_TAG}" \
             --body "Authored by the Polaris docs authoring fleet. Reviewer comment to follow." \
             --base main \
-            --head "$BRANCH"
+            --head "$BRANCH" || \
+          gh pr edit "$BRANCH" --repo ExpressCharge/docs --body "Authored by the Polaris docs authoring fleet. Updated by a re-run."
 
       - name: Review (advisory)
         if: inputs.dry_run != true && inputs.slug != ''
         continue-on-error: true
+        working-directory: monorepo/docs
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SLUG: ${{ inputs.slug }}
@@ -94,20 +122,22 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             const branch = `agent/author/${process.env.BRANCH_TAG}`;
-            const verdict = fs.existsSync('review.json')
-              ? fs.readFileSync('review.json', 'utf-8')
+            const reviewPath = path.join('monorepo', 'docs', 'review.json');
+            const verdict = fs.existsSync(reviewPath)
+              ? fs.readFileSync(reviewPath, 'utf-8')
               : 'No reviewer verdict available.';
+            const owner = 'ExpressCharge';
+            const repo = 'docs';
             const prs = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${context.repo.owner}:${branch}`,
+              owner, repo,
+              head: `${owner}:${branch}`,
               state: 'open',
             });
             if (prs.data.length === 0) return;
             await github.rest.issues.createComment({
               issue_number: prs.data[0].number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner, repo,
               body: `### Reviewer (advisory)\n\n\`\`\`json\n${verdict}\n\`\`\``,
             });

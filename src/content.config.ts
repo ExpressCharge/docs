@@ -19,8 +19,14 @@ export const collections = {
         // Authoring lineage — tracked for drift detection
         code_refs: z.array(z.string()).optional(),
         code_refs_sha: z.record(z.string(), z.string()).optional(),
-        last_authored: z.string().optional(),
-        last_reviewed: z.string().optional(),
+        last_authored: z
+          .union([z.string(), z.date()])
+          .transform((v) => (v instanceof Date ? v.toISOString().slice(0, 10) : v))
+          .optional(),
+        last_reviewed: z
+          .union([z.string(), z.date()])
+          .transform((v) => (v instanceof Date ? v.toISOString().slice(0, 10) : v))
+          .optional(),
         prompt_template: z.string().optional(),
         // Audience metadata — drives <Persona> tinting + journey maps
         persona: z
